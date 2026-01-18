@@ -1,0 +1,118 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @unique
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+
+  skillsOffered Skill[] @relation("OfferedSkills")
+  skillsWanted  Skill[] @relation("WantedSkills")
+
+  sessionsAsMentor Session[] @relation("Mentor")
+  sessionsAsMentee Session[] @relation("Mentee")
+
+  callEvents CallEvent[]
+
+  feedbackGiven SessionFeedback[]
+}
+
+model Skill {
+  id   String @id @default(uuid())
+  name String @unique
+
+  offeredBy User[] @relation("OfferedSkills")
+  wantedBy  User[] @relation("WantedSkills")
+
+  sessions Session[]
+}
+
+model Session {
+  id String @id @default(uuid())
+
+  mentorId String
+  menteeId String
+  skillId  String
+
+  mentor User  @relation("Mentor", fields: [mentorId], references: [id])
+  mentee User  @relation("Mentee", fields: [menteeId], references: [id])
+  skill  Skill @relation(fields: [skillId], references: [id])
+
+  scheduledAt DateTime
+  durationMin Int
+
+  status SessionStatus @default(PENDING)
+
+  roomId            String    @unique
+  callStartedAt     DateTime?
+  callEndedAt       DateTime?
+  totalCallDuration Int?
+
+  createdAt DateTime @default(now())
+
+  feedback SessionFeedback?
+
+  callEvents CallEvent[]
+
+  @@index([mentorId])
+  @@index([menteeId])
+  @@index([skillId])
+  @@index([scheduledAt])
+}
+
+enum SessionStatus {
+  PENDING
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+model SessionFeedback {
+  id String @id @default(uuid())
+
+  sessionId String  @unique
+  session   Session @relation(fields: [sessionId], references: [id])
+
+  givenById String
+  givenBy   User   @relation(fields: [givenById], references: [id])
+
+  rating  Int
+  comment String?
+
+  confidenceBefore Int?
+  confidenceAfter  Int?
+
+  createdAt DateTime @default(now())
+
+  @@index([givenById])
+}
+
+model CallEvent {
+  id String @id @default(uuid())
+
+  sessionId String
+  session   Session @relation(fields: [sessionId], references: [id])
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  eventType CallEventType
+  timestamp DateTime      @default(now())
+
+  @@index([sessionId])
+  @@index([userId])
+}
+
+enum CallEventType {
+  JOINED
+  LEFT
+  DISCONNECTED
+}
