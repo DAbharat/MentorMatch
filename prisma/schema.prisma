@@ -13,6 +13,9 @@ model User {
   name      String?
   createdAt DateTime @default(now())
 
+  averageRating Float?
+  ratingCount   Int    @default(0)
+
   skillsOffered Skill[] @relation("OfferedSkills")
   skillsWanted  Skill[] @relation("WantedSkills")
 
@@ -21,7 +24,8 @@ model User {
 
   callEvents CallEvent[]
 
-  feedbackGiven SessionFeedback[]
+  feedbackReceived UserFeedback[] @relation("MentorFeedback")
+  feedbackGiven    UserFeedback[] @relation("MenteeFeedback")
 }
 
 model Skill {
@@ -50,14 +54,14 @@ model Session {
 
   status SessionStatus @default(PENDING)
 
+  feedback UserFeedback?
+
   roomId            String    @unique
   callStartedAt     DateTime?
   callEndedAt       DateTime?
   totalCallDuration Int?
 
   createdAt DateTime @default(now())
-
-  feedback SessionFeedback?
 
   callEvents CallEvent[]
 
@@ -75,14 +79,17 @@ enum SessionStatus {
   CANCELLED
 }
 
-model SessionFeedback {
+model UserFeedback {
   id String @id @default(uuid())
 
-  sessionId String  @unique
-  session   Session @relation(fields: [sessionId], references: [id])
+  mentorId String
+  mentor   User   @relation("MentorFeedback", fields: [mentorId], references: [id])
 
-  givenById String
-  givenBy   User   @relation(fields: [givenById], references: [id])
+  menteeId String
+  mentee   User   @relation("MenteeFeedback", fields: [menteeId], references: [id])
+
+  sessionId String?  @unique
+  session   Session? @relation(fields: [sessionId], references: [id])
 
   rating  Int
   comment String?
@@ -92,7 +99,10 @@ model SessionFeedback {
 
   createdAt DateTime @default(now())
 
-  @@index([givenById])
+  @@unique([mentorId, menteeId])
+  @@index([mentorId])
+  @@index([menteeId])
+  @@index([sessionId])
 }
 
 model CallEvent {
