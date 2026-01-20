@@ -14,6 +14,8 @@ export async function POST(req: NextRequest) {
     }
 
     try {
+        const { mentorId, rating, comment, confidenceBefore, confidenceAfter, sessionId } = await req.json();
+
         const user = await prisma.user.findUnique({
             where: {
                 id: userId
@@ -23,22 +25,6 @@ export async function POST(req: NextRequest) {
         if (!user) {
             return Response.json({
                 message: "User not found"
-            }, {
-                status: 404
-            })
-        }
-
-        const { mentorId, rating, comment, confidenceBefore, confidenceAfter, sessionId } = await req.json();
-
-        const mentorExists = await prisma.user.findUnique({
-            where: {
-                id: mentorId
-            }
-        })
-
-        if (!mentorExists) {
-            return Response.json({
-                message: "Mentor not found"
             }, {
                 status: 404
             })
@@ -57,6 +43,23 @@ export async function POST(req: NextRequest) {
                 message: "Rating must be between 1 and 5"
             }, {
                 status: 400
+            })
+        }
+
+        const mentorExists = await prisma.user.findUnique({
+            where: {
+                id: mentorId
+            },
+            select: {
+                id: true
+            }
+        })
+
+        if (!mentorExists) {
+            return Response.json({
+                message: "Mentor not found"
+            }, {
+                status: 404
             })
         }
 
@@ -95,24 +98,158 @@ export async function POST(req: NextRequest) {
             })
         }
 
-        const createFeedback = await prisma.userFeedback.create({
-            data: {
-                mentorId: mentorId,
-                menteeId: userId,
-                rating: rating,
-                comment: comment,
-            }
-        })
+        const result = await prisma.$transaction(async (tx) => {
+            const createFeedback = await tx.userFeedback.create({
+                data: {
+                    mentorId,
+                    menteeId: userId,
+                    sessionId,
+                    rating,
+                    comment,
+                    confidenceBefore,
+                    confidenceAfter,
+                },
+            });
+
+            const mentorStats = await tx.user.findUnique({
+                where: { 
+                    id: mentorId 
+                },
+                select: { 
+                    averageRating: true, 
+                    ratingCount: true 
+                },
+            });
+
+            const oldAvg = mentorStats?.averageRating ?? 0;
+            const oldCount = mentorStats?.ratingCount ?? 0;
+
+            const newCount = oldCount + 1;
+            const newAvg = (oldAvg * oldCount + rating) / newCount;
+
+            await tx.user.update({
+                where: { 
+                    id: mentorId 
+                },
+                data: {
+                    averageRating: newAvg,
+                    ratingCount: newCount,
+                },
+            });
+
+            return createFeedback;
+        });
 
         return Response.json({
             message: "Feedback submitted successfully",
-            feedback: createFeedback
+            result
         }, {
             status: 200
         })
 
     } catch (error) {
         console.error("Error submitting feedback:", error);
+        return Response.json({
+            message: "Internal Server Error"
+        }, {
+            status: 500
+        })
+    }
+}
+
+export async function GET(req: NextRequest,
+    {
+        params
+    }: {
+        params: { mentorId: string }
+    }
+) {
+    const { mentorId } = params
+
+    if (!mentorId) {
+        return Response.json({
+            message: "Mentor ID is required"
+        }, {
+            status: 400
+        })
+    }
+
+    try {
+        const { searchParams } = new URL(req.url);
+        const limit = Number(searchParams.get("limit")) || 10;
+        const cursor = searchParams.get("cursor");
+        let nextCursor: string | null = null
+
+        const mentorExists = await prisma.user.findUnique({
+            where: {
+                id: mentorId
+            },
+            select: {
+                id: true,
+                averageRating: true,
+                ratingCount: true
+            }
+        })
+
+        if (!mentorExists) {
+            return Response.json({
+                message: "Mentor not found"
+            }, {
+                status: 404
+            })
+        }
+
+        const fetchFeedback = await prisma.userFeedback.findMany({
+            where: {
+                mentorId: mentorId
+            },
+            select: {
+                id: true,
+                rating: true,
+                comment: true,
+                confidenceBefore: true,
+                confidenceAfter: true,
+                createdAt: true,
+                mentee: {
+                    select: {
+                        id: true,
+                        name: true
+                    }
+                }
+            },
+            take: limit + 1,
+            ...(cursor && {
+                skip: 1,
+                cursor: {
+                    id: cursor
+                },
+            }),
+            orderBy: {
+                createdAt: "desc"
+            }
+        })
+
+        if (fetchFeedback.length > limit) {
+            const nextItem = fetchFeedback.pop()
+            nextCursor = nextItem!.id
+        }
+
+        return Response.json({
+            message: "Feedback fetched successfully",
+            mentorExists: {
+                id: mentorExists.id,
+                averageRating: mentorExists.averageRating,
+                ratingCount: mentorExists.ratingCount
+            },
+            fetchFeedback,
+            pagination: {
+                nextCursor
+            }
+        }, {
+            status: 200
+        })
+    } catch (error) {
+        console.error("Error fetching feedback:", error);
         return Response.json({
             message: "Internal Server Error"
         }, {
