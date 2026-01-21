@@ -14,7 +14,7 @@ model User {
   createdAt DateTime @default(now())
 
   averageRating Float?
-  ratingCount   Int    @default(0)
+  ratingCount   Int @default(0)
 
   skillsOffered Skill[] @relation("OfferedSkills")
   skillsWanted  Skill[] @relation("WantedSkills")
@@ -22,11 +22,20 @@ model User {
   sessionsAsMentor Session[] @relation("Mentor")
   sessionsAsMentee Session[] @relation("Mentee")
 
+  mentorshipRequestsReceived MentorshipRequest[] @relation("MentorRequests")
+  mentorshipRequestsSent     MentorshipRequest[] @relation("MenteeRequests")
+
+  chatsAsMentor Chat[] @relation("MentorChats")
+  chatsAsMentee Chat[] @relation("MenteeChats")
+
+  messages Message[]
+
   callEvents CallEvent[]
 
   feedbackReceived UserFeedback[] @relation("MentorFeedback")
   feedbackGiven    UserFeedback[] @relation("MenteeFeedback")
 }
+
 
 model Skill {
   id   String @id @default(uuid())
@@ -56,7 +65,7 @@ model Session {
 
   feedback UserFeedback?
 
-  roomId            String    @unique
+  roomId            String @unique
   callStartedAt     DateTime?
   callEndedAt       DateTime?
   totalCallDuration Int?
@@ -70,6 +79,7 @@ model Session {
   @@index([skillId])
   @@index([scheduledAt])
 }
+
 
 enum SessionStatus {
   PENDING
@@ -103,6 +113,66 @@ model UserFeedback {
   @@index([mentorId])
   @@index([menteeId])
   @@index([sessionId])
+}
+
+model MentorshipRequest {
+  id String @id @default(uuid())
+
+  mentorId String
+  mentor   User   @relation("MentorRequests", fields: [mentorId], references: [id])
+
+  menteeId String
+  mentee   User   @relation("MenteeRequests", fields: [menteeId], references: [id])
+
+  initialMessage String?
+
+  status MentorshipRequestStatus @default(PENDING)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([mentorId, menteeId])
+  @@index([mentorId])
+  @@index([menteeId])
+}
+
+enum MentorshipRequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+model Chat {
+  id String @id @default(uuid())
+
+  mentorId String
+  menteeId String
+
+  mentor User @relation("MentorChats", fields: [mentorId], references: [id])
+  mentee User @relation("MenteeChats", fields: [menteeId], references: [id])
+
+  messages Message[]
+
+  createdAt DateTime @default(now())
+
+  @@unique([mentorId, menteeId])
+}
+
+model Message {
+  id String @id @default(uuid())
+
+  chatId String
+  chat   Chat @relation(fields: [chatId], references: [id])
+
+  senderId String
+  sender   User @relation(fields: [senderId], references: [id])
+
+  content String
+
+  createdAt DateTime @default(now())
+
+  @@index([chatId])
+  @@index([senderId])
 }
 
 model CallEvent {
