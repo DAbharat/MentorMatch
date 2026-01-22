@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
-
+import { createMentorshipRequestSchema } from "@/schema/createMentorshipRequestSchema";
+import z from "zod";
 
 export async function POST(req: NextRequest,
-    { params }: { params: { mentorId: string }}
+    { params }: { params: { mentorId: string } }
 ) {
     const { userId } = await auth()
 
-    if(!userId) {
+    if (!userId) {
         return Response.json({
             message: "Unauthenticated"
         }, {
@@ -18,7 +19,7 @@ export async function POST(req: NextRequest,
 
     const { mentorId } = params
 
-    if(!mentorId) {
+    if (!mentorId) {
         return Response.json({
             message: "Invalid parameters"
         }, {
@@ -26,7 +27,7 @@ export async function POST(req: NextRequest,
         })
     }
 
-    if(mentorId === userId) {
+    if (mentorId === userId) {
         return Response.json({
             message: "You cannot send a mentorship request to yourself"
         }, {
@@ -34,9 +35,25 @@ export async function POST(req: NextRequest,
         })
     }
 
-    try {
-        const { initialMessage } = await req.json()
+    const body = await req.json();
+    const parsed = createMentorshipRequestSchema.safeParse(body);
 
+    if (!parsed.success) {
+        const tree = z.treeifyError(parsed.error)
+        const initialMessageError = tree.properties?.initialMessage?.errors || []
+        const message = [...initialMessageError].join(", ") || "Invalid input"
+
+        return Response.json({
+            message,
+            errors: tree
+        }, {
+            status: 400
+        })
+    }
+
+    const { initialMessage } = parsed.data;
+
+    try {
         const mentorExists = await prisma.user.findUnique({
             where: {
                 id: mentorId
@@ -46,7 +63,7 @@ export async function POST(req: NextRequest,
             }
         })
 
-        if(!mentorExists) {
+        if (!mentorExists) {
             return Response.json({
                 message: "Mentor not found"
             }, {
@@ -63,7 +80,7 @@ export async function POST(req: NextRequest,
             }
         })
 
-        if(mentorshipRequestExists?.status === "PENDING") {
+        if (mentorshipRequestExists?.status === "PENDING") {
             return Response.json({
                 message: "You have already sent a mentorship request to this mentor"
             }, {
@@ -71,7 +88,7 @@ export async function POST(req: NextRequest,
             })
         }
 
-        if(mentorshipRequestExists?.status === "ACCEPTED") {
+        if (mentorshipRequestExists?.status === "ACCEPTED") {
             return Response.json({
                 message: "You are already mentored by this mentor"
             }, {
@@ -79,7 +96,7 @@ export async function POST(req: NextRequest,
             })
         }
 
-        if(mentorshipRequestExists?.status === "REJECTED") {
+        if (mentorshipRequestExists?.status === "REJECTED") {
             return Response.json({
                 message: "Your previous mentorship request was rejected"
             }, {

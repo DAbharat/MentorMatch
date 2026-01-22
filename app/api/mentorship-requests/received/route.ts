@@ -47,7 +47,7 @@ export async function GET(req: NextRequest) {
         })
 
         if (fetchRequests.length > limit) {
-            const nextItem = fetchRequests.pop(); // remove extra item
+            const nextItem = fetchRequests.pop(); 
             nextCursor = nextItem!.id;
         }
 

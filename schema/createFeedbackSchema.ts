@@ -1,0 +1,11 @@
+import { z } from "zod"
+
+export const createFeedbackSchema = z.object({
+  rating: z.number().int().min(1).max(5),
+  comment: z.string().max(500),
+  confidenceBefore: z.number().int().min(1).max(10).optional(),
+  confidenceAfter: z.number().int().min(1).max(10).optional(),
+  sessionId: z.string().uuid(),
+})
+
+export type CreateFeedbackInput = z.infer<typeof createFeedbackSchema>;

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
+import { createFeedbackSchema } from "@/schema/createFeedbackSchema";
+import z from "zod";
 
 export async function POST(req: NextRequest) {
     const { userId } = await auth();
@@ -13,8 +15,30 @@ export async function POST(req: NextRequest) {
         })
     }
 
+    const body = await req.json();
+
+    const parsed = createFeedbackSchema.safeParse(body);
+
+    if(!parsed.success) {
+        const tree = z.treeifyError(parsed.error)
+        const commentError = tree.properties?.comment?.errors || []
+        const ratingError = tree.properties?.rating?.errors || []
+        const sessionIdError = tree.properties?.sessionId?.errors || []
+        const confidenceAfterError = tree.properties?.confidenceAfter?.errors || []
+        const confidenceBeforeError = tree.properties?.confidenceBefore?.errors || []
+        const message = [...commentError, ...ratingError, ...sessionIdError, ...confidenceAfterError, ...confidenceBeforeError].join(", ") || "Invalid input"
+
+        return Response.json({
+            message,
+            errors: tree
+        }, {
+            status: 400
+        })
+    }
+
     try {
-        const { mentorId, rating, comment, confidenceBefore, confidenceAfter, sessionId } = await req.json();
+        const { mentorId } = body
+        const { rating, comment, confidenceBefore, confidenceAfter, sessionId } = parsed.data
 
         const user = await prisma.user.findUnique({
             where: {
@@ -33,14 +57,6 @@ export async function POST(req: NextRequest) {
         if (mentorId.toString() === userId.toString()) {
             return Response.json({
                 message: "You cannot give feedback to yourself"
-            }, {
-                status: 400
-            })
-        }
-
-        if (rating < 1 || rating > 5) {
-            return Response.json({
-                message: "Rating must be between 1 and 5"
             }, {
                 status: 400
             })
@@ -105,7 +121,7 @@ export async function POST(req: NextRequest) {
                     menteeId: userId,
                     sessionId,
                     rating,
-                    comment,
+                    comment: comment.trim(),
                     confidenceBefore,
                     confidenceAfter,
                 },
