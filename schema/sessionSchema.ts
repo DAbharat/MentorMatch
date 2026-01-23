@@ -18,7 +18,7 @@ export const sessionStatusSchema = z.enum([
 ])
 
 export const updateSessionSchema = z.object({
-    status: sessionStatusSchema
+    action: z.enum(["CONFIRM", "START", "COMPLETE", "CANCEL"]),
 })
 
 export const sessionSchema = z.object({
