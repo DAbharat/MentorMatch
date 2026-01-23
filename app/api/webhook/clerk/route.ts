@@ -4,15 +4,15 @@ import { Webhook } from "svix"
 import { headers } from "next/headers"
 import { WebhookEvent } from "@clerk/nextjs/server"
 import prisma from "@/lib/prisma"
-import { NextRequest } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
     const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET
     //console.log(WEBHOOK_SECRET)
 
     if (!WEBHOOK_SECRET) {
-        return Response.json({
+        return NextResponse.json({
             message: "Webhook signing secret is not configured."
         }, {
             status: 500
@@ -35,7 +35,7 @@ export async function POST(req: Request) {
 
     if (!svix_id || !svix_timestamp || !svix_signature) {
         console.error("Missing required Svix headers. Aborting webhook verification.")
-        return Response.json({
+        return NextResponse.json({
             message: "Missing Svix headers."
         }, {
             status: 400
@@ -56,7 +56,7 @@ export async function POST(req: Request) {
         }) as WebhookEvent
     } catch (error) {
         console.error("Error verifying webhook:", error)
-        return Response.json({
+        return NextResponse.json({
             message: "Invalid webhook signature."
         }, {
             status: 400
@@ -78,11 +78,11 @@ export async function POST(req: Request) {
 
             if (!email_addresses?.length) {
                 console.warn("No email in webhook, skipping user creation")
-                return Response.json({ skipped: true }, { status: 200 })
+                return NextResponse.json({ skipped: true }, { status: 200 })
             }
 
             if (!primaryEmail) {
-                return Response.json({
+                return NextResponse.json({
                     message: "Primary email not found.",
                     email_addresses
                 }, {
@@ -100,7 +100,7 @@ export async function POST(req: Request) {
                 }
             })
 
-            return Response.json({
+            return NextResponse.json({
                 message: "User created successfully.",
                 data: createUser
             }, {
@@ -108,7 +108,7 @@ export async function POST(req: Request) {
             })
         } catch (error) {
             console.error("Error creating user:", error)
-            return Response.json({
+            return NextResponse.json({
                 message: "Error creating user."
             }, {
                 status: 500
@@ -116,7 +116,7 @@ export async function POST(req: Request) {
         }
     }
 
-    return Response.json({
+    return NextResponse.json({
         message: "Webhook received successfully.",
         eventType,
     }, {

@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
+import { request } from "node:http";
+import { updateMentorshipRequestStatusSchema } from "@/schema/createMentorshipRequestSchema";
+import { z } from "zod";
 
 export async function PATCH(req: NextRequest,
     { params }: { params: { requestId: string } }
@@ -8,7 +11,7 @@ export async function PATCH(req: NextRequest,
     const { userId } = await auth()
 
     if (!userId) {
-        return Response.json({
+        return NextResponse.json({
             message: "Unauthenticated"
         }, {
             status: 401
@@ -18,18 +21,34 @@ export async function PATCH(req: NextRequest,
     const { requestId } = params
 
     if (!requestId) {
-        return Response.json({
+        return NextResponse.json({
             message: "Request ID is required"
         }, {
             status: 400
         })
     }
 
-    try {
-        const { status } = await req.json()
+    const body = await req.json()
+    const parsed = updateMentorshipRequestStatusSchema.safeParse(body)
 
-        if (!["ACCEPT", "REJECT"].includes(status)) {
-            return Response.json({
+    if(!parsed.success) {
+        const tree = z.treeifyError(parsed.error)
+        const statusError = tree.properties?.status?.errors || []
+        const message = [...statusError].join(", ") || "Invalid input"
+
+        return NextResponse.json({
+            message,
+            errors: tree
+        }, {
+            status: 400
+        })
+    }
+
+    try {
+        const { status: action } = parsed.data
+
+        if (!["ACCEPT", "REJECT"].includes(action)) {
+            return NextResponse.json({
                 message: "Invalid status"
             }, {
                 status: 400
@@ -43,7 +62,7 @@ export async function PATCH(req: NextRequest,
         })
 
         if (!mentorshipRequestExists) {
-            return Response.json({
+            return NextResponse.json({
                 message: "Mentorship request not found"
             }, {
                 status: 404
@@ -51,7 +70,7 @@ export async function PATCH(req: NextRequest,
         }
 
         if (mentorshipRequestExists.mentorId !== userId) {
-            return Response.json({
+            return NextResponse.json({
                 message: "Unauthorized"
             }, {
                 status: 403
@@ -59,7 +78,7 @@ export async function PATCH(req: NextRequest,
         }
 
         if (mentorshipRequestExists.status !== "PENDING") {
-            return Response.json({
+            return NextResponse.json({
                 message: "Mentorship request already processed"
             }, {
                 status: 400
@@ -67,26 +86,52 @@ export async function PATCH(req: NextRequest,
         }
 
         const newStatus =
-            status === "ACCEPT" ? "ACCEPTED" : "REJECTED"
+            action === "ACCEPT" ? "ACCEPTED" : "REJECTED"
 
-        const updateRequest = await prisma.mentorshipRequest.update({
-            where: {
-                id: requestId
-            },
-            data: {
-                status: newStatus
+        const result = await prisma.$transaction(async (tx) => {
+            const updateRequest = await tx.mentorshipRequest.update({
+                where: {
+                    id: requestId
+                },
+                data: {
+                    status: newStatus
+                }
+            })
+
+            let chat = null
+
+            if (newStatus === "ACCEPTED") {
+                chat = await tx.chat.upsert({
+                    where: {
+                        mentorId_menteeId: {
+                            mentorId: updateRequest.mentorId,
+                            menteeId: updateRequest.menteeId
+                        }
+                    },
+                    update: {},
+                    create: {
+                        mentorId: updateRequest.mentorId,
+                        menteeId: updateRequest.menteeId
+                    }
+                })
+            }
+            return {
+                updateRequest,
+                chat
             }
         })
 
-        return Response.json({
+        return NextResponse.json({
             message: "Mentorship request updated successfully",
-            data: updateRequest
+            request: result.updateRequest,
+            chatId: result.chat?.id || null
         }, {
             status: 200
         })
+
     } catch (error) {
         console.error("Error updating mentorship request:", error)
-        return Response.json({
+        return NextResponse.json({
             message: "Internal server error"
         }, {
             status: 500

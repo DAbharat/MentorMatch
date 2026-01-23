@@ -7,7 +7,7 @@ export async function GET(req: NextRequest) {
     const { userId } = await auth()
 
     if (!userId) {
-        return Response.json({
+        return NextResponse.json({
             message: "Unauthenticated"
         }, {
             status: 401
@@ -51,7 +51,7 @@ export async function GET(req: NextRequest) {
             nextCursor = nextItem!.id;
         }
 
-        return Response.json({
+        return NextResponse.json({
             message: "Mentorship requests fetched successfully",
             data: fetchRequests,
             nextCursor
@@ -60,7 +60,7 @@ export async function GET(req: NextRequest) {
         })
     } catch (error) {
         console.error("Error fetching mentorship requests:", error)
-        return Response.json({
+        return NextResponse.json({
             message: "Internal server error"
         }, {
             status: 500

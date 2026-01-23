@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
 import { createMentorshipRequestSchema } from "@/schema/createMentorshipRequestSchema";
-import z from "zod";
+import { z } from "zod";
 
 export async function POST(req: NextRequest,
     { params }: { params: { mentorId: string } }
@@ -10,7 +10,7 @@ export async function POST(req: NextRequest,
     const { userId } = await auth()
 
     if (!userId) {
-        return Response.json({
+        return NextResponse.json({
             message: "Unauthenticated"
         }, {
             status: 401
@@ -20,7 +20,7 @@ export async function POST(req: NextRequest,
     const { mentorId } = params
 
     if (!mentorId) {
-        return Response.json({
+        return NextResponse.json({
             message: "Invalid parameters"
         }, {
             status: 400
@@ -28,7 +28,7 @@ export async function POST(req: NextRequest,
     }
 
     if (mentorId === userId) {
-        return Response.json({
+        return NextResponse.json({
             message: "You cannot send a mentorship request to yourself"
         }, {
             status: 400
@@ -43,7 +43,7 @@ export async function POST(req: NextRequest,
         const initialMessageError = tree.properties?.initialMessage?.errors || []
         const message = [...initialMessageError].join(", ") || "Invalid input"
 
-        return Response.json({
+        return NextResponse.json({
             message,
             errors: tree
         }, {
@@ -64,7 +64,7 @@ export async function POST(req: NextRequest,
         })
 
         if (!mentorExists) {
-            return Response.json({
+            return NextResponse.json({
                 message: "Mentor not found"
             }, {
                 status: 404
@@ -81,7 +81,7 @@ export async function POST(req: NextRequest,
         })
 
         if (mentorshipRequestExists?.status === "PENDING") {
-            return Response.json({
+            return NextResponse.json({
                 message: "You have already sent a mentorship request to this mentor"
             }, {
                 status: 400
@@ -89,7 +89,7 @@ export async function POST(req: NextRequest,
         }
 
         if (mentorshipRequestExists?.status === "ACCEPTED") {
-            return Response.json({
+            return NextResponse.json({
                 message: "You are already mentored by this mentor"
             }, {
                 status: 400
@@ -97,7 +97,7 @@ export async function POST(req: NextRequest,
         }
 
         if (mentorshipRequestExists?.status === "REJECTED") {
-            return Response.json({
+            return NextResponse.json({
                 message: "Your previous mentorship request was rejected"
             }, {
                 status: 400
@@ -113,7 +113,7 @@ export async function POST(req: NextRequest,
             }
         })
 
-        return Response.json({
+        return NextResponse.json({
             message: "Mentorship request sent successfully",
             requestId: createRequest.id
         }, {
@@ -121,7 +121,7 @@ export async function POST(req: NextRequest,
         })
     } catch (error) {
         console.error("Error creating mentorship request:", error)
-        return Response.json({
+        return NextResponse.json({
             message: "Internal server error"
         }, {
             status: 500

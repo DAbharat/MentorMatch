@@ -8,7 +8,7 @@ export async function DELETE(req: NextRequest,
     const { userId } = await auth()
 
     if (!userId) {
-        return Response.json({
+        return NextResponse.json({
             message: "Unauthorized"
         }, {
             status: 401
@@ -18,7 +18,7 @@ export async function DELETE(req: NextRequest,
     const { mentorId, feedbackId } = params
 
     if (!mentorId || !feedbackId) {
-        return Response.json(
+        return NextResponse.json(
             { message: "Invalid parameters" },
             { status: 400 }
         )
@@ -33,7 +33,7 @@ export async function DELETE(req: NextRequest,
         })
 
         if (!feedback) {
-            return Response.json({
+            return NextResponse.json({
                 message: "Feedback not found"
             }, {
                 status: 404
@@ -41,7 +41,7 @@ export async function DELETE(req: NextRequest,
         }
 
         if (feedback.menteeId !== userId) {
-            return Response.json({
+            return NextResponse.json({
                 message: "You can only delete your own feedback"
             }, {
                 status: 403
@@ -95,7 +95,7 @@ export async function DELETE(req: NextRequest,
                 })
             })
 
-            return Response.json({
+            return NextResponse.json({
                 message: "Feedback deleted successfully",
                 result
             }, {
@@ -107,7 +107,7 @@ export async function DELETE(req: NextRequest,
         }
     } catch (error) {
         console.error("Error fetching feedback:", error)
-        return Response.json({
+        return NextResponse.json({
             message: "Internal Server Error"
         }, {
             status: 500

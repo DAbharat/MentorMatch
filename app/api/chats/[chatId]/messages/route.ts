@@ -2,13 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
 import { messageSchema } from "@/schema/messageSchema";
-import z from "zod";
+import { z } from "zod";
 
 export async function POST(req: NextRequest) {
     const { userId } = await auth()
 
     if (!userId) {
-        return Response.json({
+        return NextResponse.json({
             message: "Unauthenticated"
         }, {
             status: 401
@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
         const chatIdErrors = tree.properties?.chatId?.errors || []
         const message = [...contentErrors, ...chatIdErrors].join(", ") || "Invalid request body"
 
-        return Response.json({
+        return NextResponse.json({
             message,
             errors: tree
         }, {
@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
         })
 
         if (!chatExists) {
-            return Response.json({
+            return NextResponse.json({
                 message: "Chat not found"
             }, {
                 status: 404
@@ -49,8 +49,28 @@ export async function POST(req: NextRequest) {
         }
 
         if (userId !== chatExists.mentorId && userId !== chatExists.menteeId) {
-            return Response.json({
+            return NextResponse.json({
                 message: "Unauthorized"
+            }, {
+                status: 403
+            })
+        }
+
+        const mentorShipRequest = await prisma.mentorshipRequest.findUnique({
+            where: {
+                mentorId_menteeId: {
+                    mentorId: chatExists.mentorId,
+                    menteeId: chatExists.menteeId
+                }
+            },
+            select: {
+                status: true
+            }
+        })
+
+        if(!mentorShipRequest || mentorShipRequest.status !== "ACCEPTED") {
+            return NextResponse.json({
+                message: "Cannot send message in this chat"
             }, {
                 status: 403
             })
@@ -64,7 +84,7 @@ export async function POST(req: NextRequest) {
             }
         })
 
-        return Response.json({
+        return NextResponse.json({
             message: "Message sent successfully",
             data: createMessage
         }, {
@@ -72,7 +92,7 @@ export async function POST(req: NextRequest) {
         })
     } catch (error) {
         console.error("Error creating message:", error)
-        return Response.json({
+        return NextResponse.json({
             message: "Internal server error"
         }, {
             status: 500
@@ -86,7 +106,7 @@ export async function GET(req: NextRequest,
     const { userId } = await auth()
 
     if (!userId) {
-        return Response.json({
+        return NextResponse.json({
             message: "Unauthenticated"
         }, {
             status: 401
@@ -96,7 +116,7 @@ export async function GET(req: NextRequest,
     const { chatId } = params
 
     if (!chatId) {
-        return Response.json({
+        return NextResponse.json({
             message: "Chat ID is required"
         }, {
             status: 400
@@ -116,7 +136,7 @@ export async function GET(req: NextRequest,
         })
 
         if (!chatExists) {
-            return Response.json({
+            return NextResponse.json({
                 message: "Chat not found"
             }, {
                 status: 404
@@ -124,7 +144,7 @@ export async function GET(req: NextRequest,
         }
 
         if (userId !== chatExists.mentorId && userId !== chatExists.menteeId) {
-            return Response.json({
+            return NextResponse.json({
                 message: "Unauthorized"
             }, {
                 status: 403
@@ -157,7 +177,7 @@ export async function GET(req: NextRequest,
             nextCursor = nextItem!.id
         }
 
-        return Response.json({
+        return NextResponse.json({
             data: messages,
             pagination: {
                 nextCursor,
@@ -168,7 +188,7 @@ export async function GET(req: NextRequest,
         })
     } catch (error) {
         console.error("Error fetching messages:", error)
-        return Response.json({
+        return NextResponse.json({
             message: "Internal server error"
         }, {
             status: 500

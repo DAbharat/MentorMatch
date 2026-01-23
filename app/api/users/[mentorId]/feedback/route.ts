@@ -2,13 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
 import { createFeedbackSchema } from "@/schema/createFeedbackSchema";
-import z from "zod";
+import { z } from "zod";
 
 export async function POST(req: NextRequest) {
     const { userId } = await auth();
 
     if (!userId) {
-        return Response.json({
+        return NextResponse.json({
             message: "Unauthorized"
         }, {
             status: 401
@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
         const confidenceBeforeError = tree.properties?.confidenceBefore?.errors || []
         const message = [...commentError, ...ratingError, ...sessionIdError, ...confidenceAfterError, ...confidenceBeforeError].join(", ") || "Invalid input"
 
-        return Response.json({
+        return NextResponse.json({
             message,
             errors: tree
         }, {
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
         })
 
         if (!user) {
-            return Response.json({
+            return NextResponse.json({
                 message: "User not found"
             }, {
                 status: 404
@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
         }
 
         if (mentorId.toString() === userId.toString()) {
-            return Response.json({
+            return NextResponse.json({
                 message: "You cannot give feedback to yourself"
             }, {
                 status: 400
@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
         })
 
         if (!mentorExists) {
-            return Response.json({
+            return NextResponse.json({
                 message: "Mentor not found"
             }, {
                 status: 404
@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
         })
 
         if (!sessionExists) {
-            return Response.json(
+            return NextResponse.json(
                 { message: "Invalid or incomplete session" },
                 { status: 400 }
             )
@@ -107,7 +107,7 @@ export async function POST(req: NextRequest) {
         })
 
         if (feedbackExists) {
-            return Response.json({
+            return NextResponse.json({
                 message: "Feedback already submitted for this session"
             }, {
                 status: 400
@@ -156,7 +156,7 @@ export async function POST(req: NextRequest) {
             return createFeedback;
         });
 
-        return Response.json({
+        return NextResponse.json({
             message: "Feedback submitted successfully",
             result
         }, {
@@ -165,7 +165,7 @@ export async function POST(req: NextRequest) {
 
     } catch (error) {
         console.error("Error submitting feedback:", error);
-        return Response.json({
+        return NextResponse.json({
             message: "Internal Server Error"
         }, {
             status: 500
@@ -183,7 +183,7 @@ export async function GET(req: NextRequest,
     const { mentorId } = params
 
     if (!mentorId) {
-        return Response.json({
+        return NextResponse.json({
             message: "Mentor ID is required"
         }, {
             status: 400
@@ -208,7 +208,7 @@ export async function GET(req: NextRequest,
         })
 
         if (!mentorExists) {
-            return Response.json({
+            return NextResponse.json({
                 message: "Mentor not found"
             }, {
                 status: 404
@@ -250,7 +250,7 @@ export async function GET(req: NextRequest,
             nextCursor = nextItem!.id
         }
 
-        return Response.json({
+        return NextResponse.json({
             message: "Feedback fetched successfully",
             mentorExists: {
                 id: mentorExists.id,
@@ -266,7 +266,7 @@ export async function GET(req: NextRequest,
         })
     } catch (error) {
         console.error("Error fetching feedback:", error);
-        return Response.json({
+        return NextResponse.json({
             message: "Internal Server Error"
         }, {
             status: 500
