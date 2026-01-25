@@ -120,7 +120,7 @@ export async function PATCH(req: NextRequest,
         if (action === "COMPLETE") {
             const endedAt = new Date();
             data.callEndedAt = endedAt;
-            data.totalCallDurationMin = getSession.callStartedAt
+            data.totalCallDuration = getSession.callStartedAt
                 ? Math.ceil(
                     (endedAt.getTime() -
                         getSession.callStartedAt.getTime()) /

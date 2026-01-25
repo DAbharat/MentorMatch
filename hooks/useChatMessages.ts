@@ -47,32 +47,31 @@ export function useChatMessages(chatId: string) {
         }
     }
 
+
     useEffect(() => {
-        let mounted = true;
+        let mounted = true
 
-        (async () => {
-            try {
-                setIsLoading(true)
-                const result = await fetchMessages()
-                if (!mounted) return
+        setMessages([])
+        setNextCursor(null)
+        setIsLoading(true)
 
-                setMessages(result.data.reverse())
-                setNextCursor(result.pagination.nextCursor)
-            } catch (err) {
-                console.error(err)
-            } finally {
-                setIsLoading(false)
-            }
-        })()
+            ; (async () => {
+                try {
+                    const result = await fetchMessages()
+                    if (!mounted) return
+
+                    setMessages(result.data.reverse())
+                    setNextCursor(result.pagination.nextCursor)
+                } catch (err) {
+                    console.error(err)
+                } finally {
+                    mounted && setIsLoading(false)
+                }
+            })()
 
         return () => {
             mounted = false
         }
-    }, [chatId])
-
-    useEffect(() => {
-        setMessages([])
-        setNextCursor(null)
     }, [chatId])
 
     const loadMore = useCallback(async () => {
@@ -93,7 +92,7 @@ export function useChatMessages(chatId: string) {
         } finally {
             setIsLoadingMore(false)
         }
-    }, [nextCursor, isLoadingMore, chatId])
+    }, [nextCursor, isLoadingMore])
 
     const appendMessage = useCallback((message: Message) => {
         setMessages(prev =>

@@ -98,8 +98,8 @@ model UserFeedback {
   menteeId String
   mentee   User   @relation("MenteeFeedback", fields: [menteeId], references: [id])
 
-  sessionId String?  @unique
-  session   Session? @relation(fields: [sessionId], references: [id])
+  sessionId String  @unique
+  session   Session @relation(fields: [sessionId], references: [id])
 
   rating  Int
   comment String?
@@ -109,7 +109,6 @@ model UserFeedback {
 
   createdAt DateTime @default(now())
 
-  @@unique([mentorId, menteeId])
   @@index([mentorId])
   @@index([menteeId])
   @@index([sessionId])
