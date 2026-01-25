@@ -127,11 +127,11 @@ io.on("connection", (socket) => {
         })
 
         socket.on("typing", () => {
-            socket.to(`chat_${socket.data.chatId}`).emit("user_typing", { userId: socket.data.userId })
+            socket.to(`chat_${socket.data.chatId}`).emit("typing", { userId: socket.data.userId })
         })
 
         socket.on("stop_typing", () => {
-            socket.to(`chat_${socket.data.chatId}`).emit("user_stop_typing", { userId: socket.data.userId })
+            socket.to(`chat_${socket.data.chatId}`).emit("stop_typing", { userId: socket.data.userId })
         })
 
     } catch (error) {
