@@ -118,15 +118,27 @@ export async function PATCH(req: NextRequest,
         }
 
         if (action === "COMPLETE") {
-            const endedAt = new Date();
-            data.callEndedAt = endedAt;
-            data.totalCallDuration = getSession.callStartedAt
-                ? Math.ceil(
-                    (endedAt.getTime() -
-                        getSession.callStartedAt.getTime()) /
-                    60000
-                )
-                : null;
+            if(!getSession.callStartedAt) {
+                return NextResponse.json({
+                    message: "Cannot complete session that hasn't started"
+                }, {
+                    status: 400
+                })
+            }
+
+            const endedAt = new Date()
+            const durationMin = Math.ceil(
+                (endedAt.getTime() - getSession.callStartedAt.getTime()) / 60000
+            )
+            
+            data.callEndedAt = endedAt
+            data.totalDurationMin = durationMin
+
+            if(durationMin >= 20) {
+                data.status = "COMPLETED"
+            } else {
+                data.status = "CANCELLED"
+            }
         }
 
         const updatedSession = await prisma.session.update({
