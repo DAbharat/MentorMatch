@@ -70,7 +70,7 @@ export async function PATCH(req: NextRequest,
 
         const getSession = await prisma.session.findUnique({
             where: {
-                id: sessionId || undefined
+                id: sessionId
             }
         })
 
@@ -118,7 +118,7 @@ export async function PATCH(req: NextRequest,
         }
 
         if (action === "COMPLETE") {
-            if(!getSession.callStartedAt) {
+            if (!getSession.callStartedAt) {
                 return NextResponse.json({
                     message: "Cannot complete session that hasn't started"
                 }, {
@@ -127,18 +127,21 @@ export async function PATCH(req: NextRequest,
             }
 
             const endedAt = new Date()
-            const durationMin = Math.ceil(
+            const totalCallDuration = Math.ceil(
                 (endedAt.getTime() - getSession.callStartedAt.getTime()) / 60000
             )
-            
-            data.callEndedAt = endedAt
-            data.totalDurationMin = durationMin
 
-            if(durationMin >= 20) {
-                data.status = "COMPLETED"
-            } else {
-                data.status = "CANCELLED"
+            if (totalCallDuration <= 15) {
+                return NextResponse.json({
+                    message: "Session must be at least 15 minutes long to be completed"
+                }, {
+                    status: 400
+                })
             }
+
+            data.status = "COMPLETED"
+            data.callEndedAt = endedAt
+            data.totalCallDuration = totalCallDuration
         }
 
         const updatedSession = await prisma.session.update({

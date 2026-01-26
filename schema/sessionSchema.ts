@@ -6,7 +6,7 @@ export const createSessionSchema = z.object({
     skillId: z.string().uuid(),
 
     scheduledAt: z.coerce.date(),
-    durationMin: z.number().max(30)
+    totalCallDuration: z.number().max(30),
 })
 
 export const sessionStatusSchema = z.enum([
@@ -28,7 +28,6 @@ export const sessionSchema = z.object({
     skillId: z.string().uuid(),
 
     scheduledAt: z.date(),
-    durationMin: z.number().max(30),
 
     status: sessionStatusSchema,
 
@@ -36,7 +35,7 @@ export const sessionSchema = z.object({
 
     callStartedAt: z.date().nullable(),
     callEndedAt: z.date().nullable(),
-    totalCallDurationMin: z.number().nullable(),
+    totalCallDurationMin: z.number(),
 
     createdAt: z.date(),
 })

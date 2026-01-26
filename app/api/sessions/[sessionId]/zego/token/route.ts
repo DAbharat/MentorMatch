@@ -6,16 +6,16 @@ import { generateZegoToken } from "@/lib/zego";
 
 const APP_ID = Number(process.env.ZEGOCLOUD_APP_ID)
 
-if(!APP_ID) {
-  throw new Error("ZEGOCLOUD_APP_ID is not defined in environment variables")
+if (!APP_ID) {
+    throw new Error("ZEGOCLOUD_APP_ID is not defined in environment variables")
 }
 
 export async function POST(req: NextRequest,
-    { params } : { params : { sessionId : string}}
+    { params }: { params: { sessionId: string } }
 ) {
     const { userId } = await auth()
 
-    if(!userId) {
+    if (!userId) {
         return NextResponse.json({
             message: "Unauthenticated"
         }, {
@@ -25,7 +25,7 @@ export async function POST(req: NextRequest,
 
     const { sessionId } = params
 
-    if(!sessionId) {
+    if (!sessionId) {
         return NextResponse.json({
             message: "Session ID is required"
         }, {
@@ -40,7 +40,7 @@ export async function POST(req: NextRequest,
             }
         })
 
-        if(!sessionExists) {
+        if (!sessionExists) {
             return NextResponse.json({
                 message: "Session not found"
             }, {
@@ -51,7 +51,7 @@ export async function POST(req: NextRequest,
         const isMentor = userId === sessionExists.mentorId
         const isMentee = userId === sessionExists.menteeId
 
-        if(!isMentor && !isMentee) {
+        if (!isMentor && !isMentee) {
             return NextResponse.json({
                 message: "Unauthorized"
             }, {
@@ -59,7 +59,7 @@ export async function POST(req: NextRequest,
             })
         }
 
-        if(["COMPLETED", "CANCELLED"].includes(sessionExists.status)) {
+        if (["COMPLETED", "CANCELLED"].includes(sessionExists.status)) {
             return NextResponse.json({
                 message: `Cannot generate token for a ${sessionExists.status.toLowerCase()} session`
             }, {
@@ -67,12 +67,46 @@ export async function POST(req: NextRequest,
             })
         }
 
+        const now = new Date()
+        if (!sessionExists.callStartedAt || sessionExists.status !== "IN_PROGRESS") {
+            return NextResponse.json({
+                message: "Cannot generate token for a session that has not started yet"
+            }, {
+                status: 400
+            })
+        }
+        const elapsedTime = Math.ceil(
+            (now.getTime() - sessionExists.callStartedAt.getTime()) / 60000
+        )
+
+        if (elapsedTime >= 30) {
+            await prisma.session.update({
+                where: {
+                    id: sessionExists.id
+                },
+                data: {
+                    status: "COMPLETED",
+                    callEndedAt: now,
+                    totalCallDuration: elapsedTime
+                }
+            })
+            return NextResponse.json({
+                message: "Cannot generate token for session started more than 30 minutes ago"
+            }, {
+                status: 400
+            })
+        }
+
         const roomId = `session_${sessionExists.id}`
+        const remainingSeconds = Math.max(
+            60,
+            30 * 60 - elapsedTime * 60
+        )
 
         const token = generateZegoToken({
             userId: userId,
             roomId: roomId,
-            expireSeconds: 3600
+            expireSeconds: remainingSeconds
         })
 
         return NextResponse.json({

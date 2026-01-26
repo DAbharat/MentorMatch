@@ -59,7 +59,6 @@ model Session {
   skill  Skill @relation(fields: [skillId], references: [id])
 
   scheduledAt DateTime
-  durationMin Int
 
   status SessionStatus @default(PENDING)
 

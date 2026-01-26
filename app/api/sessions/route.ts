@@ -7,7 +7,7 @@ import { z } from "zod";
 export async function POST(req: NextRequest) {
     const { userId } = await auth()
 
-    if(!userId) {
+    if (!userId) {
         return NextResponse.json({
             message: "Unauthenticated"
         }, {
@@ -18,19 +18,19 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const parsed = createSessionSchema.safeParse(body)
 
-    if(!parsed.success) {
+    if (!parsed.success) {
         const tree = z.treeifyError(parsed.error)
         const mentorIdErrors = tree.properties?.mentorId?.errors || []
         const menteeIdErrors = tree.properties?.menteeId?.errors || []
         const skillIdErrors = tree.properties?.skillId?.errors || []
         const scheduleErrors = tree.properties?.scheduledAt?.errors || []
-        const durationErrors = tree.properties?.durationMin?.errors || []
+        const totalCallDurationErrors = tree.properties?.totalCallDuration?.errors || []
         const message = [
             ...mentorIdErrors,
             ...menteeIdErrors,
             ...skillIdErrors,
             ...scheduleErrors,
-            ...durationErrors
+            ...totalCallDurationErrors
         ].join(", ") || "Invalid input"
 
         return NextResponse.json({
@@ -42,9 +42,9 @@ export async function POST(req: NextRequest) {
     }
 
     try {
-        const { mentorId, menteeId, skillId, scheduledAt, durationMin } = parsed.data
+        const { mentorId, menteeId, skillId, scheduledAt, totalCallDuration } = parsed.data
 
-        if(mentorId === menteeId) {
+        if (mentorId === menteeId) {
             return NextResponse.json({
                 message: "Mentor and mentee cannot be the same user"
             }, {
@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
             })
         }
 
-        if(menteeId !== userId) {
+        if (menteeId !== userId) {
             return NextResponse.json({
                 message: "Cannot create session for another user"
             }, {
@@ -66,7 +66,7 @@ export async function POST(req: NextRequest) {
             }
         })
 
-        if(!mentorExists) {
+        if (!mentorExists) {
             return NextResponse.json({
                 message: "Mentor not found"
             }, {
@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
                 menteeId,
                 skillId,
                 scheduledAt,
-                durationMin,
+                totalCallDuration,
                 status: "PENDING",
                 roomId: crypto.randomUUID()
             }
