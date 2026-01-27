@@ -64,6 +64,8 @@ model Session {
 
   feedback UserFeedback?
 
+  completedBy Role 
+
   roomId            String @unique
   callStartedAt     DateTime?
   callEndedAt       DateTime?
@@ -86,6 +88,11 @@ enum SessionStatus {
   IN_PROGRESS
   COMPLETED
   CANCELLED
+}
+
+enum Role {
+  Mentor
+  Auto
 }
 
 model UserFeedback {
@@ -111,6 +118,7 @@ model UserFeedback {
   @@index([mentorId])
   @@index([menteeId])
   @@index([sessionId])
+  @@unique([mentorId, menteeId])
 }
 
 model MentorshipRequest {

@@ -117,7 +117,7 @@ export async function PATCH(req: NextRequest,
             data.callStartedAt = new Date()
         }
 
-        if (action === "COMPLETE") {
+        if (action === "COMPLETE" && isMentor && getSession.status === "IN_PROGRESS") {
             if (!getSession.callStartedAt) {
                 return NextResponse.json({
                     message: "Cannot complete session that hasn't started"
@@ -142,6 +142,7 @@ export async function PATCH(req: NextRequest,
             data.status = "COMPLETED"
             data.callEndedAt = endedAt
             data.totalCallDuration = totalCallDuration
+            data.completedBy = "Mentor"
         }
 
         const updatedSession = await prisma.session.update({

@@ -36,6 +36,7 @@ export const sessionSchema = z.object({
     callStartedAt: z.date().nullable(),
     callEndedAt: z.date().nullable(),
     totalCallDurationMin: z.number(),
+    completedBy: z.enum(["Mentor", "Auto"]),
 
     createdAt: z.date(),
 })

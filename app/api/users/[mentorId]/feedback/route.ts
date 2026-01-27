@@ -95,7 +95,7 @@ export async function POST(req: NextRequest) {
             )
         }
 
-        const feedbackExists = await prisma.userFeedback.findFirst({
+        const feedbackExists = await prisma.userFeedback.findUnique({
             where: {
                 mentorId: mentorId,
                 menteeId: userId,
