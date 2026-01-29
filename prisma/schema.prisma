@@ -64,7 +64,7 @@ model Session {
 
   feedback UserFeedback?
 
-  completedBy Role 
+  completedBy Role? 
 
   roomId            String @unique
   callStartedAt     DateTime?

@@ -3,6 +3,8 @@ import { auth } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
 import { createSessionSchema, SessionStatus, sessionStatusSchema, updateSessionSchema } from "@/schema/sessionSchema";
 import { z } from "zod";
+import { computeSessionMetrices } from "@/lib/session-metrics";
+import { stat } from "fs";
 
 type TransitionRule = {
     from: SessionStatus[];
@@ -32,6 +34,59 @@ const SESSION_TRANSITIONS: Record<string, TransitionRule> = {
         role: "ANY"
     }
 } as const;
+
+type ActionHandler = (
+    session: any,
+    userId: string,
+    sessionId: string,
+) => Promise<Record<string, any>>
+
+const ACTION_HANDLERS: Record<string, ActionHandler> = {
+    CONFIRM: async() => {
+        return {
+            status: "CONFIRMED"
+        }
+    },
+
+    START: async(session, _userId, _sessionId) => {
+        if(session.callStartedAt) {
+            throw new Error("Session has already been started")
+        }
+
+        return {
+            status: "IN_PROGRESS",
+            callStartedAt: new Date()
+        }
+    },
+
+    COMPLETE: async(session, _userId, sessionId) => {
+        if(session.completedBy === "Auto") {
+            throw new Error("Session has already been auto-completed")
+        }
+
+        const metrics = await computeSessionMetrices(sessionId)
+        if(!metrics || metrics.totalActiveMinutes < 15) {
+            throw new Error("Session cannot be completed manually before 15 minutes of active participation")
+        }
+
+        return {
+            status: "COMPLETED",
+            callEndedAt: new Date(),
+            totalCallDuration: metrics.totalActiveMinutes,
+            completedBy: "Mentor"
+        }
+    },
+
+    CANCEL: async(session) => {
+        if(session.callStartedAt) {
+            throw new Error("Cannot cancel a started session")
+        }
+
+        return {
+            status: "CANCELLED"
+        }
+    }
+}
 
 
 export async function PATCH(req: NextRequest,
@@ -109,43 +164,29 @@ export async function PATCH(req: NextRequest,
             })
         }
 
-        const data: any = {
-            status: rule.to
+        const actionHandler = ACTION_HANDLERS[action]
+
+        if(!actionHandler) {
+            return NextResponse.json({
+                message: "Invalid action"
+            }, {
+                status: 400
+            })
         }
 
-        if (action === "START") {
-            data.callStartedAt = new Date()
+        let data;
+
+        try {
+            data = await actionHandler(getSession, userId, sessionId);
+        } catch (error: any) {
+            return NextResponse.json({
+                message: error.message || "Action handler error"
+            }, {
+                status: 400
+            })
         }
 
-        if (action === "COMPLETE" && isMentor && getSession.status === "IN_PROGRESS") {
-            if (!getSession.callStartedAt) {
-                return NextResponse.json({
-                    message: "Cannot complete session that hasn't started"
-                }, {
-                    status: 400
-                })
-            }
-
-            const endedAt = new Date()
-            const totalCallDuration = Math.ceil(
-                (endedAt.getTime() - getSession.callStartedAt.getTime()) / 60000
-            )
-
-            if (totalCallDuration <= 15) {
-                return NextResponse.json({
-                    message: "Session must be at least 15 minutes long to be completed"
-                }, {
-                    status: 400
-                })
-            }
-
-            data.status = "COMPLETED"
-            data.callEndedAt = endedAt
-            data.totalCallDuration = totalCallDuration
-            data.completedBy = "Mentor"
-        }
-
-        const updatedSession = await prisma.session.update({
+        const updateSession = await prisma.session.update({
             where: {
                 id: sessionId
             },
@@ -153,8 +194,8 @@ export async function PATCH(req: NextRequest,
         })
 
         return NextResponse.json({
-            message: `Session ${action.toLowerCase()} successfully`,
-            data: updatedSession
+            message: `Session ${action} successful`,
+            session: updateSession
         }, {
             status: 200
         })
