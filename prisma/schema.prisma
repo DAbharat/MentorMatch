@@ -64,12 +64,18 @@ model Session {
 
   feedback UserFeedback?
 
-  completedBy Role? 
+  completedBy SessionCompletedBy? 
 
   roomId            String @unique
   callStartedAt     DateTime?
   callEndedAt       DateTime?
   totalCallDuration Int?
+
+  mentorActiveMinutes Int?
+  menteeActiveMinutes Int?
+  totalActiveMinutes  Int?
+
+  metricsComputedAt DateTime?
 
   createdAt DateTime @default(now())
 
@@ -79,6 +85,7 @@ model Session {
   @@index([menteeId])
   @@index([skillId])
   @@index([scheduledAt])
+  @@index([status, callStartedAt, metricsComputedAt])
 }
 
 
@@ -90,7 +97,7 @@ enum SessionStatus {
   CANCELLED
 }
 
-enum Role {
+enum SessionCompletedBy {
   Mentor
   Auto
 }

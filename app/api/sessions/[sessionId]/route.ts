@@ -60,8 +60,8 @@ const ACTION_HANDLERS: Record<string, ActionHandler> = {
     },
 
     COMPLETE: async(session, _userId, sessionId) => {
-        if(session.completedBy === "Auto") {
-            throw new Error("Session has already been auto-completed")
+        if(session.metricsComputedAt) {
+            throw new Error("Session has already been completed")
         }
 
         const metrics = await computeSessionMetrices(sessionId)
@@ -73,12 +73,16 @@ const ACTION_HANDLERS: Record<string, ActionHandler> = {
             status: "COMPLETED",
             callEndedAt: new Date(),
             totalCallDuration: metrics.totalActiveMinutes,
+            mentorActiveMinutes: metrics.mentorActiveMinutes,
+            menteeActiveMinutes: metrics.menteeActiveMinutes,
+            metricsComputedAt: new Date(),
             completedBy: "Mentor"
         }
     },
 
     CANCEL: async(session) => {
         if(session.callStartedAt) {
+    
             throw new Error("Cannot cancel a started session")
         }
 

@@ -83,14 +83,14 @@ export async function computeSessionMetrices(sessionId: string) {
     }
 }
 
-export async function shouldAutoCompleteSession(metrics: {
+export function shouldAutoCompleteSession(metrics: {
     totalActiveMinutes: number
 }) {
     const { totalActiveMinutes } = metrics
     return totalActiveMinutes >= 30
 } 
 
-export async function canMentorManuallyCompleteSession(metrics: {
+export function canMentorManuallyCompleteSession(metrics: {
     totalActiveMinutes: number
 }) {
     const { totalActiveMinutes } = metrics

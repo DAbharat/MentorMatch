@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
+import { computeSessionMetrices, shouldAutoCompleteSession } from "@/lib/session-metrics";
 
 export async function POST(req: NextRequest) {
     const authHeader = req.headers.get("Authorization");
     const CRON_SECRET = process.env.CRON_SECRET
-      
-    if(!CRON_SECRET) {
+
+    if (!CRON_SECRET) {
         return NextResponse.json({
             message: "Cron secret is not configured"
         }, {
@@ -23,34 +24,41 @@ export async function POST(req: NextRequest) {
     }
 
     try {
-        const now = new Date()
-
         const activeSessions = await prisma.session.findMany({
             where: {
                 status: "IN_PROGRESS",
                 callStartedAt: {
                     not: null
-                }
+                },
+                metricsComputedAt: null,
+                completedBy: null
             }
         })
 
         let completedCount = 0
 
-        for(const session of activeSessions) {
-            const elapsedTime = Math.floor(
-                (now.getTime() - session.callStartedAt?.getTime()!) / 60000
-            )
+        for (const session of activeSessions) {
 
-            if(elapsedTime >= 30 && session.status === "IN_PROGRESS") {
+            const now = new Date()
+            const metrics = await computeSessionMetrices(session.id)
+
+            if(!metrics) continue;
+
+            if (shouldAutoCompleteSession(metrics)) {
                 await prisma.session.update({
                     where: {
-                        id: session.id
+                        id: session.id,
+                        status: "IN_PROGRESS",
+                        completedBy: null
                     },
                     data: {
                         status: "COMPLETED",
                         callEndedAt: now,
-                        totalCallDuration: elapsedTime,
-                        completedBy: "Auto"
+                        totalCallDuration: metrics.totalActiveMinutes,
+                        mentorActiveMinutes: metrics.mentorActiveMinutes,
+                        menteeActiveMinutes: metrics.menteeActiveMinutes,
+                        metricsComputedAt: now,
+                        completedBy: "Auto",
                     }
                 })
                 completedCount++
