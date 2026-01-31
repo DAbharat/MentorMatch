@@ -10,6 +10,22 @@ export async function computeSessionMetrices(sessionId: string) {
             return null
         }
 
+        if (
+            fetchSession.metricsComputedAt &&
+            fetchSession.mentorActiveMinutes !== null &&
+            fetchSession.menteeActiveMinutes !== null &&
+            fetchSession.totalActiveMinutes !== null
+        ) {
+            return {
+                mentorActiveMinutes: fetchSession.mentorActiveMinutes,
+                menteeActiveMinutes: fetchSession.menteeActiveMinutes,
+                totalActiveMinutes: fetchSession.totalActiveMinutes,
+                startedAt: fetchSession.callStartedAt,
+                endedAt: fetchSession.callEndedAt,
+                now: new Date()
+            }
+        }
+
         const fetchCallEventsForASession = await prisma.callEvent.findMany({
             where: {
                 sessionId: sessionId
@@ -32,9 +48,9 @@ export async function computeSessionMetrices(sessionId: string) {
             const isMentee = event.userId === fetchSession.menteeId
             let tracker: { time: Date | null } | null = null
 
-            if(isMentor) {
+            if (isMentor) {
                 tracker = mentorLastJoin
-            } else if(isMentee) {
+            } else if (isMentee) {
                 tracker = menteeLastJoin
             } else {
                 continue
@@ -88,7 +104,7 @@ export function shouldAutoCompleteSession(metrics: {
 }) {
     const { totalActiveMinutes } = metrics
     return totalActiveMinutes >= 30
-} 
+}
 
 export function canMentorManuallyCompleteSession(metrics: {
     totalActiveMinutes: number

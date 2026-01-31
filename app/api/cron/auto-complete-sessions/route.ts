@@ -37,9 +37,10 @@ export async function POST(req: NextRequest) {
 
         let completedCount = 0
 
+        const now = new Date()
+
         for (const session of activeSessions) {
 
-            const now = new Date()
             const metrics = await computeSessionMetrices(session.id)
 
             if(!metrics) continue;
@@ -49,7 +50,8 @@ export async function POST(req: NextRequest) {
                     where: {
                         id: session.id,
                         status: "IN_PROGRESS",
-                        completedBy: null
+                        completedBy: null,
+                        metricsComputedAt: null
                     },
                     data: {
                         status: "COMPLETED",

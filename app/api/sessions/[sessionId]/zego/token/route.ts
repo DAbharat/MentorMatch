@@ -80,18 +80,8 @@ export async function POST(req: NextRequest,
         )
 
         if (elapsedTime >= 30) {
-            await prisma.session.update({
-                where: {
-                    id: sessionExists.id
-                },
-                data: {
-                    status: "COMPLETED",
-                    callEndedAt: now,
-                    totalCallDuration: elapsedTime
-                }
-            })
             return NextResponse.json({
-                message: "Cannot generate token for session started more than 30 minutes ago"
+                message: "Session has exceeded allowed duration"
             }, {
                 status: 400
             })

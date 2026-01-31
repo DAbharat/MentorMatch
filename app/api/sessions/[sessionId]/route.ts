@@ -61,7 +61,7 @@ const ACTION_HANDLERS: Record<string, ActionHandler> = {
 
     COMPLETE: async(session, _userId, sessionId) => {
         if(session.metricsComputedAt) {
-            throw new Error("Session has already been completed")
+            throw new Error("Session metrics already finalized")
         }
 
         const metrics = await computeSessionMetrices(sessionId)
