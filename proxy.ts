@@ -15,6 +15,9 @@ export default clerkMiddleware(async (auth, request) => {
     const { userId } = await auth()
     const isPageRequest = !request.nextUrl.pathname.startsWith("/api")
 
+    const isAuthPage =
+        request.nextUrl.pathname.startsWith("/sign-in") ||
+        request.nextUrl.pathname.startsWith("/sign-up")
 
     if (!isPublicRoute(request)) {
         await auth.protect();
@@ -22,14 +25,12 @@ export default clerkMiddleware(async (auth, request) => {
 
     const isAccessingHome = request.nextUrl.pathname === "/home"
 
-    if (userId && isPublicRoute(request)) {
+    if (userId && isAuthPage) {
         return NextResponse.redirect(new URL("/", request.url))
     }
 
-    if(!userId) {
-        if(!isPublicRoute(request) && isPageRequest) {
-            return NextResponse.redirect(new URL("/sign-in", request.url))
-        }
+    if (!userId && !isPublicRoute(request)) {
+        return NextResponse.redirect(new URL("/sign-in", request.url))
     }
 });
 
