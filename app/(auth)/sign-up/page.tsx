@@ -6,10 +6,16 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/retroui/Button";
 import { Eye, EyeOff, Shield, CheckCircle2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { DM_Sans } from "next/font/google";
+import { toast } from "sonner";
 
+const DM_Sans_Font = DM_Sans({
+  weight: ["400", "500", "700"],
+  subsets: ["latin"],
+})
 
 export default function SignUp() {
   const signUpHook = useSignUp();
@@ -37,17 +43,13 @@ export default function SignUp() {
         redirectUrlComplete: "/",
       });
     } catch (err: any) {
+      toast.error("Google signup failed. Please try again.");
       setError(err?.errors?.[0]?.message || "Google signup failed");
     }
   }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-
-    if (!agreedToTerms) {
-      setError("Please agree to the Terms & Privacy");
-      return;
-    }
 
     try {
       await signUp.create({
@@ -63,6 +65,7 @@ export default function SignUp() {
 
       setPendingVerification(true);
     } catch (err: any) {
+      toast.error("Signup failed. Please try again.");
       setError(err?.errors?.[0]?.message || "Signup failed");
     }
   }
@@ -77,15 +80,17 @@ export default function SignUp() {
         await setActive({ session: result.createdSessionId });
         router.push("/sign-in");
       } else {
+        toast.error("Verification failed. Please check your code and try again.");
         setError("Verification failed");
       }
     } catch (err: any) {
+      toast.error("Invalid verification code");
       setError(err?.errors?.[0]?.message || "Invalid verification code");
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-slate-50 via-blue-50 to-indigo-50 p-3 sm:p-4 md:p-6">
+    <div className={`min-h-screen flex items-center justify-center bg-linear-to-br from-slate-50 via-blue-50 to-indigo-50 p-3 sm:p-4 md:p-6 ${DM_Sans_Font.className}`}>
       <div className="w-full max-w-6xl bg-white rounded-2xl sm:rounded-3xl shadow-xl sm:shadow-2xl overflow-hidden grid grid-cols-1 lg:grid-cols-2 my-4">
         {/* Left: Form area */}
         <div className="p-6 sm:p-8 md:p-10 lg:p-12">
@@ -208,10 +213,11 @@ export default function SignUp() {
 
                   <Button
                     type="submit"
-                    className="w-full h-11 sm:h-12/mt-0 bg-linear-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white font-semibold text-sm sm:text-base rounded-lg sm:rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 mt-5 sm:mt-6"
+                    className="w-full h-11 sm:h-12 bg-linear-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white font-semibold text-sm sm:text-base rounded-lg sm:rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 mt-5 sm:mt-6"
                   >
                     Create Account
                   </Button>
+
                 </form>
 
                 <p className="text-xs sm:text-sm text-gray-600 text-center mt-6 sm:mt-8">
