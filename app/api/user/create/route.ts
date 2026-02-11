@@ -8,12 +8,12 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const parsed = userCreationSchema.safeParse(body)
 
-    if(!parsed.success) {
+    if (!parsed.success) {
         const tree = z.treeifyError(parsed.error)
-        const idErrors = tree.properties?.id?.errors || []
+        const clerkUserIdErrors = tree.properties?.clerkUserId?.errors || []
         const emailErrors = tree.properties?.email?.errors || []
         const nameErrors = tree.properties?.name?.errors || []
-        const message = [...idErrors, ...emailErrors, ...nameErrors].join(", ") || "Invalid input"
+        const message = [...clerkUserIdErrors, ...emailErrors, ...nameErrors].join(", ") || "Invalid input"
 
         return NextResponse.json({
             message
@@ -23,13 +23,26 @@ export async function POST(req: NextRequest) {
     }
 
     try {
-        const { id, email, name } = parsed.data
+        const { clerkUserId, email, name } = parsed.data
         console.log("info received: ", parsed.data)
+
+        console.log("POST /api/user/create: Received data:", { clerkUserId, email, name });
+
+        if (!clerkUserId || !email || !name) {
+            console.error("POST /api/user/create: Missing required fields.");
+            return NextResponse.json({
+                message: "Missing required fields: clerkUserId, email, or name."
+            }, {
+                status: 400
+            });
+        }
+
+
         const userExists = await prisma.user.findFirst({
             where: {
                 OR: [
                     {
-                        id: id
+                        clerkUserId: clerkUserId
                     },
                     {
                         email: email
@@ -38,7 +51,7 @@ export async function POST(req: NextRequest) {
             }
         })
 
-        if(userExists) {
+        if (userExists) {
             console.log("user Exists: ", userExists)
             return NextResponse.json({
                 message: "User with this ID or email already exists.",
@@ -50,7 +63,7 @@ export async function POST(req: NextRequest) {
 
         const createUser = await prisma.user.create({
             data: {
-                id,
+                clerkUserId,
                 email,
                 name
             }
@@ -63,7 +76,14 @@ export async function POST(req: NextRequest) {
             status: 201
         })
     } catch (error: any) {
-        console.error("Error creating user:", error.message)
+        console.error("Error creating user:", error); // Log the full error object
+        if (error.code === 'P2002') {
+            return NextResponse.json({
+                message: `Unique constraint violation: A user with this ${error.meta.target} already exists.`
+            }, {
+                status: 400
+            });
+        }
         return NextResponse.json({
             message: "An error occurred while creating the user."
         }, {

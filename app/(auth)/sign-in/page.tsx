@@ -56,7 +56,7 @@ export default function SignIn() {
 
       if (result.status === "complete") {
         await setActive({ session: result.createdSessionId });
-        router.push("/");
+        router.push("/profile");
       } else {
         toast.error("Sign in failed, try again");
         setError("Sign in failed");

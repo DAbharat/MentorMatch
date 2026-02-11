@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { DM_Sans } from "next/font/google";
 import { toast } from "sonner";
 import axios from "axios";
+import { createAccount } from "@/services/createAccount.service";
 
 const DM_Sans_Font = DM_Sans({
   weight: ["400", "500", "700"],
@@ -60,20 +61,11 @@ export default function SignUp() {
         lastName: name.split(" ").slice(1).join(" ") || undefined,
       });
 
-      console.log("Frontend: Sending request to /api/user/create");
-      const createUser = await axios.post("/api/user/create", {
-        id: signUpResult.id,
-        email: email,
-        name: name
-      });
-
-      console.log("Frontend: User created successfully", createUser.data);
-
       await signUp.prepareEmailAddressVerification({
         strategy: "email_code",
       });
 
-      toast.success("Signup successful! Please check your email for the verification code.");
+      toast.success("A verification code has been sent to your email. Please check your inbox.");
       setPendingVerification(true);
     } catch (err: any) {
       console.error("Frontend: Signup failed", err);
@@ -88,10 +80,21 @@ export default function SignUp() {
     try {
       const result = await signUp.attemptEmailAddressVerification({ code });
 
-      if (result.status === "complete") {
+      if (result.status === "complete" && result.createdUserId) {
+
+        const clerkUserId = result.createdUserId;
+
+        console.log("Frontend: Sending request to /api/user/create");
+        const createUser = await createAccount({
+          name,
+          email,
+          clerkUserId
+        })
+
+        console.log("Frontend: User created successfully", createUser.data);
         toast.success("Email verified successfully! Redirecting...");
         await setActive({ session: result.createdSessionId });
-        router.push("/sign-in");
+        router.push("/profile/edit");
       } else {
         toast.error("Verification failed. Please check your code and try again.");
         setError("Verification failed");

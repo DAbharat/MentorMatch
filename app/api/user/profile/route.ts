@@ -8,7 +8,9 @@ import { resolveSkills } from "@/lib/skills";
 export async function GET(req: NextRequest) {
     const { userId } = await auth()
 
-    if(!userId) {
+    console.log("GET /api/user/profile: userId from auth middleware:", userId);
+
+    if (!userId) {
         return NextResponse.json({
             message: "Unauthorized"
         }, {
@@ -16,10 +18,12 @@ export async function GET(req: NextRequest) {
         })
     }
 
+    console.log("GET /api/user/profile: userId", userId);
+
     try {
         const userProfile = await prisma.user.findUnique({
             where: {
-                id: userId
+                clerkUserId: userId
             },
             select: {
                 id: true,
@@ -32,7 +36,7 @@ export async function GET(req: NextRequest) {
             }
         })
 
-        if(!userProfile) {
+        if (!userProfile) {
             return NextResponse.json({
                 message: "User profile not found"
             }, {
@@ -59,7 +63,9 @@ export async function GET(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
     const { userId } = await auth()
 
-    if(!userId) {
+    console.log("PATCH /api/user/profile: userId from auth middleware:", userId);
+
+    if (!userId) {
         return NextResponse.json({
             message: "Unauthorized"
         }, {
@@ -70,7 +76,7 @@ export async function PATCH(req: NextRequest) {
     const body = await req.json()
     const parsed = updateProfileSchema.safeParse(body)
 
-    if(!parsed.success) {
+    if (!parsed.success) {
         const tree = z.treeifyError(parsed.error)
         const bioErrors = tree.properties?.bio?.errors || []
         const nameErrors = tree.properties?.name?.errors || []
@@ -86,35 +92,57 @@ export async function PATCH(req: NextRequest) {
         })
     }
 
+    console.log("PATCH /api/user/profile: Verifying user existence with userId:", userId);
+
+    const existingUser = await prisma.user.findUnique({
+        where: {
+            clerkUserId: userId
+        },
+        select: {
+            id: true
+        },
+    });
+
+    console.log("PATCH /api/user/profile: Result of findUnique query:", existingUser);
+
+    if (!existingUser) {
+        return NextResponse.json({
+            message: "User not found. Cannot update profile."
+        }, {
+            status: 404
+        });
+    }
+
     try {
         const { bio, name, skillsWanted, skillsOffered } = parsed.data
 
         const data: any = {}
 
-        if(name !== undefined) data.name = name
-        if(bio !== undefined) data.bio = bio
+        if (name !== undefined) data.name = name
+        if (bio !== undefined) data.bio = bio
 
-        if(skillsOffered) {
-            const skillIds = await resolveSkills(skillsOffered)
+        if (skillsOffered) {
+            const skillIds = await resolveSkills(skillsOffered);
             data.skillsOffered = {
-                set: skillIds
+                connect: skillIds.map((id) => ({ id })) 
             }
         }
 
-        if(skillsWanted) {
-            const skillIds = await resolveSkills(skillsWanted)
+        if (skillsWanted) {
+            const skillIds = await resolveSkills(skillsWanted);
             data.skillsWanted = {
-                set: skillIds
+                connect: skillIds.map((id) => ({ id })) // Use connect instead of set
             }
         }
 
         const updateProfile = await prisma.user.update({
             where: {
-                id: userId
-            }, 
+                clerkUserId: userId
+            },
             data,
             select: {
                 id: true,
+                clerkUserId: true,
                 name: true,
                 bio: true,
                 skillsOffered: true,

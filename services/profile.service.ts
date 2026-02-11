@@ -12,3 +12,21 @@ export async function fetchMyProfile() {
         throw new Error(axiosError.response?.data.message || "An error occurred while fetching profile.");
     }
 }
+
+export async function updateMyProfile(profileData: {
+    name?: string;
+    bio?: string;
+    skillsOffered?: string[];
+    skillsWanted?: string[];
+}) {
+    try {
+        console.log("Updating profile with data:", profileData);
+        const response = await axios.patch(`/api/user/profile`, profileData);
+        return response.data.data;
+    } catch (error) {
+        const axiosError = error as AxiosError<ApiResponse>
+        console.error("Error updating profile:", axiosError.response?.data.message || error);
+        throw new Error(axiosError.response?.data.message || "An error occurred while updating profile.");
+    }
+}
+

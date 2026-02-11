@@ -22,50 +22,56 @@ export default function ProfilePage() {
     const [profile, setProfile] = useState<Profile | null>(null);
     const [loading, setLoading] = useState(true);
 
-
     useEffect(() => {
-        if (!isLoaded) return;
+        if (!isLoaded) {
+            console.log("ProfilePage: User data not loaded yet.");
+            return;
+        }
 
         if (!isSignedIn) {
+            console.log("ProfilePage: User not signed in. Redirecting to /sign-in.");
             toast.error("You must be signed in to view your profile");
             router.replace("/sign-in");
+        } else {
+            console.log("ProfilePage: User is signed in.", user);
         }
-    }, [isLoaded, isSignedIn, router]);
-
-    if (!profile) {
-        return null;
-    }
+    }, [isLoaded, isSignedIn, router, user]);
 
     useEffect(() => {
-        console.log("loading profile")
+        console.log("ProfilePage: Attempting to load profile.");
         if (!isLoaded || !isSignedIn) return;
 
         const loadProfile = async () => {
             try {
                 const data = await fetchMyProfile();
-                console.log("profile fetched....")
+                console.log("ProfilePage: Profile fetched successfully.", data);
                 toast.success("Profile loaded successfully!");
                 setProfile(data);
-                setLoading(false);
             } catch (error) {
-                const axiosError = error as AxiosError<ApiResponse>
+                const axiosError = error as AxiosError<ApiResponse>;
+                console.error("ProfilePage: Error fetching profile.", axiosError.response?.data.message || error);
                 toast.error(axiosError.response?.data.message || "An error occurred while fetching profile.");
                 router.replace("/sign-in");
             } finally {
-                console.log("Profile fetch attempt finished.")
+                console.log("ProfilePage: Profile fetch attempt finished.");
                 setLoading(false);
             }
-        }
+        };
         loadProfile();
     }, [isLoaded, isSignedIn, router]);
 
     if (!isLoaded || loading) {
+        console.log("ProfilePage: Loading spinner displayed.");
         return <Spinner />;
     }
 
     if (!profile) {
-        return null;
+        console.error("ProfilePage: Profile not found.");
+        toast.error("Profile not found.");
+        return <p className="text-center text-red-500">Profile not found.</p>;
     }
+
+    console.log("ProfilePage: Rendering profile page.", profile);
 
     return (
         <div>
@@ -85,5 +91,5 @@ export default function ProfilePage() {
                 />
             </div>
         </div>
-    )
+    );
 }

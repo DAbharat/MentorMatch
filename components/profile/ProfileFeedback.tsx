@@ -1,4 +1,10 @@
 import React from 'react'
+import { DM_Sans } from 'next/font/google';
+
+const DM_Sans_Font = DM_Sans({
+  weight: ["400", "500", "700"],
+  subsets: ["latin"],
+})
 
 type Feedback = {
     id: string;
@@ -17,16 +23,18 @@ type ProfileFeedbackProps = {
 export default function ProfileFeedback(
     { feedbacks }: ProfileFeedbackProps
 ) {
-    if (feedbacks.length === 0) {
+    if (!feedbacks) {
     return (
-      <p className="text-center text-muted-foreground">
-        No feedback yet
-      </p>
+      <div className={`p-6 rounded-xl text-center ${DM_Sans_Font.className}`}>
+        <p className="text-sm text-muted-foreground">
+          No feedback available for this user!
+        </p>
+      </div>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <div className={`space-y-4 ${DM_Sans_Font.className}`}>
       {feedbacks.map((fb) => (
         <div
           key={fb.id}
