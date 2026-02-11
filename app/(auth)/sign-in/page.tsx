@@ -70,7 +70,7 @@ export default function SignIn() {
 
   return (
     <div className={`min-h-screen flex items-center justify-center bg-linear-to-br from-slate-50 via-blue-50 to-indigo-50 p-3 sm:p-4 md:p-6 ${DM_Sans_Font.className}`}>
-      <div className="w-full max-w-6xl bg-white rounded-2xl sm:rounded-3xl shadow-xl sm:shadow-2xl overflow-hidden grid grid-cols-1 lg:grid-cols-2 my-4">
+      <div className="w-full max-w-6xl bg-white lg:bg-transparent rounded-2xl sm:rounded-3xl lg:rounded-none shadow-xl sm:shadow-2xl lg:shadow-none overflow-hidden grid grid-cols-1 lg:grid-cols-2 my-4 lg:my-0">
         {/* Left: Form area */}
         <div className="p-6 sm:p-8 md:p-10 lg:p-12">
           <div className="max-w-md mx-auto">
@@ -104,7 +104,7 @@ export default function SignIn() {
                 <div className="w-full border-t border-gray-200" />
               </div>
               <div className="relative flex justify-center text-xs sm:text-sm">
-                <span className="px-3 sm:px-4 bg-white text-gray-500 font-medium">or</span>
+                <span className="px-3 sm:px-4 bg-slate-50 text-gray-500 font-medium">or</span>
               </div>
             </div>
 
@@ -194,7 +194,7 @@ export default function SignIn() {
         </div>
 
         {/* Right: Promo panel */}
-        <div className="hidden lg:flex items-center justify-center bg-linear-to-br from-indigo-600 via-indigo-700 to-blue-700 text-white p-8 xl:p-12 relative overflow-hidden">
+        <div className="hidden lg:flex items-center justify-center bg-linear-to-br from-indigo-600 via-indigo-700 to-blue-700 text-white p-8 xl:p-12 relative overflow-hidden rounded-4xl">
           <div className="absolute top-0 right-0 w-72 h-72 xl:w-96 xl:h-96 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
           <div className="absolute bottom-0 left-0 w-64 h-64 xl:w-80 xl:h-80 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
 

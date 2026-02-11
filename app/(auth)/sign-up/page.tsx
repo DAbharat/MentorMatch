@@ -11,6 +11,7 @@ import { Eye, EyeOff, Shield, CheckCircle2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { DM_Sans } from "next/font/google";
 import { toast } from "sonner";
+import axios from "axios";
 
 const DM_Sans_Font = DM_Sans({
   weight: ["400", "500", "700"],
@@ -52,19 +53,30 @@ export default function SignUp() {
     e.preventDefault();
 
     try {
-      await signUp.create({
+      const signUpResult = await signUp.create({
         emailAddress: email,
         password,
         firstName: name.split(" ")[0],
         lastName: name.split(" ").slice(1).join(" ") || undefined,
       });
 
+      console.log("Frontend: Sending request to /api/user/create");
+      const createUser = await axios.post("/api/user/create", {
+        id: signUpResult.id,
+        email: email,
+        name: name
+      });
+
+      console.log("Frontend: User created successfully", createUser.data);
+
       await signUp.prepareEmailAddressVerification({
         strategy: "email_code",
       });
 
+      toast.success("Signup successful! Please check your email for the verification code.");
       setPendingVerification(true);
     } catch (err: any) {
+      console.error("Frontend: Signup failed", err);
       toast.error("Signup failed. Please try again.");
       setError(err?.errors?.[0]?.message || "Signup failed");
     }
@@ -77,6 +89,7 @@ export default function SignUp() {
       const result = await signUp.attemptEmailAddressVerification({ code });
 
       if (result.status === "complete") {
+        toast.success("Email verified successfully! Redirecting...");
         await setActive({ session: result.createdSessionId });
         router.push("/sign-in");
       } else {
@@ -91,10 +104,10 @@ export default function SignUp() {
 
   return (
     <div className={`min-h-screen flex items-center justify-center bg-linear-to-br from-slate-50 via-blue-50 to-indigo-50 p-3 sm:p-4 md:p-6 ${DM_Sans_Font.className}`}>
-      <div className="w-full max-w-6xl bg-white rounded-2xl sm:rounded-3xl shadow-xl sm:shadow-2xl overflow-hidden grid grid-cols-1 lg:grid-cols-2 my-4">
+      <div className="w-full max-w-6xl bg-white lg:bg-transparent rounded-2xl sm:rounded-3xl lg:rounded-none shadow-xl sm:shadow-2xl lg:shadow-none overflow-hidden grid grid-cols-1 lg:grid-cols-2 my-4 lg:my-0">
         {/* Left: Form area */}
         <div className="p-6 sm:p-8 md:p-10 lg:p-12">
-          <div className="max-w-md mx-auto">
+          <div className="max-w-md mx-auto lg:mx-0">
             {!pendingVerification ? (
               <>
                 <div className="mb-6 sm:mb-8">
@@ -128,7 +141,7 @@ export default function SignUp() {
                     <div className="w-full border-t border-gray-200" />
                   </div>
                   <div className="relative flex justify-center text-xs sm:text-sm">
-                    <span className="px-3 sm:px-4 bg-white text-gray-500 font-medium">or</span>
+                    <span className="px-3 sm:px-4 bg-slate-50 text-gray-500 font-medium">or</span>
                   </div>
                 </div>
 
@@ -234,9 +247,7 @@ export default function SignUp() {
             ) : (
               <>
                 <div className="mb-6 sm:mb-8">
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 bg-indigo-100 rounded-xl sm:rounded-2xl flex items-center justify-center mb-4 sm:mb-6">
-                    <Shield className="w-7 h-7 sm:w-8 sm:h-8 text-indigo-600" />
-                  </div>
+
                   <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 tracking-tight">
                     Verify Your Email
                   </h1>
@@ -296,7 +307,7 @@ export default function SignUp() {
         </div>
 
         {/* Right: Promo panel */}
-        <div className="hidden lg:flex items-center justify-center bg-linear-to-br from-indigo-600 via-indigo-700 to-blue-700 text-white p-8 xl:p-12 relative overflow-hidden">
+        <div className="hidden lg:flex items-center justify-center bg-linear-to-br from-indigo-600 via-indigo-700 to-blue-700 text-white p-8 xl:p-12 relative overflow-hidden rounded-4xl">
           {/* Decorative background elements */}
           <div className="absolute top-0 right-0 w-72 h-72 xl:w-96 xl:h-96 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
           <div className="absolute bottom-0 left-0 w-64 h-64 xl:w-80 xl:h-80 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />

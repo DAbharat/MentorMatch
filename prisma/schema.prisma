@@ -1,6 +1,5 @@
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider        = "prisma-client-js"
 }
 
 datasource db {
@@ -35,6 +34,8 @@ model User {
 
   feedbackReceived UserFeedback[] @relation("MentorFeedback")
   feedbackGiven    UserFeedback[] @relation("MenteeFeedback")
+
+  @@index([email, id])
 }
 
 
@@ -116,7 +117,7 @@ model UserFeedback {
   session   Session @relation(fields: [sessionId], references: [id])
 
   rating  Int
-  comment String?
+  comment String
 
   confidenceBefore Int?
   confidenceAfter  Int?

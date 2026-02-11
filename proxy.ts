@@ -7,31 +7,36 @@ const isPublicRoute = createRouteMatcher([
     "/sign-in(.*)?",
     "/sign-up(.*)?",
     "/home",
-    "/api/webhook/clerk"
+    "/api/webhook/clerk",
+    "/api/user/create" // Allow unauthenticated requests to this route
 ])
 
 
 export default clerkMiddleware(async (auth, request) => {
-    const { userId } = await auth()
-    const isPageRequest = !request.nextUrl.pathname.startsWith("/api")
+    const { userId } = await auth();
+    const pathname = request.nextUrl.pathname;
+
+    console.log("Middleware: Request received for", pathname);
 
     const isAuthPage =
-        request.nextUrl.pathname.startsWith("/sign-in") ||
-        request.nextUrl.pathname.startsWith("/sign-up")
-
-    if (!isPublicRoute(request)) {
-        await auth.protect();
-    }
-
-    const isAccessingHome = request.nextUrl.pathname === "/home"
+        pathname.startsWith("/sign-in") ||
+        pathname.startsWith("/sign-up")
 
     if (userId && isAuthPage) {
-        return NextResponse.redirect(new URL("/", request.url))
+        console.log("Middleware: Redirecting authenticated user to /profile");
+        return NextResponse.redirect(new URL("/profile", request.url));
     }
 
     if (!userId && !isPublicRoute(request)) {
-        return NextResponse.redirect(new URL("/sign-in", request.url))
+        console.log("Middleware: Redirecting unauthenticated user to /sign-in");
+        return NextResponse.redirect(new URL("/sign-in", request.url));
     }
+
+    if (!isPublicRoute(request)) {
+        console.log("Middleware: Protecting route", pathname);
+        await auth.protect();
+    }
+
 });
 
 export const config = {
