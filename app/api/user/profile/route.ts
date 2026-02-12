@@ -27,6 +27,7 @@ export async function GET(req: NextRequest) {
             },
             select: {
                 id: true,
+                clerkUserId: true,
                 name: true,
                 bio: true,
                 skillsOffered: true,

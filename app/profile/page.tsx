@@ -80,6 +80,7 @@ export default function ProfilePage() {
                     name={profile.name}
                     bio={profile.bio || ""}
                     createdAt={profile.createdAt}
+                    clerkUserId={profile.clerkUserId}
                 />
             </div>
             <div>

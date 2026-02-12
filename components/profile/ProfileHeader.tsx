@@ -3,6 +3,9 @@ import React from 'react'
 import { DM_Sans } from 'next/font/google';
 import { Button } from '../retroui/Button';
 import { useRouter } from 'next/navigation';
+import { UserButton, useUser } from '@clerk/nextjs';
+import { toast } from 'sonner';
+import { profile } from 'console';
 
 
 const DM_Sans_Font = DM_Sans({
@@ -11,9 +14,10 @@ const DM_Sans_Font = DM_Sans({
 })
 
 type ProfileHeaderProps = {
-    name: string;
-    bio: string;
-    createdAt: string;
+  name: string;
+  bio: string;
+  createdAt: string;
+  clerkUserId: string;
 }
 
 function getMemberSince(createdAt: string) {
@@ -21,10 +25,19 @@ function getMemberSince(createdAt: string) {
 }
 
 export default function ProfileHeader(
-    { name, bio, createdAt }: ProfileHeaderProps
+  { name, bio, createdAt, clerkUserId }: ProfileHeaderProps
 ) {
-    const memberSince = getMemberSince(createdAt);
-    const router = useRouter()
+  const memberSince = getMemberSince(createdAt);
+  const router = useRouter()
+  const { user } = useUser()
+
+  if (!user) {
+    return null;
+  }
+  console.log("Clerk ID:", user?.id)
+console.log("Profile clerkUserId:", clerkUserId)
+
+  const isOwner = user.id === clerkUserId
 
   return (
     <div className={`bg-linear-to-br ${DM_Sans_Font.className}`}>
@@ -50,14 +63,25 @@ export default function ProfileHeader(
               </p>
 
               {/* Button exactly below "Member since" */}
-              <Button
-                size="sm"
-                className="mt-6 bg-transparent border border-black border-b-2 text-black px-4"
-                onClick={() => { router.push("/profile/edit")}}
-              >
-                Edit Profile
-              </Button>
+              {isOwner ? (
+                <Button
+                  size="sm"
+                  className="mt-6 bg-transparent border border-black border-b-2 text-black px-4"
+                  onClick={() => router.push("/profile/edit")}
+                >
+                  Edit Profile
+                </Button>
+              ) : (
+                <Button
+                  size="sm"
+                  className="mt-6 bg-black text-white px-4"
+                  onClick={() => { router.push(`/profile/${clerkUserId}/request`); toast("Redirecting to request form...") }}
+                >
+                  Send Request
+                </Button>
+              )}
             </div>
+            <UserButton />
 
           </div>
         </header>

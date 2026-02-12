@@ -294,8 +294,11 @@ export default function SignUp() {
 
                   <button
                     type="button"
-                    onClick={() => setPendingVerification(false)}
-                    className="w-full text-xs sm:text-sm text-indigo-600 hover:text-indigo-700 font-medium"
+                    onClick={() => {
+                      setPendingVerification(false)
+                      router.push("/sign-up")
+                    }}
+                    className="w-full text-xs sm:text-sm text-indigo-600 hover:text-indigo-700 font-medium cursor-pointer"
                   >
                     Use a different email
                   </button>
