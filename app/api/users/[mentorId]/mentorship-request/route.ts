@@ -27,21 +27,14 @@ export async function POST(req: NextRequest,
         })
     }
 
-    if (mentorId === userId) {
-        return NextResponse.json({
-            message: "You cannot send a mentorship request to yourself"
-        }, {
-            status: 400
-        })
-    }
-
     const body = await req.json();
     const parsed = createMentorshipRequestSchema.safeParse(body);
 
     if (!parsed.success) {
         const tree = z.treeifyError(parsed.error)
         const initialMessageError = tree.properties?.initialMessage?.errors || []
-        const message = [...initialMessageError].join(", ") || "Invalid input"
+        const skillIdError = tree.properties?.skillId?.errors || []
+        const message = [...initialMessageError, ...skillIdError].join(", ") || "Invalid input"
 
         return NextResponse.json({
             message,
@@ -51,9 +44,34 @@ export async function POST(req: NextRequest,
         })
     }
 
-    const { initialMessage } = parsed.data;
+    const { initialMessage, skillId } = parsed.data;
 
     try {
+        const dbUser = await prisma.user.findUnique({
+            where: {
+                clerkUserId: userId
+            }
+        })
+
+        if (!dbUser) {
+            return NextResponse.json({
+                message: "User not found"
+            }, {
+                status: 404
+            })
+        }
+
+        const dbUserId = dbUser.id
+
+
+        if (mentorId === dbUserId) {
+            return NextResponse.json({
+                message: "You cannot send a mentorship request to yourself"
+            }, {
+                status: 400
+            })
+        }
+
         const mentorExists = await prisma.user.findUnique({
             where: {
                 id: mentorId
@@ -71,11 +89,33 @@ export async function POST(req: NextRequest,
             })
         }
 
+        const skillExistsForMentor = await prisma.user.findFirst({
+            where: {
+                id: mentorId,
+                skillsOffered: {
+                    some: {
+                        id: skillId
+                    }
+                }
+            },
+            select: {
+                id: true
+            }
+        })
+
+        if (!skillExistsForMentor) {
+            return NextResponse.json(
+                { message: "Invalid skill selected" },
+                { status: 400 }
+            )
+        }
+
         const mentorshipRequestExists = await prisma.mentorshipRequest.findUnique({
             where: {
-                mentorId_menteeId: {
+                mentorId_menteeId_skillId: {
                     mentorId: mentorId,
-                    menteeId: userId
+                    menteeId: dbUserId,
+                    skillId: skillId
                 }
             }
         })
@@ -107,8 +147,9 @@ export async function POST(req: NextRequest,
         const createRequest = await prisma.mentorshipRequest.create({
             data: {
                 mentorId: mentorId,
-                menteeId: userId,
+                menteeId: dbUserId,
                 initialMessage: initialMessage,
+                skillId: skillId,
                 status: "PENDING",
             }
         })

@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
     try {
         const fetchUser = await prisma.user.findUnique({
             where: {
-                id: userId
+                clerkUserId: userId
             },
             select: {
                 id: true,
@@ -25,11 +25,13 @@ export async function GET(req: NextRequest) {
                 bio: true,
                 skillsOffered: {
                     select: {
+                        id: true,
                         name: true
                     }
                 },
                 skillsWanted: {
                     select: {
+                        id: true,
                         name: true
                     }
                 },
@@ -69,8 +71,8 @@ export async function GET(req: NextRequest) {
 
         const data = {
             ...fetchUser,
-            skillsOffered: fetchUser.skillsOffered.map(s => s.name),
-            skillsWanted: fetchUser.skillsWanted.map(s => s.name),
+            // skillsOffered: fetchUser.skillsOffered.map(s => s.name),
+            // skillsWanted: fetchUser.skillsWanted.map(s => s.name),
             joinedAt,
             sessionsCompletedAsMentor: fetchUser._count.sessionsAsMentor,
             sessionsCompletedAsMentee: fetchUser._count.sessionsAsMentee,

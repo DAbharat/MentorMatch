@@ -22,8 +22,7 @@ export default function SearchBar({ onClose }: SearchBarProps) {
 
     const handleSubmit = () => {
         if (text.trim() === "") return;
-        // Search by name (you can modify logic to detect if it's a skill search)
-        router.push(`/search?name=${encodeURIComponent(text)}`)
+        router.push(`/search?name=${encodeURIComponent(text)}&skill=${encodeURIComponent(text)}`)
         onClose?.()
     }
 

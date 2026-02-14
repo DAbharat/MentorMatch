@@ -58,9 +58,17 @@ export async function GET(req: NextRequest) {
             where: whereClause,
             select: {
                 id: true,
+                clerkUserId: true,
                 name: true,
                 skillsOffered: {
                     select: {
+                        id: true,
+                        name: true
+                    }
+                },
+                skillsWanted: {
+                    select: {
+                        id: true,
                         name: true
                     }
                 },
@@ -68,6 +76,11 @@ export async function GET(req: NextRequest) {
                 _count: {
                     select: {
                         sessionsAsMentor: {
+                            where: {
+                                status: "COMPLETED"
+                            }
+                        },
+                        sessionsAsMentee: {
                             where: {
                                 status: "COMPLETED"
                             }
@@ -94,10 +107,12 @@ export async function GET(req: NextRequest) {
 
         const data = searchUsers.map(u => ({
             id: u.id,
+            clerkUserId: u.clerkUserId,
             name: u.name,
             skillsOffered: u.skillsOffered.map(s => s.name),
+            skillsWanted: u.skillsWanted.map(s => s.name),
             averageRating: u.averageRating,
-            completedSessions: u._count.sessionsAsMentor
+            completedSessions: u._count.sessionsAsMentor + u._count.sessionsAsMentee
         }));
 
         return NextResponse.json({

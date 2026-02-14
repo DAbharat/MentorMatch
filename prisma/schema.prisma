@@ -48,6 +48,8 @@ model Skill {
   wantedBy  User[] @relation("WantedSkills")
 
   sessions Session[]
+
+  mentorshipRequests MentorshipRequest[]
 }
 
 model Session {
@@ -142,14 +144,18 @@ model MentorshipRequest {
 
   initialMessage String?
 
+  skillId String
+  skill   Skill @relation(fields: [skillId], references: [id])
+
   status MentorshipRequestStatus @default(PENDING)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([mentorId, menteeId])
+  @@unique([mentorId, menteeId, skillId])
   @@index([mentorId])
   @@index([menteeId])
+  @@index([skillId])
 }
 
 enum MentorshipRequestStatus {

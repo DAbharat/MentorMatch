@@ -1,11 +1,12 @@
 "use client"
-import React from 'react'
+import React, { useState } from 'react'
 import { DM_Sans } from 'next/font/google';
 import { Button } from '../retroui/Button';
 import { useRouter } from 'next/navigation';
 import { UserButton, useUser } from '@clerk/nextjs';
 import { toast } from 'sonner';
 import { profile } from 'console';
+import RequestFormContainer from '../mentorship-request/RequestFormContainer';
 
 
 const DM_Sans_Font = DM_Sans({
@@ -13,11 +14,18 @@ const DM_Sans_Font = DM_Sans({
   subsets: ["latin"],
 })
 
+type Skills = {
+  id: string;
+  name: string;
+}
+
 type ProfileHeaderProps = {
+  id: string;
   name: string;
   bio: string;
   createdAt: string;
   clerkUserId: string;
+  skillsOffered: Skills[];
 }
 
 function getMemberSince(createdAt: string) {
@@ -25,17 +33,18 @@ function getMemberSince(createdAt: string) {
 }
 
 export default function ProfileHeader(
-  { name, bio, createdAt, clerkUserId }: ProfileHeaderProps
+  { id, name, bio, createdAt, clerkUserId, skillsOffered }: ProfileHeaderProps
 ) {
   const memberSince = getMemberSince(createdAt);
   const router = useRouter()
   const { user } = useUser()
+  const [open, setOpen] = useState(false)
 
   if (!user) {
     return null;
   }
   console.log("Clerk ID:", user?.id)
-console.log("Profile clerkUserId:", clerkUserId)
+  console.log("Profile clerkUserId:", clerkUserId)
 
   const isOwner = user.id === clerkUserId
 
@@ -74,13 +83,24 @@ console.log("Profile clerkUserId:", clerkUserId)
               ) : (
                 <Button
                   size="sm"
-                  className="mt-6 bg-black text-white px-4"
-                  onClick={() => { router.push(`/profile/${clerkUserId}/request`); toast("Redirecting to request form...") }}
+                  className="mt-6 bg-transparent border border-black border-b-2 text-black px-4"
+                  onClick={() => setOpen(true)}
                 >
                   Send Request
                 </Button>
               )}
             </div>
+            {open && (
+              <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+                <div className="bg-white p-8 rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                  <RequestFormContainer
+                    mentorId={id}
+                    mentorName={name}
+                    skills={skillsOffered}
+                  />
+                </div>
+              </div>
+            )}
             <UserButton />
 
           </div>

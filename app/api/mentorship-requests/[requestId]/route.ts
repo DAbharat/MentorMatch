@@ -55,9 +55,28 @@ export async function PATCH(req: NextRequest,
             })
         }
 
+        const dbUser = await prisma.user.findUnique({
+            where: {
+                clerkUserId: userId
+            }
+        })
+
+        if (!dbUser) {
+            return NextResponse.json({
+                message: "User not found"
+            }, {
+                status: 404
+            })
+        }
+
+        const dbUserId = dbUser.id
+
         const mentorshipRequestExists = await prisma.mentorshipRequest.findUnique({
             where: {
                 id: requestId
+            },
+            include: {
+                skill: true
             }
         })
 
@@ -69,7 +88,7 @@ export async function PATCH(req: NextRequest,
             })
         }
 
-        if (mentorshipRequestExists.mentorId !== userId) {
+        if (mentorshipRequestExists.mentorId !== dbUserId) {
             return NextResponse.json({
                 message: "Unauthorized"
             }, {

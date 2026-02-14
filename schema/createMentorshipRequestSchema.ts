@@ -5,6 +5,7 @@ export const createMentorshipRequestSchema = z.object({
     .string()
     .min(10, "Message must be at least 10 characters")
     .max(500, "Message cannot exceed 500 characters"),
+  skillId: z.string().uuid("Invalid skill ID")
 })
 
 export const updateMentorshipRequestStatusSchema = z.object({
