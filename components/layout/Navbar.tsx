@@ -63,7 +63,7 @@ export default function Navbar() {
                 <div className="hidden md:grid grid-cols-[minmax(300px,1fr)_minmax(600px,900px)_minmax(200px,1fr)] items-center gap-4 lg:gap-6 h-16 max-w-6xl mx-auto">
                     {/* Left Section */}
                     <div className="flex items-center gap-3">
-                        <SidebarTrigger className="text-white hover:bg-blue-500 hover:text-white" />
+                        <SidebarTrigger className="text-white hover:bg-blue-500 hover:text-white cursor-pointer" />
                         <Link
                             href="/"
                             className="flex items-center gap-2 group"
@@ -91,7 +91,7 @@ export default function Navbar() {
                             className="relative p-2 text-white hover:bg-blue-500 rounded-lg transition-colors"
                             aria-label="Notifications"
                         >
-                            <Bell className="w-5 h-5" />
+                            <Bell className="w-5 h-5 cursor-pointer" />
                             <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
                         </button>
 

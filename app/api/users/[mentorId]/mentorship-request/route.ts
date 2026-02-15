@@ -3,6 +3,8 @@ import { auth } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
 import { createMentorshipRequestSchema } from "@/schema/createMentorshipRequestSchema";
 import { z } from "zod";
+import { createNotification } from "@/lib/notification";
+import { NotificationType } from "@prisma/client";
 
 export async function POST(req: NextRequest,
     { params }: { params: { mentorId: string } }
@@ -77,7 +79,8 @@ export async function POST(req: NextRequest,
                 id: mentorId
             },
             select: {
-                id: true
+                id: true,
+                name: true
             }
         })
 
@@ -99,7 +102,8 @@ export async function POST(req: NextRequest,
                 }
             },
             select: {
-                id: true
+                id: true,
+                name: true
             }
         })
 
@@ -152,6 +156,13 @@ export async function POST(req: NextRequest,
                 skillId: skillId,
                 status: "PENDING",
             }
+        })
+
+        const sendNotificationToMentor = await createNotification({
+            userId: mentorId,
+            type: NotificationType.MENTORSHIP_REQUEST_RECEIVED,
+            title: "Received a mentorship request",
+            message: `You received a mentorship request from ${dbUser.name} for the skill ${skillExistsForMentor.name}`
         })
 
         return NextResponse.json({

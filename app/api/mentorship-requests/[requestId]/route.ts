@@ -4,6 +4,8 @@ import prisma from "@/lib/prisma";
 import { request } from "node:http";
 import { updateMentorshipRequestStatusSchema } from "@/schema/createMentorshipRequestSchema";
 import { z } from "zod";
+import { createNotification } from "@/lib/notification";
+import { NotificationType } from "@prisma/client";
 
 export async function PATCH(req: NextRequest,
     { params }: { params: { requestId: string } }
@@ -138,6 +140,13 @@ export async function PATCH(req: NextRequest,
                 updateRequest,
                 chat
             }
+        })
+
+        const sendNotificationToMentee = await createNotification({
+            userId: mentorshipRequestExists.menteeId,
+            type: action === "ACCEPT" ? NotificationType.MENTORSHIP_REQUEST_ACCEPTED : NotificationType.MENTORSHIP_REQUEST_REJECTED,
+            title: action === "ACCEPT" ? "Your mentorship request was accepted" : "Your mentorship request was rejected",
+            message: `Your mentorship request for the skill ${mentorshipRequestExists.skill.name} was ${action === "ACCEPT" ? "accepted" : "rejected"} by ${dbUser.name}`
         })
 
         return NextResponse.json({

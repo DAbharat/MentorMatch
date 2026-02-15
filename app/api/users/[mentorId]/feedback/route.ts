@@ -3,6 +3,8 @@ import { auth } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
 import { createFeedbackSchema } from "@/schema/createFeedbackSchema";
 import { z } from "zod";
+import { createNotification } from "@/lib/notification";
+import { NotificationType } from "@prisma/client";
 
 export async function POST(req: NextRequest) {
     const { userId } = await auth();
@@ -19,7 +21,7 @@ export async function POST(req: NextRequest) {
 
     const parsed = createFeedbackSchema.safeParse(body);
 
-    if(!parsed.success) {
+    if (!parsed.success) {
         const tree = z.treeifyError(parsed.error)
         const commentError = tree.properties?.comment?.errors || []
         const ratingError = tree.properties?.rating?.errors || []
@@ -128,12 +130,12 @@ export async function POST(req: NextRequest) {
             });
 
             const mentorStats = await tx.user.findUnique({
-                where: { 
-                    id: mentorId 
+                where: {
+                    id: mentorId
                 },
-                select: { 
-                    averageRating: true, 
-                    ratingCount: true 
+                select: {
+                    averageRating: true,
+                    ratingCount: true
                 },
             });
 
@@ -144,8 +146,8 @@ export async function POST(req: NextRequest) {
             const newAvg = (oldAvg * oldCount + rating) / newCount;
 
             await tx.user.update({
-                where: { 
-                    id: mentorId 
+                where: {
+                    id: mentorId
                 },
                 data: {
                     averageRating: newAvg,
@@ -153,7 +155,18 @@ export async function POST(req: NextRequest) {
                 },
             });
 
-            return createFeedback;
+            await tx.notification.create({
+                data: {
+                    userId: mentorId,
+                    type: NotificationType.FEEDBACK_RECEIVED,
+                    title: "New feedback received",
+                    message: `${user.name} rated you ${rating} stars`
+                }
+            });
+
+            return {
+                feedback: createFeedback,
+            };
         });
 
         return NextResponse.json({

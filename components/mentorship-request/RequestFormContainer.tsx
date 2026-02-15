@@ -14,12 +14,14 @@ type Props = {
     mentorName: string
     mentorId: string
     skills: Skill[]
+    onClose: () => void
 }
 
 export default function RequestFormContainer({
     mentorName,
     mentorId,
-    skills
+    skills,
+    onClose
 }: Props) {
 
     const [loading, setLoading] = useState(false)
@@ -49,6 +51,7 @@ export default function RequestFormContainer({
             skills={skills}
             onSubmit={handleSubmit}
             loading={loading}
+            onClose={onClose}
         />
     )
 }

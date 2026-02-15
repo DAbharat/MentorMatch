@@ -22,6 +22,7 @@ import {
 } from "../ui/select"
 import { Textarea } from "../ui/textarea"
 import { Button } from "../retroui/Button"
+import { X } from "lucide-react"
 
 type Skill = {
     id: string
@@ -33,13 +34,15 @@ type Props = {
     skills: Skill[]
     onSubmit: (data: { skillId: string; message: string }) => void
     loading?: boolean
+    onClose: () => void
 }
 
 export default function RequestForm({
     mentorName,
     skills,
     onSubmit,
-    loading = false
+    loading = false,
+    onClose
 }: Props) {
 
     const [skillId, setSkillId] = useState("")
@@ -52,11 +55,23 @@ export default function RequestForm({
 
     return (
         <form onSubmit={handleSubmit} className="w-full">
-            <FieldSet>
-                <FieldLegend>Mentorship Request Form</FieldLegend>
-                <FieldDescription>
-                    Request mentorship from {mentorName}
-                </FieldDescription>
+            <FieldSet className="relative">
+                <div className="flex items-start justify-between gap-4 mb-2">
+                    <div className="flex-1 min-w-0">
+                        <FieldLegend>Mentorship Request Form</FieldLegend>
+                        <FieldDescription className="mt-1">
+                            Request mentorship from {mentorName}
+                        </FieldDescription>
+                    </div>
+                    <button 
+                        type="button" 
+                        onClick={onClose}
+                        className="shrink-0 p-1 hover:opacity-70 transition-opacity cursor-pointer"
+                        aria-label="Close form"
+                    >
+                        <X className="w-5 h-5" />
+                    </button>
+                </div>
 
                 <FieldSeparator />
 
@@ -99,7 +114,11 @@ export default function RequestForm({
                     </Field>
 
                     <div className="flex justify-center mt-6">
-                        <Button type="submit" disabled={!skillId || loading}>
+                        <Button 
+                            type="submit" 
+                            disabled={!skillId || loading}
+                            className="min-w-45"
+                        >
                             {loading ? "Sending..." : "Submit Request"}
                         </Button>
                     </div>

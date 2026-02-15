@@ -3,6 +3,8 @@ import { auth } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
 import { createSessionSchema } from "@/schema/sessionSchema";
 import { z } from "zod";
+import { createNotification } from "@/lib/notification";
+import { NotificationType } from "@prisma/client";
 
 export async function POST(req: NextRequest) {
     const { userId } = await auth()
@@ -60,9 +62,37 @@ export async function POST(req: NextRequest) {
             })
         }
 
+        const dbUser = await prisma.user.findUnique({
+            where: {
+                clerkUserId: userId
+            },
+            select: {
+                id: true,
+                name: true
+            }
+        })
+
+        if (!dbUser) {
+            return NextResponse.json({
+                message: "Mentee not found"
+            }, {
+                status: 404
+            })
+        }
+
         const mentorExists = await prisma.user.findUnique({
             where: {
                 id: mentorId
+            },
+            select: {
+                id: true,
+                name: true,
+                skillsOffered: {
+                    select: {
+                        id: true,
+                        name: true
+                    }
+                }
             }
         })
 
@@ -84,6 +114,13 @@ export async function POST(req: NextRequest) {
                 status: "PENDING",
                 roomId: crypto.randomUUID()
             }
+        })
+
+        const sendNotificationToMentor = await createNotification({
+            userId: mentorId,
+            type: NotificationType.SESSION_SCHEDULED,
+            title: `New Session request`,
+            message: `${dbUser.name} requested session for the skill ${mentorExists.skillsOffered.find(s => s.id === skillId)?.name || "Unknown Skill"} scheduled at ${new Date(scheduledAt).toLocaleString()}`
         })
 
         return NextResponse.json({

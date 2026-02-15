@@ -97,6 +97,7 @@ export default function ProfileHeader(
                     mentorId={id}
                     mentorName={name}
                     skills={skillsOffered}
+                    onClose={() => setOpen(false)}
                   />
                 </div>
               </div>
