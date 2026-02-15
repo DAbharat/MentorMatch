@@ -36,6 +36,8 @@ model User {
   feedbackReceived UserFeedback[] @relation("MentorFeedback")
   feedbackGiven    UserFeedback[] @relation("MenteeFeedback")
 
+  notifications Notification[]
+
   @@index([email, id])
 }
 
@@ -217,4 +219,31 @@ enum CallEventType {
   JOINED
   LEFT
   DISCONNECTED
+}
+
+model Notification {
+  id String @id @default(uuid())
+
+  userId String
+  user User @relation(fields: [userId], references: [id])
+
+  type NotificationType
+
+  title String
+  message String
+
+  isRead Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt, isRead])
+}
+
+enum NotificationType {
+  MENTORSHIP_REQUEST
+  REQUEST_ACCEPTED
+  REQUEST_REJECTED
+  SESSION_SCHEDULED
+  SESSION_CANCELLED
+  SESSION_REMINDER
 }
