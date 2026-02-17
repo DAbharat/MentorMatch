@@ -20,9 +20,17 @@ export async function GET(req: NextRequest) {
         const cursor = searchParams.get("cursor")
         let nextCursor: string | null = null
 
+        const currentUser = await prisma.user.findUnique({
+            where: {
+                clerkUserId: userId
+            }
+        })
+
+        const currentUserId = currentUser?.id
+
         const fetchRequests = await prisma.mentorshipRequest.findMany({
             where: {
-                mentorId: userId,
+                mentorId: currentUserId,
                 status: "PENDING"
             },
             include: {

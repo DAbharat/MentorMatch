@@ -43,8 +43,8 @@ export default function ProfileHeader(
   if (!user) {
     return null;
   }
-  console.log("Clerk ID:", user?.id)
-  console.log("Profile clerkUserId:", clerkUserId)
+  // console.log("Clerk ID:", user?.id)
+  // console.log("Profile clerkUserId:", clerkUserId)
 
   const isOwner = user.id === clerkUserId
 

@@ -6,14 +6,41 @@ import { DM_Sans } from "next/font/google";
 import { useRouter } from "next/navigation";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import SearchBar from "../search/search";
+import { useEffect, useState } from "react";
+import { FetchAllNotifications } from "@/services/notification.service";
+import { toast } from "sonner";
 
 const DM_Sans_Font = DM_Sans({
     weight: ["400", "500", "700"],
     subsets: ["latin"],
 });
 
+//TODO: Add tooltip (shadcn)
+
 export default function Navbar() {
     const router = useRouter();
+
+    const [unreadCount, setUnreadCount] = useState(0)
+
+    useEffect(() => {
+        const fetchNotifications = async () => {
+            try {
+                const response = await FetchAllNotifications()
+                console.log("Navbar notifications response:", response)
+
+                if (response.unreadCount !== undefined) {
+                    setUnreadCount(response.unreadCount)
+                } else if (response.notifications) {
+                    const unread = response.notifications.filter((n: any) => !n.isRead).length
+                    setUnreadCount(unread)
+                }
+            } catch (error) {
+                console.error("Error fetching notifications:", error)
+                toast.error("Failed to load notifications. Please try again later.")
+            }
+        }
+        fetchNotifications()
+    }, [])
 
     return (
         <nav
@@ -48,8 +75,12 @@ export default function Navbar() {
                             className="relative p-1.5 sm:p-2 text-white hover:bg-blue-500 rounded-lg transition-colors"
                             aria-label="Notifications"
                         >
-                            <Bell className="w-4 h-4 sm:w-5 sm:h-5" />
-                            <span className="absolute top-0.5 right-0.5 sm:top-1 sm:right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                            <Bell className="w-4 h-4 sm:w-5 sm:h-5" onClick={() => {router.push(`/notifications`)}}/>
+                            {unreadCount > 0 && (
+                                <span className="absolute top-1 right-1 min-w-4.5 h-4.5 text-xs flex items-center justify-center bg-red-500 text-white rounded-full px-1">
+                                    {unreadCount}
+                                </span>
+                            )}                        
                         </button>
 
                         <User2

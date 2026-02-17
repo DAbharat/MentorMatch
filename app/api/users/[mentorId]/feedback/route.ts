@@ -158,6 +158,7 @@ export async function POST(req: NextRequest) {
             await tx.notification.create({
                 data: {
                     userId: mentorId,
+                    senderId: userId,
                     type: NotificationType.FEEDBACK_RECEIVED,
                     title: "New feedback received",
                     message: `${user.name} rated you ${rating} stars`

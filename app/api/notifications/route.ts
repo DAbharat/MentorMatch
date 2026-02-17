@@ -6,6 +6,7 @@ export async function GET(request: NextRequest) {
     const { userId } = await auth()
 
     if (!userId) {
+        console.log("Unauthenticated request to /api/notifications")
         return NextResponse.json({
             message: "Unauthenticated"
         }, {
@@ -21,6 +22,8 @@ export async function GET(request: NextRequest) {
         const cursor = searchParams.get("cursor")
         let nextCursor: string | null = null
 
+        console.log("Fetching notifications for userId:", userId, "params:", { limit, filter, cursor })
+
         const dbUser = await prisma.user.findUnique({
             where: {
                 clerkUserId: userId
@@ -28,6 +31,7 @@ export async function GET(request: NextRequest) {
         })
 
         if (!dbUser) {
+            console.log("User not found in database for clerkUserId:", userId)
             return NextResponse.json({
                 message: "User not found"
             }, {
@@ -36,6 +40,7 @@ export async function GET(request: NextRequest) {
         }
 
         const dbUserId = dbUser.id
+        console.log("Found dbUser:", dbUserId)
         
         const whereClause: { userId: string, isRead?: boolean } = {
             userId: dbUserId
@@ -50,6 +55,15 @@ export async function GET(request: NextRequest) {
         const [fetchNotifications, unreadCount] = await Promise.all([
             prisma.notification.findMany({
                 where: whereClause,
+                include: {
+                    sender: {
+                        select: {
+                            id: true,
+                            name: true,
+                            clerkUserId: true
+                        }
+                    }
+                },
                 take: limit + 1,
                 ...(cursor && {
                     skip: 1,
@@ -68,6 +82,7 @@ export async function GET(request: NextRequest) {
             })
         ])
 
+        console.log("Fetched notifications count:", fetchNotifications.length, "unreadCount:", unreadCount)
 
         if (fetchNotifications.length > limit) {
             const nextItem = fetchNotifications.pop()

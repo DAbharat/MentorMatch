@@ -77,10 +77,12 @@ export default function ProfilePage() {
         <div>
             <div>
                 <ProfileHeader
+                    id={profile.id}
                     name={profile.name}
                     bio={profile.bio || ""}
                     createdAt={profile.createdAt}
                     clerkUserId={profile.clerkUserId}
+                    skillsOffered={profile.skillsOffered}
                 />
             </div>
             <div>

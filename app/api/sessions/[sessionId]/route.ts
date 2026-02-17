@@ -206,6 +206,7 @@ export async function PATCH(req: NextRequest,
 
         const sendNotification = await createNotification({
             userId: isMentor ? getSession.menteeId : getSession.mentorId,
+            senderId: userId,
             type: action === "CONFIRM" ? NotificationType.SESSION_CONFIRMED :
                 action === "START" ? NotificationType.SESSION_STARTED :
                 NotificationType.SESSION_CANCELLED,

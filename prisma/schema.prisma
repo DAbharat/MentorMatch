@@ -36,7 +36,8 @@ model User {
   feedbackReceived UserFeedback[] @relation("MentorFeedback")
   feedbackGiven    UserFeedback[] @relation("MenteeFeedback")
 
-  notifications Notification[]
+  notifications Notification[] @relation("UserNotifications")
+  notificationsSent Notification[] @relation("SenderNotifications")
 
   @@index([email, id])
 }
@@ -225,7 +226,10 @@ model Notification {
   id String @id @default(uuid())
 
   userId String
-  user User @relation(fields: [userId], references: [id])
+  user User @relation("UserNotifications", fields: [userId], references: [id])
+
+  senderId String?           
+  sender   User? @relation("SenderNotifications", fields: [senderId], references: [id])
 
   type NotificationType
 

@@ -39,8 +39,8 @@ export default function RequestFormContainer({
             })
 
             toast.success("Mentorship request sent successfully!")
-        } catch (error) {
-            toast.error("Failed to send mentorship request")
+        } catch (error: any) {
+            toast.error(error.message || "Failed to send mentorship request")
         } finally {
             setLoading(false)
         }
