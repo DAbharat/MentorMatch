@@ -6,6 +6,7 @@ import { receivedMentorshipRequests } from '@/services/mentorship-request.servic
 import React, { useEffect, useState } from 'react'
 import { toast } from 'sonner';
 import { DM_Sans } from "next/font/google"
+import { useRouter } from 'next/navigation';
 
 
 const DM_Sans_Font = DM_Sans({
@@ -34,6 +35,12 @@ export default function RequestPage() {
     const [error, setError] = useState<string | null>(null)
     const [requests, setRequests] = useState<Request[]>([])
     const [nextCursor, setNextCursor] = useState<string | null>(null)
+
+    const router = useRouter()
+    
+    const handleStatusUpdate = (requestId: string) => {
+        setRequests(prev => prev.filter(req => req.id !== requestId))
+    }
 
     useEffect(() => {
         const fetchRequests = async () => {
@@ -96,6 +103,10 @@ export default function RequestPage() {
                         createdAt={request.createdAt}
                         mentee={request.mentee}
                         skill={request.skill}
+                        onStatusUpdate={handleStatusUpdate}
+                        onClick={() => {
+                            router.push(`/requests/${request.id}`)
+                        }}
                     />
                 ))}
             </div>

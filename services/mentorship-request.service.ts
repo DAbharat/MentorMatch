@@ -33,3 +33,30 @@ export async function receivedMentorshipRequests(limit: number = 10, cursor?: st
         throw new Error(axiosError.response?.data.message || "An error occurred while fetching received mentorship requests.");
     }
 }
+
+export async function updateMentorshipRequestStatus(
+    requestId: string,
+    status: "ACCEPT" | "REJECT"
+) {
+    try {
+        console.log(`Updating mentorship request ${requestId} to ${status}...`)
+        const response = await axios.patch(`/api/mentorship-requests/${requestId}`, { status })
+        return response.data
+    } catch (error) {
+        const axiosError = error as AxiosError<ApiResponse>;
+        console.error("Error updating mentorship request:", axiosError.response?.data.message || axiosError.message);
+        throw new Error(axiosError.response?.data.message || "An error occurred while updating mentorship request.");
+    }
+}
+
+export async function getMentorshipRequestById(requestId: string) {
+    try {
+        console.log("Fetching request by id...")
+        const response = await axios.get(`/api/mentorship-requests/${requestId}`)
+        return response.data
+    } catch (error) {
+        const axiosError = error as AxiosError<ApiResponse>;
+        console.error("Error fetching mentorship request by id:", axiosError.response?.data.message || axiosError.message);
+        throw new Error(axiosError.response?.data.message || "An error occurred while fetching mentorship request by id.");
+    }
+}

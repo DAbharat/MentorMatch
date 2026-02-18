@@ -66,9 +66,18 @@ export async function GET(req: NextRequest) {
             nextCursor = nextItem!.id;
         }
 
+        const formattedRequests = fetchRequests.map(req => ({
+            id: req.id,
+            title: `Mentorship Request for ${req.skill.name}`,
+            message: req.initialMessage || "No message provided",
+            createdAt: req.createdAt,
+            mentee: req.mentee,
+            skill: req.skill
+        }))
+
         return NextResponse.json({
             message: "Mentorship requests fetched successfully",
-            data: fetchRequests,
+            data: formattedRequests,
             nextCursor
         }, {
             status: 200

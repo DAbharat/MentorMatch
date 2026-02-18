@@ -8,7 +8,7 @@ import { createNotification } from "@/lib/notification";
 import { NotificationType } from "@prisma/client";
 
 export async function PATCH(req: NextRequest,
-    { params }: { params: { requestId: string } }
+    { params }: { params: Promise<{ requestId: string }> }
 ) {
     const { userId } = await auth()
 
@@ -20,15 +20,7 @@ export async function PATCH(req: NextRequest,
         })
     }
 
-    const { requestId } = params
-
-    if (!requestId) {
-        return NextResponse.json({
-            message: "Request ID is required"
-        }, {
-            status: 400
-        })
-    }
+    const { requestId } = await params
 
     const body = await req.json()
     const parsed = updateMentorshipRequestStatusSchema.safeParse(body)
@@ -160,6 +152,100 @@ export async function PATCH(req: NextRequest,
 
     } catch (error) {
         console.error("Error updating mentorship request:", error)
+        return NextResponse.json({
+            message: "Internal server error"
+        }, {
+            status: 500
+        })
+    }
+}
+
+export async function GET(req: NextRequest,
+    { params } : { params : Promise<{ requestId : string }> }
+) {
+    const { userId } = await auth()
+
+    if (!userId) {
+        return NextResponse.json({
+            message: "Unauthenticated"
+        }, {
+            status: 401
+        })
+    }
+
+    const { requestId } = await params
+
+    try {
+
+        const dbUser = await prisma.user.findUnique({
+            where: {
+                clerkUserId: userId
+            }
+        })
+
+        if (!dbUser) {
+            return NextResponse.json({
+                message: "User not found"
+            }, {
+                status: 404
+            })
+        }
+
+        const dbUserId = dbUser?.id
+
+        const mentorshipRequest = await prisma.mentorshipRequest.findUnique({
+            where: {
+                id: requestId,
+                mentorId: dbUserId
+            },
+            include: {
+                mentee: {
+                    select: {
+                        id: true,
+                        name: true,
+                        messages: true,
+                        skillsOffered: {
+                            select: {
+                                id: true,
+                                name: true
+                            }
+                        },
+                        skillsWanted: {
+                            select: {
+                                id: true,
+                                name: true
+                            }
+                        },
+                        clerkUserId: true,
+                        createdAt: true,
+                    }
+                },
+                skill: {
+                    select: {
+                        id: true,
+                        name: true
+                    }
+                },
+            }
+        })
+
+        if (!mentorshipRequest) {
+            return NextResponse.json({
+                message: "Mentorship request not found"
+            }, {
+                status: 404
+            })
+        }
+
+        return NextResponse.json({
+            message: "Mentorship request fetched successfully",
+            data: mentorshipRequest
+        }, {
+            status: 200
+        })
+        
+    } catch (error) {
+        console.error("Error fetching mentorship request:", error)
         return NextResponse.json({
             message: "Internal server error"
         }, {

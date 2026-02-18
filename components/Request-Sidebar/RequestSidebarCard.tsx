@@ -1,8 +1,10 @@
 "use client"
 
-import React from 'react'
+import React, { useState } from 'react'
 import { Card } from '../ui/card';
 import Link from 'next/link';
+import { updateMentorshipRequestStatus } from '@/services/mentorship-request.service';
+import { toast } from 'sonner';
 
 type RequestSidebarProps = {
     id: string;
@@ -17,14 +19,33 @@ type RequestSidebarProps = {
     skill?: {
         id: string;
         name: string;
-    }
+    };
+    onStatusUpdate?: (requestId: string) => void;
+    onClick?: () => void;
 }
 
 export default function RequestSidebarCard(
-    { id, title, message, createdAt, mentee, skill }: RequestSidebarProps
+    { id, title, message, createdAt, mentee, skill, onStatusUpdate, onClick }: RequestSidebarProps
 ) {
+    const [isProcessing, setIsProcessing] = useState(false)
+
+    const handleAction = async (action: "ACCEPT" | "REJECT") => {
+        try {
+            setIsProcessing(true)
+            await updateMentorshipRequestStatus(id, action)
+            toast.success(`Request ${action === "ACCEPT" ? "accepted" : "rejected"} successfully`)
+            if (onStatusUpdate) {
+                onStatusUpdate(id)
+            }
+        } catch (error: any) {
+            toast.error(error.message || `Failed to ${action.toLowerCase()} request`)
+        } finally {
+            setIsProcessing(false)
+        }
+    }
+
   return (
-    <Card className="p-4 w-full cursor-pointer">
+    <Card className="p-4 w-full cursor-pointer" onClick={onClick}>
         <div className="flex gap-4">
 
             {/* Avatar */}
@@ -62,11 +83,19 @@ export default function RequestSidebarCard(
 
                 {/* Action Buttons */}
                 <div className="flex gap-3 pt-1">
-                    <button className="px-4 py-1.5 text-sm font-medium rounded-md bg-green-600 text-white hover:bg-green-700 transition">
-                        Accept
+                    <button 
+                        onClick={() => handleAction("ACCEPT")}
+                        disabled={isProcessing}
+                        className="px-4 py-1.5 text-sm font-medium rounded-md bg-green-600 text-white hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        {isProcessing ? "Processing..." : "Accept"}
                     </button>
-                    <button className="px-4 py-1.5 text-sm font-medium rounded-md bg-red-600 text-white hover:bg-red-700 transition">
-                        Reject
+                    <button 
+                        onClick={() => handleAction("REJECT")}
+                        disabled={isProcessing}
+                        className="px-4 py-1.5 text-sm font-medium rounded-md bg-red-600 text-white hover:bg-red-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        {isProcessing ? "Processing..." : "Reject"}
                     </button>
                 </div>
 
