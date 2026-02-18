@@ -70,7 +70,7 @@ export default function NotificationPage() {
             <Separator className="w-full" />
 
             {/* Centered Content */}
-            <div className="max-w-3xl mx-auto px-4 mt-6 space-y-4">
+            <div className="max-w-4xl mx-auto px-4 mt-6 space-y-4">
 
                 {loading && (
                     <p className="text-gray-500">

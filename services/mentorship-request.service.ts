@@ -18,3 +18,18 @@ export async function MentorshipRequestService(requestData: {
     }
 }
 
+export async function receivedMentorshipRequests(limit: number = 10, cursor?: string) {
+    try {
+        console.log("fetching received mentorship requests...")
+        const params = new URLSearchParams({ limit: limit.toString() });
+
+        if(cursor) params.append("cursor", cursor)
+
+        const response = await axios.get(`/api/mentorship-requests/received?${params.toString()}`)
+        return response.data
+    } catch (error) {
+        const axiosError = error as AxiosError<ApiResponse>;
+        console.error("Error fetching received mentorship requests:", axiosError.response?.data.message || axiosError.message);
+        throw new Error(axiosError.response?.data.message || "An error occurred while fetching received mentorship requests.");
+    }
+}

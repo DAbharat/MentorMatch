@@ -39,6 +39,13 @@ export async function GET(req: NextRequest) {
                         id: true,
                         name: true,
                         email: true,
+                        clerkUserId: true,
+                    }
+                },
+                skill: {
+                    select: {
+                        id: true,
+                        name: true
                     }
                 }
             },

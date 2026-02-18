@@ -1,0 +1,104 @@
+"use client"
+
+import RequestSidebarCard from '@/components/Request-Sidebar/RequestSidebarCard'
+import { Separator } from '@/components/ui/separator';
+import { receivedMentorshipRequests } from '@/services/mentorship-request.service';
+import React, { useEffect, useState } from 'react'
+import { toast } from 'sonner';
+import { DM_Sans } from "next/font/google"
+
+
+const DM_Sans_Font = DM_Sans({
+    weight: ["400", "500", "700"],
+    subsets: ["latin"],
+})
+
+type Request = {
+    id: string;
+    title: string;
+    message: string;
+    createdAt: string;
+    mentee?: {
+        id: string
+        name: string
+        clerkUserId: string
+    };
+    skill?: {
+        id: string;
+        name: string;
+    }
+}
+
+export default function RequestPage() {
+    const [isLoading, setIsLoading] = useState(true)
+    const [error, setError] = useState<string | null>(null)
+    const [requests, setRequests] = useState<Request[]>([])
+    const [nextCursor, setNextCursor] = useState<string | null>(null)
+
+    useEffect(() => {
+        const fetchRequests = async () => {
+            try {
+                setIsLoading(true)
+                setError(null)
+
+                const data = await receivedMentorshipRequests()
+                setRequests(data.data)
+                setNextCursor(data.nextCursor)
+            } catch (error: any) {
+                const errorMessage =
+                    error?.message || "Failed to load notifications."
+                setError(errorMessage)
+                toast.error(errorMessage)
+            } finally {
+                setIsLoading(false)
+            }
+        }
+
+        fetchRequests()
+    }, [])
+    return (
+        <div className={`${DM_Sans_Font.className} mt-24`}>
+
+            <div className="max-w-3xl mx-auto px-4">
+                <h1 className="text-2xl font-semibold mb-4">
+                    Mentorship Requests
+                </h1>
+            </div>
+
+            <Separator className="w-full" />
+
+            <div className="max-w-4xl mx-auto px-4 mt-6 space-y-4">
+                {isLoading && (
+                    <p className="text-gray-500">Loading mentorship requests...</p>
+                )}
+
+                {error && (
+                    <div className="p-4 bg-red-50 border border-red-200 rounded-md">
+                        <p className="text-red-800">{error}</p>
+                        <p className="text-sm text-red-600 mt-1">
+                            Check the browser console for more details.
+                        </p>
+                    </div>
+                )}
+
+                {!isLoading && !error && requests.length === 0 && (
+                    <p className="text-gray-500">
+                        No mentorship requests yet.
+                    </p>
+                )}
+
+                {!isLoading && requests.map((request) => (
+                    <RequestSidebarCard
+                        key={request.id}
+                        id={request.id}
+                        title={request.title}
+                        message={request.message}
+                        createdAt={request.createdAt}
+                        mentee={request.mentee}
+                        skill={request.skill}
+                    />
+                ))}
+            </div>
+        </div>
+    )
+}
