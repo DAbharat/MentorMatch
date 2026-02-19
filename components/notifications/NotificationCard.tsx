@@ -3,11 +3,14 @@
 import React from 'react'
 import { Card } from '../ui/card';
 import Link from 'next/link';
+import { Button } from '../retroui/Button';
+import { useRouter } from 'next/navigation';
 
 type NotificationCardProps = {
     id: string;
     title: string;
     message: string;
+    type: string;
     isRead: boolean;
     createdAt: string;
     sender?: {
@@ -18,10 +21,17 @@ type NotificationCardProps = {
 }
 
 export default function NotificationCard(
-    { id, title, message, isRead, createdAt, sender }: NotificationCardProps
+    { id, title, message, type, isRead, createdAt, sender }: NotificationCardProps
 ) {
-    console.log("sender id and name: ",sender?.id, sender?.name)
+    const router = useRouter()
     const senderName = sender?.name || "Unknown User"
+    const showScheduleButton = type === "MENTORSHIP_REQUEST_ACCEPTED"
+
+    const handleScheduleSession = () => {
+        if (sender?.clerkUserId) {
+            router.push(`/sessions/schedule/${sender.clerkUserId}`)
+        }
+    }
 
     return (
         <Card className="p-4 w-full cursor-pointer">
@@ -46,6 +56,18 @@ export default function NotificationCard(
 
                     {/* Message */}
                     <p className="text-sm text-gray-500 leading-relaxed">{message}</p>
+
+                    {/* Action Button */}
+                    {showScheduleButton && (
+                        <div className="mt-3">
+                            <Button
+                                onClick={handleScheduleSession}
+                                className="px-4 py-1.5 text-xs font-semibold rounded-lg bg-black text-white hover:bg-black/90"
+                            >
+                                Schedule Session
+                            </Button>
+                        </div>
+                    )}
 
                 </div>
             </div>

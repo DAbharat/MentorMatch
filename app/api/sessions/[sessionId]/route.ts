@@ -96,7 +96,7 @@ const ACTION_HANDLERS: Record<string, ActionHandler> = {
 
 
 export async function PATCH(req: NextRequest,
-    { params }: { params: { sessionId: string } }
+    { params }: { params: Promise<{ sessionId: string }> }
 ) {
     const { userId } = await auth()
 
@@ -108,7 +108,7 @@ export async function PATCH(req: NextRequest,
         })
     }
 
-    const { sessionId } = params
+    const { sessionId } = await params
     const body = await req.json()
 
     const parsedUpdateStatus = updateSessionSchema.safeParse(body);
@@ -139,9 +139,30 @@ export async function PATCH(req: NextRequest,
                 skill: true
             }
         })
+        console.log("getsession", getSession)
 
-        const isMentor = userId === getSession?.mentorId
-        const isMentee = userId === getSession?.menteeId
+        const dbUser = await prisma.user.findUnique({
+            where: {
+                clerkUserId: userId
+            },
+            select: {
+                id: true,
+                name: true
+            }
+        })
+
+        if(!dbUser) {
+            return NextResponse.json({
+                message: "User not found"
+            }, {
+                status: 404
+            })
+        }
+
+        const dbUserId = dbUser.id
+
+        const isMentor = dbUserId === getSession?.mentorId
+        const isMentee = dbUserId === getSession?.menteeId
 
         if (!getSession) {
             return NextResponse.json({
@@ -206,7 +227,7 @@ export async function PATCH(req: NextRequest,
 
         const sendNotification = await createNotification({
             userId: isMentor ? getSession.menteeId : getSession.mentorId,
-            senderId: userId,
+            senderId: dbUserId,
             type: action === "CONFIRM" ? NotificationType.SESSION_CONFIRMED :
                 action === "START" ? NotificationType.SESSION_STARTED :
                 NotificationType.SESSION_CANCELLED,

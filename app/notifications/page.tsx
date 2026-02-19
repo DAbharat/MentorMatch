@@ -16,6 +16,7 @@ type Notification = {
     id: string
     title: string
     message: string
+    type: string
     isRead: boolean
     createdAt: string
     sender?: {
@@ -99,6 +100,7 @@ export default function NotificationPage() {
                         id={notification.id}
                         title={notification.title}
                         message={notification.message}
+                        type={notification.type}
                         isRead={notification.isRead}
                         createdAt={notification.createdAt}
                         sender={notification.sender}

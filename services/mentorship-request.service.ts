@@ -60,3 +60,22 @@ export async function getMentorshipRequestById(requestId: string) {
         throw new Error(axiosError.response?.data.message || "An error occurred while fetching mentorship request by id.");
     }
 }
+
+export async function getMentorshipRequestsByUsers(
+    mentorId: string,
+    menteeId: string,
+    status?: string
+) {
+    try {
+        console.log("Fetching mentorship requests by users...")
+        const params = new URLSearchParams({ mentorId, menteeId });
+        if (status) params.append("status", status);
+        
+        const response = await axios.get(`/api/mentorship-requests?${params.toString()}`)
+        return response.data
+    } catch (error) {
+        const axiosError = error as AxiosError<ApiResponse>;
+        console.error("Error fetching mentorship requests by users:", axiosError.response?.data.message || axiosError.message);
+        throw new Error(axiosError.response?.data.message || "An error occurred while fetching mentorship requests by users.");
+    }
+}

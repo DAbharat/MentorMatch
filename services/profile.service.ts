@@ -30,3 +30,13 @@ export async function updateMyProfile(profileData: {
     }
 }
 
+export async function fetchUserById(params: { userId: string }) {
+    try {
+        const response = await axios.get(`/api/user/${params.userId}`)
+        return response.data
+    } catch (error) {
+        const axiosError = error as AxiosError<ApiResponse>
+        console.error("Error fetching user:", axiosError.response?.data.message || axiosError.message)
+        throw new Error(axiosError.response?.data.message || "An error occurred while fetching user.")
+    }
+}

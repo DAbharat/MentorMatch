@@ -6,6 +6,82 @@ import { z } from "zod";
 import { createNotification } from "@/lib/notification";
 import { NotificationType } from "@prisma/client";
 
+export async function GET(req: NextRequest) {
+    const { userId } = await auth()
+
+    if (!userId) {
+        return NextResponse.json({
+            message: "Unauthenticated"
+        }, {
+            status: 401
+        })
+    }
+
+    try {
+        const dbUser = await prisma.user.findUnique({
+            where: {
+                clerkUserId: userId
+            }
+        })
+
+        if (!dbUser) {
+            return NextResponse.json({
+                message: "User not found"
+            }, {
+                status: 404
+            })
+        }
+
+        const sessions = await prisma.session.findMany({
+            where: {
+                OR: [
+                    { mentorId: dbUser.id },
+                    { menteeId: dbUser.id }
+                ]
+            },
+            include: {
+                mentor: {
+                    select: {
+                        id: true,
+                        name: true,
+                        clerkUserId: true
+                    }
+                },
+                mentee: {
+                    select: {
+                        id: true,
+                        name: true,
+                        clerkUserId: true
+                    }
+                },
+                skill: {
+                    select: {
+                        id: true,
+                        name: true
+                    }
+                }
+            },
+            orderBy: {
+                scheduledAt: 'desc'
+            }
+        })
+
+        return NextResponse.json({
+            message: "Sessions fetched successfully",
+            sessions
+        }, {
+            status: 200
+        })
+    } catch (error) {
+        console.error("Error fetching sessions:", error)
+        return NextResponse.json({
+            message: "Internal server error"
+        }, {
+            status: 500
+        })
+    }
+}
+
 export async function POST(req: NextRequest) {
     const { userId } = await auth()
 
@@ -54,14 +130,6 @@ export async function POST(req: NextRequest) {
             })
         }
 
-        if (menteeId !== userId) {
-            return NextResponse.json({
-                message: "Cannot create session for another user"
-            }, {
-                status: 400
-            })
-        }
-
         const dbUser = await prisma.user.findUnique({
             where: {
                 clerkUserId: userId
@@ -77,6 +145,16 @@ export async function POST(req: NextRequest) {
                 message: "Mentee not found"
             }, {
                 status: 404
+            })
+        }
+
+        const dbUserId = dbUser?.id
+
+        if (menteeId !== dbUserId) {
+            return NextResponse.json({
+                message: "Cannot create session for another user"
+            }, {
+                status: 400
             })
         }
 
@@ -118,7 +196,7 @@ export async function POST(req: NextRequest) {
 
         const sendNotificationToMentor = await createNotification({
             userId: mentorId,
-            senderId: userId,
+            senderId: dbUserId,
             type: NotificationType.SESSION_SCHEDULED,
             title: `New Session request`,
             message: `${dbUser.name} requested session for the skill ${mentorExists.skillsOffered.find(s => s.id === skillId)?.name || "Unknown Skill"} scheduled at ${new Date(scheduledAt).toLocaleString()}`
