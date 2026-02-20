@@ -34,9 +34,34 @@ export async function POST(req: NextRequest) {
 
     try {
         const { chatId, content } = parsed.data
+        
+        // Get the database user ID from Clerk userId
+        const dbUser = await prisma.user.findUnique({
+            where: {
+                clerkUserId: userId
+            },
+            select: {
+                id: true
+            }
+        })
+
+        if (!dbUser) {
+            return NextResponse.json({
+                message: "User not found"
+            }, {
+                status: 404
+            })
+        }
+
         const chatExists = await prisma.chat.findUnique({
             where: {
-                id: chatId
+                id: chatId,
+            },
+            select: {
+                id: true,
+                mentorId: true,
+                menteeId: true,
+                skillId: true
             }
         })
 
@@ -48,7 +73,7 @@ export async function POST(req: NextRequest) {
             })
         }
 
-        if (userId !== chatExists.mentorId && userId !== chatExists.menteeId) {
+        if (dbUser.id !== chatExists.mentorId && dbUser.id !== chatExists.menteeId) {
             return NextResponse.json({
                 message: "Unauthorized"
             }, {
@@ -58,9 +83,10 @@ export async function POST(req: NextRequest) {
 
         const mentorShipRequest = await prisma.mentorshipRequest.findUnique({
             where: {
-                mentorId_menteeId: {
+                mentorId_menteeId_skillId: {
                     mentorId: chatExists.mentorId,
-                    menteeId: chatExists.menteeId
+                    menteeId: chatExists.menteeId,
+                    skillId: chatExists.skillId
                 }
             },
             select: {
@@ -79,7 +105,7 @@ export async function POST(req: NextRequest) {
         const createMessage = await prisma.message.create({
             data: {
                 chatId: chatId,
-                senderId: userId,
+                senderId: dbUser.id,
                 content: content
             }
         })
@@ -101,7 +127,7 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET(req: NextRequest,
-    { params }: { params: { chatId: string } }
+    context: { params: Promise<{ chatId: string }> }
 ) {
     const { userId } = await auth()
 
@@ -113,7 +139,7 @@ export async function GET(req: NextRequest,
         })
     }
 
-    const { chatId } = params
+    const { chatId } = await context.params
 
     if (!chatId) {
         return NextResponse.json({
@@ -124,6 +150,26 @@ export async function GET(req: NextRequest,
     }
 
     try {
+        const dbUser = await prisma.user.findUnique({
+            where: {
+                clerkUserId: userId
+            },
+            select: {
+                id: true,
+                name: true,
+            }
+        })
+
+        if (!dbUser) {
+            return NextResponse.json({
+                message: "User not found"
+            }, {
+                status: 404
+            })
+        }
+
+        const dbUserId = dbUser.id
+
         const { searchParams } = req.nextUrl
         const limit = Number(searchParams.get("limit")) || 20
         const cursor = searchParams.get("cursor")
@@ -132,6 +178,12 @@ export async function GET(req: NextRequest,
         const chatExists = await prisma.chat.findUnique({
             where: {
                 id: chatId
+            },
+            select: {
+                id: true,
+                mentorId: true,
+                menteeId: true,
+                skillId: true
             }
         })
 
@@ -143,7 +195,7 @@ export async function GET(req: NextRequest,
             })
         }
 
-        if (userId !== chatExists.mentorId && userId !== chatExists.menteeId) {
+        if(chatExists.mentorId !== dbUserId && chatExists.menteeId !== dbUserId) {
             return NextResponse.json({
                 message: "Unauthorized"
             }, {
@@ -155,6 +207,23 @@ export async function GET(req: NextRequest,
             where: {
                 chatId: chatId
             },
+            select: {
+                id: true,
+                chatId: true,
+                senderId: true,
+                content: true,
+                createdAt: true,
+                isDelivered: true,
+                isRead: true,
+                readAt: true,
+                sender: {
+                    select: {
+                        id: true,
+                        name: true,
+                        clerkUserId: true
+                    }
+                }
+            },
             orderBy: {
                 createdAt: "desc"
             },
@@ -162,14 +231,7 @@ export async function GET(req: NextRequest,
             ...(cursor && {
                 cursor: { id: cursor },
                 skip: 1,
-            }),
-            select: {
-                id: true,
-                chatId: true,
-                senderId: true,
-                content: true,
-                createdAt: true
-            }
+            })
         })
 
         if (messages.length > limit) {

@@ -7,6 +7,11 @@ import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/retroui/Button"
 import Link from "next/link"
 import { DM_Sans } from "next/font/google"
+import { MessageCircleMore } from "lucide-react"
+import axios from "axios"
+import { toast } from "sonner"
+import { useRouter } from "next/navigation"
+import { fetchAllChatsForAUser } from "@/services/messages.service"
 
 const DM_Sans_Font = DM_Sans({
     weight: ["400", "500", "700"],
@@ -43,12 +48,39 @@ type SessionsListProps = {
 }
 
 export default function SessionsList({ sessions, currentUserClerkId, loading, onConfirm, onCancel }: SessionsListProps) {
+    const router = useRouter()
     const [filter, setFilter] = useState<"all" | "pending" | "confirmed" | "completed">("all")
+    const [navigatingToChatId, setNavigatingToChatId] = useState<string | null>(null)
 
     const filteredSessions = sessions.filter((session) => {
         if (filter === "all") return true
         return session.status.toLowerCase() === filter
     })
+
+    const handleNavigateToChat = async (session: Session) => {
+        setNavigatingToChatId(session.id)
+        try {
+            const response = await fetchAllChatsForAUser()
+            const chats = response.chats || []
+            
+            const matchingChat = chats.find((chat: any) => 
+                chat.mentor.id === session.mentor.id && 
+                chat.mentee.id === session.mentee.id &&
+                chat.skill?.id === session.skill.id
+            )
+            
+            if (matchingChat) {
+                router.push(`/chats/${matchingChat.id}`)
+            } else {
+                toast.error("Chat not found. The mentorship may not be active yet.")
+            }
+        } catch (error) {
+            console.error("Error finding chat:", error)
+            toast.error("Failed to open chat")
+        } finally {
+            setNavigatingToChatId(null)
+        }
+    }
 
     const getStatusColor = (status: string) => {
         const colors: Record<string, string> = {
@@ -61,21 +93,19 @@ export default function SessionsList({ sessions, currentUserClerkId, loading, on
         return colors[status] || "bg-gray-100 text-gray-800"
     }
 
+    const isMentor = (session: Session) => session.mentor.clerkUserId === currentUserClerkId
+    const isMentee = (session: Session) => session.mentee.clerkUserId === currentUserClerkId
+
     return (
         <div className={`${DM_Sans_Font.className} container max-w-4xl mx-auto px-4 py-8 mt-20`}>
             <div className="space-y-6">
-                
+
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <h1 className="text-2xl font-bold">Sessions</h1>
-                    {/* <Link href="/sessions/schedule">
-                        <Button className="bg-black text-white hover:bg-black/90">
-                            Schedule New Session
-                        </Button>
-                    </Link> */}
                 </div>
 
-                <Separator />
+                <Separator className="w-full" />
 
                 {/* Filters */}
                 <div className="flex gap-2 flex-wrap">
@@ -83,11 +113,10 @@ export default function SessionsList({ sessions, currentUserClerkId, loading, on
                         <button
                             key={f}
                             onClick={() => setFilter(f as any)}
-                            className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors cursor-pointer ${
-                                filter === f
+                            className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors cursor-pointer ${filter === f
                                     ? "bg-black text-white"
                                     : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                            }`}
+                                }`}
                         >
                             {f.charAt(0).toUpperCase() + f.slice(1)}
                         </button>
@@ -111,7 +140,7 @@ export default function SessionsList({ sessions, currentUserClerkId, loading, on
                     {!loading && filteredSessions.map((session) => (
                         <Card key={session.id} className="p-6">
                             <div className="space-y-4">
-                                
+
                                 {/* Header Row */}
                                 <div className="flex items-start justify-between">
                                     <div className="space-y-1">
@@ -123,9 +152,16 @@ export default function SessionsList({ sessions, currentUserClerkId, loading, on
                                                 {session.status}
                                             </Badge>
                                         </div>
-                                        <p className="text-sm text-muted-foreground">
-                                            with {session.mentor.name}
-                                        </p>
+                                        {isMentor(session) ? (
+                                            <p className="text-sm text-muted-foreground">
+                                                with {session.mentee.name}
+                                            </p>
+                                        ) : (
+                                            <p className="text-sm text-muted-foreground">
+                                                with {session.mentor.name}
+                                            </p>
+                                        )}
+
                                     </div>
                                 </div>
 
@@ -171,11 +207,14 @@ export default function SessionsList({ sessions, currentUserClerkId, loading, on
 
                                 {session.status === "CONFIRMED" && (
                                     <div className="pt-2">
-                                        <Link href={`/sessions/${session.id}`}>
-                                            <Button className="w-full bg-black text-white hover:bg-black/90">
-                                                View Session
-                                            </Button>
-                                        </Link>
+                                        <Button 
+                                            className="w-full bg-white text-black hover:bg-gray-200 border border-black rounded-2xl"
+                                            onClick={() => handleNavigateToChat(session)}
+                                            disabled={navigatingToChatId === session.id}
+                                        >
+                                            <MessageCircleMore className="mr-2 text-sm size-4" />
+                                            {navigatingToChatId === session.id ? "Opening..." : "Message"}
+                                        </Button>
                                     </div>
                                 )}
                             </div>

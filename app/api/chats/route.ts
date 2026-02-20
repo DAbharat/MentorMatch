@@ -14,14 +14,34 @@ export async function GET(req: NextRequest) {
     }
 
     try {
+        const dbUser = await prisma.user.findUnique({
+            where: {
+                clerkUserId: userId
+            },
+            select: {
+                id: true,
+                name: true,
+            }
+        })
+
+        if (!dbUser) {
+            return NextResponse.json({
+                message: "User not found"
+            }, {
+                status: 404
+            })
+        }
+
+        const dbUserId = dbUser.id
+
         const fetchChatsForAUser = await prisma.chat.findMany({
             where: {
                 OR: [
                     {
-                        mentorId: userId
+                        mentorId: dbUserId
                     },
                     {
-                        menteeId: userId
+                        menteeId: dbUserId
                     }
                 ]
             },
@@ -30,12 +50,20 @@ export async function GET(req: NextRequest) {
                     select: {
                         id: true,
                         name: true,
+                        clerkUserId: true
                     }
                 },
                 mentee: {
                     select: {
                         id: true,
                         name: true,
+                        clerkUserId: true
+                    }
+                },
+                skill: {
+                    select: {
+                        id: true,
+                        name: true
                     }
                 },
                 messages: {
@@ -47,7 +75,14 @@ export async function GET(req: NextRequest) {
                         id: true,
                         content: true,
                         createdAt: true,
-                        senderId: true
+                        senderId: true,
+                        sender: {
+                            select: {
+                                id: true,
+                                name: true,
+                                clerkUserId: true
+                            }
+                        }
                     }
                 },
             },
@@ -57,6 +92,7 @@ export async function GET(req: NextRequest) {
         })
 
         return NextResponse.json({
+            message: "Chats fetched successfully",
             chats: fetchChatsForAUser
         }, {
             status: 200

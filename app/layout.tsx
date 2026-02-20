@@ -35,9 +35,9 @@ export default function RootLayout({
         >
           <SidebarProvider>
             <AppSidebar />
-            <div className="flex-1 w-full">
+            <div className="flex flex-col flex-1 w-full min-h-screen">
               <Navbar />
-              <main className="mt-8 sm:mt-10 md:mt-10 lg:mt-10 ">
+              <main className="flex-1 pt-14 md:pt-16">
                 {children}
               </main>
             </div>

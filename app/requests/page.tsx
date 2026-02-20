@@ -64,7 +64,7 @@ export default function RequestPage() {
         fetchRequests()
     }, [])
     return (
-        <div className={`${DM_Sans_Font.className} mt-24`}>
+        <div className={`${DM_Sans_Font.className} pt-6 md:pt-8`}>
 
             <div className="max-w-3xl mx-auto px-4">
                 <h1 className="text-2xl font-semibold mb-4">

@@ -64,7 +64,7 @@ export default function RequestIdPage({ params }: { params: Promise<{ requestId:
     )
 
     return (
-        <div className={`${DM_Sans_Font.className} mt-24`}>
+        <div className={`${DM_Sans_Font.className} pt-6 md:pt-8`}>
 
             {/* Centered Header */}
             <div className="max-w-3xl mx-auto px-4">

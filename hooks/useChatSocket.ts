@@ -21,6 +21,11 @@ export const useChatSocket = ({
     const [typingUsers, setTypingUsers] = useState<string[]>([])
 
     useEffect(() => {
+        if (!token || !chatId) {
+            setIsConnecting(false)
+            return
+        }
+
         const socket = getChatSocket(token, chatId)
         socketRef.current = socket
 

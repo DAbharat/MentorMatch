@@ -54,6 +54,8 @@ export default function PublicProfilePage() {
         createdAt={profile.joinedAt}
         clerkUserId={profile.id}
         skillsOffered={profile.skillsOffered}
+        hasAcceptedRequest={profile.hasAcceptedRequest}
+        chatId={profile.chatId}
       />
 
       <ProfileTabs

@@ -3,10 +3,11 @@ import { auth } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
 
 export async function GET(req: NextRequest) {
+    const { userId: currentClerkUserId } = await auth();
     const url = new URL(req.url);
-    const userId = url.pathname.split("/").pop();
+    const profileClerkUserId = url.pathname.split("/").pop();
 
-    if (!userId) {
+    if (!profileClerkUserId) {
         return NextResponse.json({
             message: "Bad Request: User ID is required in the URL"
         }, {
@@ -17,7 +18,7 @@ export async function GET(req: NextRequest) {
     try {
         const fetchUser = await prisma.user.findUnique({
             where: {
-                clerkUserId: userId
+                clerkUserId: profileClerkUserId
             },
             select: {
                 id: true,
@@ -62,6 +63,67 @@ export async function GET(req: NextRequest) {
             });
         }
 
+        // Check if current user has accepted mentorship request with this profile user
+        let hasAcceptedRequest = false;
+        let chatId = null;
+
+        if (currentClerkUserId && currentClerkUserId !== profileClerkUserId) {
+            const currentUser = await prisma.user.findUnique({
+                where: { clerkUserId: currentClerkUserId },
+                select: { id: true }
+            });
+
+            if (currentUser) {
+                // Check for accepted mentorship request (either direction)
+                const acceptedRequest = await prisma.mentorshipRequest.findFirst({
+                    where: {
+                        OR: [
+                            {
+                                mentorId: fetchUser.id,
+                                menteeId: currentUser.id,
+                                status: "ACCEPTED"
+                            },
+                            {
+                                mentorId: currentUser.id,
+                                menteeId: fetchUser.id,
+                                status: "ACCEPTED"
+                            }
+                        ]
+                    },
+                    select: {
+                        skillId: true
+                    }
+                });
+
+                if (acceptedRequest) {
+                    hasAcceptedRequest = true;
+                    
+                    // Fetch the chat for this mentorship
+                    const chat = await prisma.chat.findFirst({
+                        where: {
+                            OR: [
+                                {
+                                    mentorId: fetchUser.id,
+                                    menteeId: currentUser.id,
+                                    skillId: acceptedRequest.skillId
+                                },
+                                {
+                                    mentorId: currentUser.id,
+                                    menteeId: fetchUser.id,
+                                    skillId: acceptedRequest.skillId
+                                }
+                            ]
+                        },
+                        select: {
+                            id: true
+                        }
+                    });
+
+                    chatId = chat?.id || null;
+                }
+            }
+        }
+
         const options = {
             year: "numeric",
             month: "short"
@@ -76,6 +138,8 @@ export async function GET(req: NextRequest) {
             joinedAt,
             sessionsCompletedAsMentor: fetchUser._count.sessionsAsMentor,
             sessionsCompletedAsMentee: fetchUser._count.sessionsAsMentee,
+            hasAcceptedRequest,
+            chatId
         }
 
         return NextResponse.json({

@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react"
 import axios, { AxiosError } from "axios"
 import { ApiResponse } from "@/types/ApiResponse"
+import { fetchAllMessage } from "@/services/messages.service"
 
 type Message = {
     id: string
@@ -10,6 +11,14 @@ type Message = {
     senderId: string
     content: string
     createdAt: string
+    isDelivered: boolean
+    isRead: boolean
+    readAt: string | null
+    sender: {
+        id: string
+        name: string
+        clerkUserId: string
+    }
 }
 
 type MessagesResponse = {
@@ -28,17 +37,8 @@ export function useChatMessages(chatId: string) {
 
     const fetchMessages = async (cursor?: string) => {
         try {
-            const result = await axios.get<MessagesResponse>(
-                `/api/chats/${chatId}/messages`,
-                {
-                    params: {
-                        limit: 20,
-                        ...(cursor && { cursor }),
-                    },
-                }
-            )
-
-            return result.data
+            const result = await fetchAllMessage(chatId, 20, cursor)
+            return result as MessagesResponse
         } catch (error) {
             const axiosError = error as AxiosError<ApiResponse>
             throw new Error(
@@ -50,6 +50,11 @@ export function useChatMessages(chatId: string) {
 
     useEffect(() => {
         let mounted = true
+
+        if (!chatId) {
+            setIsLoading(false)
+            return
+        }
 
         setMessages([])
         setNextCursor(null)

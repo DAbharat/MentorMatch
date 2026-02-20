@@ -7,6 +7,7 @@ import { UserButton, useUser } from '@clerk/nextjs';
 import { toast } from 'sonner';
 import { profile } from 'console';
 import RequestFormContainer from '../mentorship-request/RequestFormContainer';
+import { MessageSquare } from 'lucide-react';
 
 
 const DM_Sans_Font = DM_Sans({
@@ -26,6 +27,8 @@ type ProfileHeaderProps = {
   createdAt: string;
   clerkUserId: string;
   skillsOffered: Skills[];
+  hasAcceptedRequest?: boolean;
+  chatId?: string;
 }
 
 function getMemberSince(createdAt: string) {
@@ -33,7 +36,7 @@ function getMemberSince(createdAt: string) {
 }
 
 export default function ProfileHeader(
-  { id, name, bio, createdAt, clerkUserId, skillsOffered }: ProfileHeaderProps
+  { id, name, bio, createdAt, clerkUserId, skillsOffered, hasAcceptedRequest = false, chatId }: ProfileHeaderProps
 ) {
   const memberSince = getMemberSince(createdAt);
   const router = useRouter()
@@ -80,6 +83,24 @@ export default function ProfileHeader(
                 >
                   Edit Profile
                 </Button>
+              ) : hasAcceptedRequest && chatId ? (
+                <div className="flex gap-2 mt-6">
+                  <Button
+                    size="sm"
+                    className="bg-transparent border border-black border-b-2 text-black px-4 flex items-center gap-2"
+                    onClick={() => router.push(`/chats/${chatId}`)}
+                  >
+                    <MessageSquare className="w-4 h-4" />
+                    Message
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="bg-transparent border border-black border-b-2 text-black px-4"
+                    onClick={() => setOpen(true)}
+                  >
+                    Send Request
+                  </Button>
+                </div>
               ) : (
                 <Button
                   size="sm"

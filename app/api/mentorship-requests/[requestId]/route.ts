@@ -101,7 +101,12 @@ export async function PATCH(req: NextRequest,
         const newStatus =
             action === "ACCEPT" ? "ACCEPTED" : "REJECTED"
 
+        console.log("Starting transaction...")
+        console.log("Request ID:", requestId)
+        console.log("New Status:", newStatus)
+
         const result = await prisma.$transaction(async (tx) => {
+            console.log("Updating mentorship request...")
             const updateRequest = await tx.mentorshipRequest.update({
                 where: {
                     id: requestId
@@ -111,28 +116,40 @@ export async function PATCH(req: NextRequest,
                 }
             })
 
+            console.log("Request updated:", updateRequest)
+
             let chat = null
 
             if (newStatus === "ACCEPTED") {
+                console.log("Creating/updating chat...")
+                console.log("mentor:", updateRequest.mentorId)
+                console.log("mentee:", updateRequest.menteeId)
+                console.log("skill:", updateRequest.skillId)
+                
                 chat = await tx.chat.upsert({
                     where: {
-                        mentorId_menteeId: {
+                        mentorId_menteeId_skillId: {
                             mentorId: updateRequest.mentorId,
-                            menteeId: updateRequest.menteeId
+                            menteeId: updateRequest.menteeId,
+                            skillId: updateRequest.skillId
                         }
                     },
                     update: {},
                     create: {
                         mentorId: updateRequest.mentorId,
-                        menteeId: updateRequest.menteeId
+                        menteeId: updateRequest.menteeId,
+                        skillId: updateRequest.skillId
                     }
                 })
+                console.log("Chat created/updated:", chat)
             }
             return {
                 updateRequest,
                 chat
             }
         })
+
+        console.log("Transaction completed successfully")
 
         const sendNotificationToMentee = await createNotification({
             userId: mentorshipRequestExists.menteeId,
@@ -203,7 +220,6 @@ export async function GET(req: NextRequest,
                     select: {
                         id: true,
                         name: true,
-                        messages: true,
                         skillsOffered: {
                             select: {
                                 id: true,
