@@ -18,6 +18,8 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { RadioGroup } from "radix-ui"
 
 const DM_Sans_Font = DM_Sans({
     weight: ["400", "500", "700"],
@@ -104,7 +106,7 @@ export default function NotificationPage() {
     }
 
     const handleNotificationRead = (notificationId: string) => {
-        setNotifications(prev => prev.map(n => 
+        setNotifications(prev => prev.map(n =>
             n.id === notificationId ? { ...n, isRead: true } : n
         ))
     }
@@ -121,12 +123,36 @@ export default function NotificationPage() {
                         Notifications {unreadCount > 0 && <span className="text-sm text-gray-500">({unreadCount} unread)</span>}
                     </h1>
                     <div className="flex flex-wrap gap-2">
-                        <Button
-                            className="bg-transparent border border-black text-black hover:bg-gray-100 flex items-center gap-2 text-xs sm:text-sm"
-                        >
-                            <SlidersHorizontal className="w-4 h-4" />
-                            <span className="hidden xs:inline sm:inline">Filter</span>
-                        </Button>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button
+                                    className="bg-transparent border border-black text-black hover:bg-gray-100 flex items-center gap-2 text-xs sm:text-sm"
+                                >
+                                    <SlidersHorizontal className="w-4 h-4" />
+                                    <span className="hidden xs:inline sm:inline">Filter</span>
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-44 p-2">
+                                <div className="space-y-1">
+                                    {["all", "unread", "read"].map((f) => {
+                                        const isActive = filter === f
+
+                                        return (
+                                            <button
+                                                key={f}
+                                                onClick={() => setFilter(f as any)}
+                                                className={`w-full text-left px-3 py-2 text-sm rounded-md transition-colors ${isActive
+                                                        ? "bg-black text-white"
+                                                        : "hover:bg-gray-100 text-gray-700"
+                                                    }`}
+                                            >
+                                                {f.charAt(0).toUpperCase() + f.slice(1)}
+                                            </button>
+                                        )
+                                    })}
+                                </div>
+                            </PopoverContent>
+                        </Popover>
                         <Button
                             size="sm"
                             onClick={handleMarkAllAsRead}
@@ -154,7 +180,7 @@ export default function NotificationPage() {
             <Separator className="w-full" />
 
             {/* Filters */}
-            <div className="max-w-4xl mx-auto px-4 mt-6">
+            {/* <div className="max-w-4xl mx-auto px-4 mt-6">
                 <div className="flex gap-2 mb-4">
                     {["all", "unread", "read"].map((f) => (
                         <button
@@ -170,7 +196,7 @@ export default function NotificationPage() {
                         </button>
                     ))}
                 </div>
-            </div>
+            </div> */}
 
             {/* Centered Content */}
             <div className="max-w-4xl mx-auto px-4 space-y-4">

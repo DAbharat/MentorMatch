@@ -97,21 +97,21 @@ export default function ProfileHeader(
   const isOwner = user.id === clerkUserId
 
   return (
-    <div className={`bg-linear-to-br ${DM_Sans_Font.className}`}>
+    <div className={`bg-linear-to-br bg-[#0b090a] ${DM_Sans_Font.className}`}>
       <div className="max-w-4xl mx-auto px-4">
-        <header className="pt-16 pb-8">
+        <header className="pt-10 pb-8">
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
 
             {/* LEFT: Avatar */}
             <div className="shrink-0">
-              <div className="w-24 h-24 rounded-full bg-black flex items-center justify-center text-white text-xl font-semibold shadow-md">
+              <div className="w-24 h-24 rounded-full bg-[#d3d3d3] flex items-center justify-center text-black text-xl font-semibold shadow-md">
                 {name.charAt(0).toUpperCase()}
               </div>
             </div>
 
             {/* RIGHT: Info + Button */}
             <div className="text-center sm:text-left">
-              <h1 className="text-2xl font-semibold">{name}</h1>
+              <h1 className="text-2xl font-semibold text-[#d3d3d3]">{name}</h1>
 
               <p className="text-muted-foreground mt-1">{bio}</p>
 
@@ -132,7 +132,7 @@ export default function ProfileHeader(
                 <div className="flex gap-2 mt-6">
                   <Button
                     size="sm"
-                    className="bg-transparent border border-black border-b-2 text-black px-4 flex items-center gap-2"
+                    className="bg-transparent border border-[#d3d3d3] border-b-2 text-[#d3d3d3] px-4 flex items-center gap-2"
                     onClick={() => router.push(`/chats/${chatId}`)}
                   >
                     <MessageCircleMore className="w-4 h-4" />
@@ -140,7 +140,7 @@ export default function ProfileHeader(
                   </Button>
                   <Button
                     size="sm"
-                    className="bg-transparent border border-black border-b-2 text-black px-4 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="bg-transparent border border-[#d3d3d3] border-b-2 text-[#d3d3d3] px-4 disabled:opacity-50 disabled:cursor-not-allowed"
                     onClick={() => setOpen(true)}
                     disabled={hasActiveConfirmedSession}
                     title={hasActiveConfirmedSession ? "You have an active confirmed session. Wait until it completes to send another request." : "Send a new mentorship request"}
@@ -151,7 +151,7 @@ export default function ProfileHeader(
               ) : (
                 <Button
                   size="sm"
-                  className="mt-6 bg-transparent border border-black border-b-2 text-black px-4"
+                  className="mt-6 bg-transparent border border-[#d3d3d3] text-[#d3d3d3] border-b-2 px-4"
                   onClick={() => setOpen(true)}
                 >
                   Send Request

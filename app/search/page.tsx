@@ -56,14 +56,7 @@ export default function SearchPage({
     }
 
     return (
-    <div className={DM_Sans_Font.className}>
-      {/* Header Section */}
-      <div className="p-6 pt-10">
-        <h1 className="text-2xl font-bold">Search Results</h1>
-      </div>
-
-      {/* Full Width Separator */}
-      <Separator className="w-full" />
+    <div className={`${DM_Sans_Font.className} bg-[#0b090a] min-h-screen`}>
 
       {/* Content Section */}
       <div className="p-8">

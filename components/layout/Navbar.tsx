@@ -45,7 +45,7 @@ export default function Navbar() {
 
     return (
         <nav
-            className={`${DM_Sans_Font.className} fixed top-0 left-0 right-0 z-50 bg-blue-600 border-b border-gray-200 shadow-sm`}
+            className={`${DM_Sans_Font.className} fixed top-0 left-0 right-0 z-50 bg-[#0b090a] border-b border-[#1f1f1f] shadow-sm`}
         >
             <div className="w-full pl-2 pr-3 sm:pl-3 sm:pr-4 md:pl-4 md:pr-6 lg:pl-6 lg:pr-8">
                 {/* Mobile and Tablet Layout */}
