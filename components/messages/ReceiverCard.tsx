@@ -1,6 +1,7 @@
 "use client"
 
 import React from 'react'
+import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 
@@ -41,9 +42,12 @@ export default function ReceiverCard(
       <div className="flex-1 min-w-0">
         {/* Header with name and badge */}
         <div className="flex items-center gap-1.5 sm:gap-2 mb-1 flex-wrap">
-          <span className="font-semibold text-xs sm:text-sm md:text-base text-foreground truncate">
+          <Link 
+            href={`/profile/${sender.clerkUserId}`}
+            className="font-semibold text-xs sm:text-sm md:text-base text-foreground truncate hover:text-primary transition-colors hover:underline"
+          >
             {sender.name}
-          </span>
+          </Link>
           {category && (
             <Badge variant="secondary" className="text-[10px] sm:text-xs px-1.5 py-0">
               {category}

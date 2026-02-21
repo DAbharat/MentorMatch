@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/sonner";
 import Navbar from "@/components/layout/Navbar";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,15 +34,17 @@ export default function RootLayout({
         <body
           className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         >
-          <SidebarProvider>
-            <AppSidebar />
-            <div className="flex flex-col flex-1 w-full min-h-screen">
-              <Navbar />
-              <main className="flex-1 pt-14 md:pt-16">
-                {children}
-              </main>
-            </div>
-          </SidebarProvider>
+          <TooltipProvider>
+            <SidebarProvider>
+              <AppSidebar />
+              <div className="flex flex-col flex-1 w-full min-h-screen">
+                <Navbar />
+                <main className="flex-1 pt-14 md:pt-16">
+                  {children}
+                </main>
+              </div>
+            </SidebarProvider>
+          </TooltipProvider>
           <Toaster />
         </body>
       </html>

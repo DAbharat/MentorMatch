@@ -2,7 +2,7 @@
 
 import RequestSidebarCard from '@/components/Request-Sidebar/RequestSidebarCard'
 import { Separator } from '@/components/ui/separator';
-import { receivedMentorshipRequests } from '@/services/mentorship-request.service';
+import { receivedMentorshipRequests, sentMentorshipRequests } from '@/services/mentorship-request.service';
 import React, { useEffect, useState } from 'react'
 import { toast } from 'sonner';
 import { DM_Sans } from "next/font/google"
@@ -19,7 +19,13 @@ type Request = {
     title: string;
     message: string;
     createdAt: string;
+    status?: string;
     mentee?: {
+        id: string
+        name: string
+        clerkUserId: string
+    };
+    mentor?: {
         id: string
         name: string
         clerkUserId: string
@@ -35,6 +41,8 @@ export default function RequestPage() {
     const [error, setError] = useState<string | null>(null)
     const [requests, setRequests] = useState<Request[]>([])
     const [nextCursor, setNextCursor] = useState<string | null>(null)
+    const [mainFilter, setMainFilter] = useState<"received" | "sent">("received")
+    const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "accepted" | "rejected">("all")
 
     const router = useRouter()
     
@@ -48,12 +56,18 @@ export default function RequestPage() {
                 setIsLoading(true)
                 setError(null)
 
-                const data = await receivedMentorshipRequests()
+                let data;
+                if (mainFilter === "received") {
+                    data = await receivedMentorshipRequests()
+                } else {
+                    data = await sentMentorshipRequests(statusFilter === "all" ? undefined : statusFilter)
+                }
+                
                 setRequests(data.data)
                 setNextCursor(data.nextCursor)
             } catch (error: any) {
                 const errorMessage =
-                    error?.message || "Failed to load notifications."
+                    error?.message || "Failed to load mentorship requests."
                 setError(errorMessage)
                 toast.error(errorMessage)
             } finally {
@@ -62,7 +76,8 @@ export default function RequestPage() {
         }
 
         fetchRequests()
-    }, [])
+    }, [mainFilter, statusFilter])
+    
     return (
         <div className={`${DM_Sans_Font.className} pt-6 md:pt-8`}>
 
@@ -74,41 +89,96 @@ export default function RequestPage() {
 
             <Separator className="w-full" />
 
-            <div className="max-w-4xl mx-auto px-4 mt-6 space-y-4">
-                {isLoading && (
-                    <p className="text-gray-500">Loading mentorship requests...</p>
-                )}
+            <div className="max-w-4xl mx-auto px-4 mt-6">
+                
+                {/* Main Filters: Sent / Received */}
+                <div className="flex gap-2 mb-4">
+                    <button
+                        onClick={() => {
+                            setMainFilter("received")
+                            setStatusFilter("all")
+                        }}
+                        className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors cursor-pointer ${
+                            mainFilter === "received"
+                                ? "bg-black text-white"
+                                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        }`}
+                    >
+                        Received
+                    </button>
+                    <button
+                        onClick={() => {
+                            setMainFilter("sent")
+                            setStatusFilter("all")
+                        }}
+                        className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors cursor-pointer ${
+                            mainFilter === "sent"
+                                ? "bg-black text-white"
+                                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        }`}
+                    >
+                        Sent
+                    </button>
+                </div>
 
-                {error && (
-                    <div className="p-4 bg-red-50 border border-red-200 rounded-md">
-                        <p className="text-red-800">{error}</p>
-                        <p className="text-sm text-red-600 mt-1">
-                            Check the browser console for more details.
-                        </p>
+                {/* Status Filters (only for Sent) */}
+                {mainFilter === "sent" && (
+                    <div className="flex gap-2 mb-4 flex-wrap">
+                        {["all", "pending", "accepted", "rejected"].map((status) => (
+                            <button
+                                key={status}
+                                onClick={() => setStatusFilter(status as any)}
+                                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors cursor-pointer ${
+                                    statusFilter === status
+                                        ? "bg-black text-white"
+                                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                }`}
+                            >
+                                {status.charAt(0).toUpperCase() + status.slice(1)}
+                            </button>
+                        ))}
                     </div>
                 )}
 
-                {!isLoading && !error && requests.length === 0 && (
-                    <p className="text-gray-500">
-                        No mentorship requests yet.
-                    </p>
-                )}
+                <div className="space-y-4">
+                    {isLoading && (
+                        <p className="text-gray-500">Loading mentorship requests...</p>
+                    )}
 
-                {!isLoading && requests.map((request) => (
-                    <RequestSidebarCard
-                        key={request.id}
-                        id={request.id}
-                        title={request.title}
-                        message={request.message}
-                        createdAt={request.createdAt}
-                        mentee={request.mentee}
-                        skill={request.skill}
-                        onStatusUpdate={handleStatusUpdate}
-                        onClick={() => {
-                            router.push(`/requests/${request.id}`)
-                        }}
-                    />
-                ))}
+                    {error && (
+                        <div className="p-4 bg-red-50 border border-red-200 rounded-md">
+                            <p className="text-red-800">{error}</p>
+                            <p className="text-sm text-red-600 mt-1">
+                                Check the browser console for more details.
+                            </p>
+                        </div>
+                    )}
+
+                    {!isLoading && !error && requests.length === 0 && (
+                        <p className="flex justify-center align-middle text-gray-500 text-center">
+                            No mentorship requests yet.
+                        </p>
+                    )}
+
+                    {!isLoading && requests.map((request) => (
+                        <RequestSidebarCard
+                            key={request.id}
+                            id={request.id}
+                            title={request.title}
+                            message={request.message}
+                            createdAt={request.createdAt}
+                            status={request.status}
+                            mentee={request.mentee}
+                            mentor={request.mentor}
+                            skill={request.skill}
+                            isSentView={mainFilter === "sent"}
+                            onStatusUpdate={handleStatusUpdate}
+                            onClick={() => {
+                                router.push(`/requests/${request.id}`)
+                            }}
+                        />
+                    ))}
+                </div>
             </div>
         </div>
     )

@@ -9,6 +9,7 @@ import SearchBar from "../search/search";
 import { useEffect, useState } from "react";
 import { FetchAllNotifications } from "@/services/notification.service";
 import { toast } from "sonner";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 
 const DM_Sans_Font = DM_Sans({
     weight: ["400", "500", "700"],
@@ -75,12 +76,12 @@ export default function Navbar() {
                             className="relative p-1.5 sm:p-2 text-white hover:bg-blue-500 rounded-lg transition-colors"
                             aria-label="Notifications"
                         >
-                            <Bell className="w-4 h-4 sm:w-5 sm:h-5" onClick={() => {router.push(`/notifications`)}}/>
+                            <Bell className="w-4 h-4 sm:w-5 sm:h-5" onClick={() => { router.push(`/notifications`) }} />
                             {unreadCount > 0 && (
                                 <span className="absolute top-1 right-1 min-w-4.5 h-4.5 text-xs flex items-center justify-center bg-red-500 text-white rounded-full px-1">
                                     {unreadCount}
                                 </span>
-                            )}                        
+                            )}
                         </button>
 
                         <User2
@@ -118,18 +119,34 @@ export default function Navbar() {
 
                     {/* Right Section */}
                     <div className="flex items-center gap-3 justify-end">
-                        <button
-                            className="relative p-2 text-white hover:bg-blue-500 rounded-lg transition-colors"
-                            aria-label="Notifications"
-                        >
-                            <Bell className="w-5 h-5 cursor-pointer" />
-                            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-                        </button>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <button
+                                    className="relative p-2 text-white hover:bg-blue-500 rounded-lg transition-colors cursor-pointer"
+                                    aria-label="Notifications"
+                                    onClick={() => router.push('/notifications')}
+                                >
+                                    <Bell className="w-5 h-5" />
+                                    {unreadCount > 0 && (
+                                        <span className="absolute top-1 right-1 min-w-4.5 h-4.5 text-xs flex items-center justify-center bg-red-500 text-white rounded-full px-1">
+                                            {unreadCount}
+                                        </span>
+                                    )}
+                                </button>
+                            </TooltipTrigger>
+                            <TooltipContent>Notifications</TooltipContent>
+                        </Tooltip>
 
-                        <User2
-                            className="w-8 h-8 p-1.5 text-black cursor-pointer bg-white rounded-full hover:bg-gray-100 transition-colors"
-                            onClick={() => router.push("/profile")}
-                        />
+                        <Tooltip>
+                            <TooltipTrigger >
+                                <User2
+                                    className="w-8 h-8 p-1.5 text-black cursor-pointer bg-white rounded-full hover:bg-gray-100 transition-colors"
+                                    onClick={() => router.push("/profile")}
+                                />
+                                <TooltipContent>Profile</TooltipContent>
+                            </TooltipTrigger>
+                        </Tooltip>
+
                     </div>
                 </div>
             </div>

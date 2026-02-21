@@ -13,6 +13,7 @@ import { ApiResponse } from '@/types/ApiResponse';
 import { redirect, useRouter } from 'next/navigation';
 import { Profile } from '@/types/profile';
 import { fetchMyProfile } from '@/services/profile.service';
+import { Skeleton } from '@/components/ui/skeleton';
 
 
 export default function ProfilePage() {
@@ -62,7 +63,15 @@ export default function ProfilePage() {
 
     if (!isLoaded || loading) {
         console.log("ProfilePage: Loading spinner displayed.");
-        return <Spinner />;
+        return (
+            <div className="flex items-center gap-4">
+                <Skeleton className="h-12 w-12 rounded-full" />
+                <div className="space-y-2">
+                    <Skeleton className="h-4 w-62.5" />
+                    <Skeleton className="h-4 w-50" />
+                </div>
+            </div>
+        )
     }
 
     if (!profile) {
@@ -83,6 +92,7 @@ export default function ProfilePage() {
                     createdAt={profile.createdAt}
                     clerkUserId={profile.clerkUserId}
                     skillsOffered={profile.skillsOffered}
+                    skillsWanted={profile.skillsWanted}
                 />
             </div>
             <div>

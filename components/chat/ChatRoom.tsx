@@ -6,6 +6,7 @@ import SenderCard from '@/components/messages/SenderCard'
 import ReceiverCard from '@/components/messages/ReceiverCard'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
+import Link from 'next/link'
 
 type Message = {
     id: string;
@@ -27,6 +28,7 @@ type ChatRoomProps = {
     lastSeen?: string;
     messages?: Message[];
     currentUserId?: string;
+    otherUserClerkId?: string;
     onVideoCall?: () => void;
     onBack?: () => void;
 }
@@ -36,6 +38,7 @@ export default function ChatRoom({
     lastSeen = "last seen 41 minutes ago",
     messages = [],
     currentUserId = "current-user",
+    otherUserClerkId,
     onVideoCall,
     onBack
 }: ChatRoomProps) {
@@ -97,9 +100,18 @@ export default function ChatRoom({
                         </span>
                     </div>
                     <div className="flex flex-col min-w-0">
-                        <h2 className="font-semibold text-xs sm:text-sm text-foreground leading-tight truncate">
-                            {roomName}
-                        </h2>
+                        {otherUserClerkId ? (
+                            <Link 
+                                href={`/profile/${otherUserClerkId}`}
+                                className="font-semibold text-xs sm:text-sm text-foreground leading-tight truncate hover:text-primary transition-colors"
+                            >
+                                {roomName}
+                            </Link>
+                        ) : (
+                            <h2 className="font-semibold text-xs sm:text-sm text-foreground leading-tight truncate">
+                                {roomName}
+                            </h2>
+                        )}
                         <p className="text-[10px] sm:text-xs text-muted-foreground leading-tight truncate">{lastSeen}</p>
                     </div>
                 </div>
@@ -136,7 +148,7 @@ export default function ChatRoom({
                             {/* Messages for this date */}
                             <div className="space-y-2 sm:space-y-3">
                                 {dateMessages.map((message) => {
-                                    const isSender = message.senderId === currentUserId;
+                                    const isSender = message.sender?.clerkUserId === currentUserId;
 
                                     return isSender ? (
                                         <SenderCard

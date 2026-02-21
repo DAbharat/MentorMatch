@@ -18,7 +18,7 @@ export async function fetchAllMessage(chatId: string, limit: number = 20, cursor
 
 export async function sendMessage(chatId: string, content: string) {
     try {
-        console.log("sending message...")
+        console.log("sending message...", content)
         const response = await axios.post(`/api/chats/${chatId}/messages`, { content })
         return response.data
     } catch (error) {

@@ -1,10 +1,25 @@
 "use client"
 
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { Card } from '../ui/card';
 import Link from 'next/link';
 import { Button } from '../retroui/Button';
 import { useRouter } from 'next/navigation';
+import { checkMentorshipSessionStatus } from '@/services/session.service';
+import { Badge } from '../ui/badge';
+import { deleteNotificationById, markSingleNotificationAsRead } from '@/services/notification.service';
+import { toast } from 'sonner';
+import { Trash2, Check } from 'lucide-react';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '../ui/alert-dialog';
 
 type NotificationCardProps = {
     id: string;
@@ -17,15 +32,45 @@ type NotificationCardProps = {
         id: string
         name: string
         clerkUserId: string
-    }
+    };
+    onDeleted?: (notificationId: string) => void;
+    onRead?: (notificationId: string) => void;
 }
 
 export default function NotificationCard(
-    { id, title, message, type, isRead, createdAt, sender }: NotificationCardProps
+    { id, title, message, type, isRead, createdAt, sender, onDeleted, onRead }: NotificationCardProps
 ) {
     const router = useRouter()
     const senderName = sender?.name || "Unknown User"
     const showScheduleButton = type === "MENTORSHIP_REQUEST_ACCEPTED"
+    
+    const [sessionStatus, setSessionStatus] = useState<{
+        hasSession: boolean
+        status: string | null
+    }>({ hasSession: false, status: null })
+    const [checkingSession, setCheckingSession] = useState(true)
+    const [isDeleting, setIsDeleting] = useState(false)
+    const [isMarkingRead, setIsMarkingRead] = useState(false)
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+
+    useEffect(() => {
+        const checkSession = async () => {
+            if (showScheduleButton && sender?.clerkUserId) {
+                try {
+                    const result = await checkMentorshipSessionStatus(sender.clerkUserId)
+                    setSessionStatus(result)
+                } catch (error) {
+                    console.error("Error checking session status:", error)
+                } finally {
+                    setCheckingSession(false)
+                }
+            } else {
+                setCheckingSession(false)
+            }
+        }
+
+        checkSession()
+    }, [showScheduleButton, sender?.clerkUserId])
 
     const handleScheduleSession = () => {
         if (sender?.clerkUserId) {
@@ -33,8 +78,75 @@ export default function NotificationCard(
         }
     }
 
+    const handleDelete = async () => {
+        try {
+            setIsDeleting(true)
+            await deleteNotificationById(id)
+            toast.success("Notification deleted")
+            if (onDeleted) {
+                onDeleted(id)
+            }
+            setShowDeleteDialog(false)
+        } catch (error: any) {
+            toast.error(error.message || "Failed to delete notification")
+        } finally {
+            setIsDeleting(false)
+        }
+    }
+
+    const handleMarkAsRead = async (e: React.MouseEvent) => {
+        e.stopPropagation()
+        if (isRead) return
+        
+        try {
+            setIsMarkingRead(true)
+            await markSingleNotificationAsRead(id)
+            toast.success("Marked as read")
+            if (onRead) {
+                onRead(id)
+            }
+        } catch (error: any) {
+            toast.error(error.message || "Failed to mark as read")
+        } finally {
+            setIsMarkingRead(false)
+        }
+    }
+
+    const renderActionButton = () => {
+        if (!showScheduleButton) return null
+        
+        if (checkingSession) {
+            return <p className="text-xs text-gray-500">Checking session status...</p>
+        }
+
+        if (sessionStatus.hasSession) {
+            const statusColors: Record<string, string> = {
+                PENDING: "bg-yellow-100 text-yellow-800",
+                CONFIRMED: "bg-blue-100 text-blue-800",
+                IN_PROGRESS: "bg-green-100 text-green-800",
+                COMPLETED: "bg-gray-100 text-gray-800",
+                CANCELLED: "bg-red-100 text-red-800"
+            }
+            
+            return (
+                <Badge className={`${statusColors[sessionStatus.status || ''] || 'bg-gray-100 text-gray-800'} text-xs`}>
+                    Session {sessionStatus.status?.toLowerCase() || 'created'}
+                </Badge>
+            )
+        }
+
+        return (
+            <Button
+                onClick={handleScheduleSession}
+                className="px-4 py-1.5 text-xs font-semibold rounded-lg bg-black text-white hover:bg-black/90"
+            >
+                Schedule Session
+            </Button>
+        )
+    }
+
     return (
-        <Card className="p-4 w-full cursor-pointer">
+        <Card className={`p-4 w-full relative ${!isRead ? 'bg-blue-50/30 border-blue-200' : ''}`}>
             <div className="flex gap-4">
 
                 {/* Avatar */}
@@ -45,10 +157,48 @@ export default function NotificationCard(
                 {/* Content */}
                 <div className="flex-1 min-w-0 space-y-1">
 
-                    {/* Name + Timestamp row */}
+                    {/* Name + Timestamp + Actions row */}
                     <div className="flex items-center justify-between gap-4">
-                        <Link href={`/profile/${sender?.clerkUserId}`}><span className="text-sm font-semibold truncate hover:underline">{senderName}</span></Link>
-                        <span className="text-xs text-gray-400 whitespace-nowrap">{new Date(createdAt).toLocaleString()}</span>
+                        <div className="flex items-center gap-2">
+                            {sender?.clerkUserId ? (
+                                <Link href={`/profile/${sender.clerkUserId}`} onClick={(e) => e.stopPropagation()}>
+                                    <span className="text-sm font-semibold truncate hover:underline">{senderName}</span>
+                                </Link>
+                            ) : (
+                                <span className="text-sm font-semibold truncate">{senderName}</span>
+                            )}
+                            {!isRead && (
+                                <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                            )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <span className="text-xs text-gray-400 whitespace-nowrap">{new Date(createdAt).toLocaleString()}</span>
+                            
+                            {/* Action buttons */}
+                            <div className="flex gap-1">
+                                {!isRead && (
+                                    <button
+                                        onClick={handleMarkAsRead}
+                                        disabled={isMarkingRead}
+                                        className="p-1.5 hover:bg-gray-100 rounded-md transition-colors disabled:opacity-50"
+                                        title="Mark as read"
+                                    >
+                                        <Check className="w-4 h-4 text-green-600" />
+                                    </button>
+                                )}
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation()
+                                        setShowDeleteDialog(true)
+                                    }}
+                                    disabled={isDeleting}
+                                    className="p-1.5 hover:bg-red-50 rounded-md transition-colors disabled:opacity-50"
+                                    title="Delete notification"
+                                >
+                                    <Trash2 className="w-4 h-4 text-red-600" />
+                                </button>
+                            </div>
+                        </div>
                     </div>
 
                     {/* Title */}
@@ -58,19 +208,33 @@ export default function NotificationCard(
                     <p className="text-sm text-gray-500 leading-relaxed">{message}</p>
 
                     {/* Action Button */}
-                    {showScheduleButton && (
-                        <div className="mt-3">
-                            <Button
-                                onClick={handleScheduleSession}
-                                className="px-4 py-1.5 text-xs font-semibold rounded-lg bg-black text-white hover:bg-black/90"
-                            >
-                                Schedule Session
-                            </Button>
-                        </div>
-                    )}
+                    <div className="mt-3">
+                        {renderActionButton()}
+                    </div>
 
                 </div>
             </div>
+
+            {/* Delete Confirmation Dialog */}
+            <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete notification?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete this notification.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={handleDelete}
+                            className="bg-red-600 hover:bg-red-700"
+                        >
+                            Delete
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </Card>
     )
 }

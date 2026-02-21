@@ -97,7 +97,7 @@ export default function SessionsList({ sessions, currentUserClerkId, loading, on
     const isMentee = (session: Session) => session.mentee.clerkUserId === currentUserClerkId
 
     return (
-        <div className={`${DM_Sans_Font.className} container max-w-4xl mx-auto px-4 py-8 mt-20`}>
+        <div className={`${DM_Sans_Font.className} container max-w-4xl mx-auto px-4 py-8`}>
             <div className="space-y-6">
 
                 {/* Header */}

@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
-import { messageSchema } from "@/schema/messageSchema";
+import { sendMessageSchema } from "@/schema/messageSchema";
 import { z } from "zod";
 
-export async function POST(req: NextRequest) {
+export async function POST(
+    req: NextRequest,
+    context: { params: Promise<{ chatId: string }> }
+) {
     const { userId } = await auth()
 
     if (!userId) {
@@ -15,14 +18,23 @@ export async function POST(req: NextRequest) {
         })
     }
 
+    const { chatId } = await context.params
+
+    if (!chatId) {
+        return NextResponse.json({
+            message: "Chat ID is required"
+        }, {
+            status: 400
+        })
+    }
+
     const body = await req.json()
-    const parsed = messageSchema.safeParse(body)
+    const parsed = sendMessageSchema.safeParse(body)
 
     if (!parsed.success) {
         const tree = z.treeifyError(parsed.error)
         const contentErrors = tree.properties?.content?.errors || []
-        const chatIdErrors = tree.properties?.chatId?.errors || []
-        const message = [...contentErrors, ...chatIdErrors].join(", ") || "Invalid request body"
+        const message = contentErrors.join(", ") || "Invalid request body"
 
         return NextResponse.json({
             message,
@@ -33,9 +45,9 @@ export async function POST(req: NextRequest) {
     }
 
     try {
-        const { chatId, content } = parsed.data
+        const { content } = parsed.data
+        //console.log("content: ", content)
         
-        // Get the database user ID from Clerk userId
         const dbUser = await prisma.user.findUnique({
             where: {
                 clerkUserId: userId
@@ -52,6 +64,8 @@ export async function POST(req: NextRequest) {
                 status: 404
             })
         }
+
+        const dbUserId = dbUser.id
 
         const chatExists = await prisma.chat.findUnique({
             where: {
@@ -105,10 +119,11 @@ export async function POST(req: NextRequest) {
         const createMessage = await prisma.message.create({
             data: {
                 chatId: chatId,
-                senderId: dbUser.id,
+                senderId: dbUserId,
                 content: content
             }
         })
+        console.log("message: ", createMessage)
 
         return NextResponse.json({
             message: "Message sent successfully",

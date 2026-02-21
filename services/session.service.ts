@@ -53,4 +53,30 @@ export async function createSession(sessionData: {
     }
 }
 
+export async function checkMentorshipSessionStatus(mentorClerkId: string) {
+    try {
+        const allSessions = await fetchAllSessions()
+        const sessions = allSessions.sessions || []
+        
+        const mentorshipSession = sessions.find((session: any) => 
+            session.mentor.clerkUserId === mentorClerkId || 
+            session.mentee.clerkUserId === mentorClerkId
+        )
+        
+        if (!mentorshipSession) {
+            return { hasSession: false, status: null }
+        }
+        
+        return { 
+            hasSession: true, 
+            status: mentorshipSession.status,
+            sessionId: mentorshipSession.id 
+        }
+    } catch (error) {
+        const axiosError = error as AxiosError<ApiResponse>
+        console.error("Error checking session status:", axiosError.response?.data.message || axiosError.message)
+        return { hasSession: false, status: null }
+    }
+}
+
 

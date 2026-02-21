@@ -8,6 +8,7 @@ import ProfileHeader from "@/components/profile/ProfileHeader";
 import ProfileTabs from "@/components/profile/ProfileTabs";
 import { toast } from "sonner";
 import { useUser } from "@clerk/nextjs";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function PublicProfilePage() {
   const { userId } = useParams();
@@ -41,7 +42,15 @@ export default function PublicProfilePage() {
     }
   }, [user, userId, router]);
 
-  if (loading) return <Spinner />;
+  if (loading) return (
+    <div className="flex items-center gap-4">
+      <Skeleton className="h-12 w-12 rounded-full" />
+      <div className="space-y-2">
+        <Skeleton className="h-4 w-62.5" />
+        <Skeleton className="h-4 w-50" />
+      </div>
+    </div>
+  );
 
   if (!profile) return <p>User not found</p>;
 
@@ -52,17 +61,19 @@ export default function PublicProfilePage() {
         name={profile.name}
         bio={profile.bio || ""}
         createdAt={profile.joinedAt}
-        clerkUserId={profile.id}
+        clerkUserId={profile.clerkUserId}
         skillsOffered={profile.skillsOffered}
+        skillsWanted={profile.skillsWanted}
         hasAcceptedRequest={profile.hasAcceptedRequest}
         chatId={profile.chatId}
+        hasActiveConfirmedSession={profile.hasActiveConfirmedSession}
       />
 
       <ProfileTabs
         stats={{ averageRating: profile.averageRating, ratingCount: profile._count.sessionsAsMentor + profile._count.sessionsAsMentee, sessionsCompleted: profile.sessionsCompleted }}
         skillsOffered={profile.skillsOffered}
         skillsWanted={profile.skillsWanted}
-        feedbacks={profile.feedbacks} 
+        feedbacks={profile.feedbacks}
       />
     </div>
   );

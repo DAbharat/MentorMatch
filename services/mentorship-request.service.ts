@@ -34,6 +34,23 @@ export async function receivedMentorshipRequests(limit: number = 10, cursor?: st
     }
 }
 
+export async function sentMentorshipRequests(status?: string, limit: number = 10, cursor?: string) {
+    try {
+        console.log("fetching sent mentorship requests...")
+        const params = new URLSearchParams({ limit: limit.toString() });
+
+        if(cursor) params.append("cursor", cursor)
+        if(status) params.append("status", status)
+
+        const response = await axios.get(`/api/mentorship-requests/sent?${params.toString()}`)
+        return response.data
+    } catch (error) {
+        const axiosError = error as AxiosError<ApiResponse>;
+        console.error("Error fetching sent mentorship requests:", axiosError.response?.data.message || axiosError.message);
+        throw new Error(axiosError.response?.data.message || "An error occurred while fetching sent mentorship requests.");
+    }
+}
+
 export async function updateMentorshipRequestStatus(
     requestId: string,
     status: "ACCEPT" | "REJECT"

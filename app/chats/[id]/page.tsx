@@ -13,6 +13,12 @@ import { Send, ArrowLeft } from 'lucide-react'
 import { Spinner } from '@/components/ui/spinner'
 import { toast } from 'sonner'
 import axios from 'axios'
+import { DM_Sans } from "next/font/google"
+
+const DM_Sans_Font = DM_Sans({
+    weight: ["400", "500", "700"],
+    subsets: ["latin"],
+})
 
 export default function ChatRoomPage() {
     const params = useParams()
@@ -27,12 +33,10 @@ export default function ChatRoomPage() {
     const messagesEndRef = useRef<HTMLDivElement>(null)
     const inputRef = useRef<HTMLInputElement>(null)
 
-    // Auto-scroll to bottom
     const scrollToBottom = useCallback(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
     }, [])
 
-    // Hooks for messages and socket
     const { messages, isLoading, appendMessage } = useChatMessages(chatId)
 
     const handleNewMessage = useCallback((message: any) => {
@@ -46,7 +50,6 @@ export default function ChatRoomPage() {
         onNewMessage: handleNewMessage,
     })
 
-    // Fetch chat details
     useEffect(() => {
         const fetchChatDetails = async () => {
             try {
@@ -93,11 +96,9 @@ export default function ChatRoomPage() {
 
         try {
             const response = await sendMessage(chatId, content)
-            // Message will be added via socket event
         } catch (error: any) {
             console.error("Failed to send message:", error)
             toast.error(error.message || "Failed to send message")
-            // Restore message on error
             setMessageInput(content)
         } finally {
             setIsSending(false)
@@ -105,7 +106,6 @@ export default function ChatRoomPage() {
         }
     }
 
-    // Handle typing events
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setMessageInput(e.target.value)
         if (e.target.value.trim()) {
@@ -115,14 +115,11 @@ export default function ChatRoomPage() {
         }
     }
 
-    // Handle video call
     const handleVideoCall = () => {
         if (!otherUser) return
         
-        // Navigate to video call page/route or integrate ZegoCloud here
         router.push(`/sessions/video-call?chatId=${chatId}&userId=${otherUser.clerkUserId}`)
         
-        // Alternative: You can implement ZegoCloud inline
         toast.info("Starting video call...")
     }
 
@@ -143,7 +140,7 @@ export default function ChatRoomPage() {
     }
 
     return (
-        <div className="flex flex-col h-[calc(100vh-3.5rem)] md:h-[calc(100vh-4rem)] w-full overflow-hidden bg-background">
+        <div className={`${DM_Sans_Font.className} flex flex-col h-[calc(100vh-3.5rem)] md:h-[calc(100vh-4rem)] w-full overflow-hidden bg-background`}>
             {/* Chat Room */}
             <div className="flex-1 overflow-hidden min-h-0">
                 <ChatRoom
@@ -151,6 +148,7 @@ export default function ChatRoomPage() {
                     lastSeen={connected ? "online" : "offline"}
                     messages={messages}
                     currentUserId={user?.id}
+                    otherUserClerkId={otherUser.clerkUserId}
                     onVideoCall={handleVideoCall}
                     onBack={() => router.back()}
                 />

@@ -22,6 +22,7 @@ export async function GET(req: NextRequest) {
             },
             select: {
                 id: true,
+                clerkUserId: true,
                 name: true,
                 bio: true,
                 skillsOffered: {
@@ -63,9 +64,9 @@ export async function GET(req: NextRequest) {
             });
         }
 
-        // Check if current user has accepted mentorship request with this profile user
         let hasAcceptedRequest = false;
         let chatId = null;
+        let hasActiveConfirmedSession = false;
 
         if (currentClerkUserId && currentClerkUserId !== profileClerkUserId) {
             const currentUser = await prisma.user.findUnique({
@@ -74,7 +75,6 @@ export async function GET(req: NextRequest) {
             });
 
             if (currentUser) {
-                // Check for accepted mentorship request (either direction)
                 const acceptedRequest = await prisma.mentorshipRequest.findFirst({
                     where: {
                         OR: [
@@ -98,28 +98,76 @@ export async function GET(req: NextRequest) {
                 if (acceptedRequest) {
                     hasAcceptedRequest = true;
                     
-                    // Fetch the chat for this mentorship
-                    const chat = await prisma.chat.findFirst({
+                    const fullRequest = await prisma.mentorshipRequest.findFirst({
                         where: {
                             OR: [
                                 {
                                     mentorId: fetchUser.id,
                                     menteeId: currentUser.id,
-                                    skillId: acceptedRequest.skillId
+                                    status: "ACCEPTED"
                                 },
                                 {
                                     mentorId: currentUser.id,
                                     menteeId: fetchUser.id,
-                                    skillId: acceptedRequest.skillId
+                                    status: "ACCEPTED"
                                 }
                             ]
                         },
                         select: {
-                            id: true
+                            mentorId: true,
+                            menteeId: true,
+                            skillId: true
                         }
                     });
 
-                    chatId = chat?.id || null;
+                    if (fullRequest) {
+                        const chat = await prisma.chat.upsert({
+                            where: {
+                                mentorId_menteeId_skillId: {
+                                    mentorId: fullRequest.mentorId,
+                                    menteeId: fullRequest.menteeId,
+                                    skillId: fullRequest.skillId
+                                }
+                            },
+                            update: {},
+                            create: {
+                                mentorId: fullRequest.mentorId,
+                                menteeId: fullRequest.menteeId,
+                                skillId: fullRequest.skillId
+                            },
+                            select: {
+                                id: true
+                            }
+                        });
+
+                        chatId = chat.id;
+
+                        const confirmedSession = await prisma.session.findFirst({
+                            where: {
+                                OR: [
+                                    {
+                                        mentorId: fullRequest.mentorId,
+                                        menteeId: fullRequest.menteeId,
+                                    },
+                                    {
+                                        mentorId: fullRequest.menteeId,
+                                        menteeId: fullRequest.mentorId,
+                                    }
+                                ],
+                                skillId: fullRequest.skillId,
+                                status: "CONFIRMED",
+                                scheduledAt: {
+                                    gte: new Date() 
+                                }
+                            },
+                            select: {
+                                id: true,
+                                scheduledAt: true
+                            }
+                        });
+
+                        hasActiveConfirmedSession = !!confirmedSession;
+                    }
                 }
             }
         }
@@ -139,7 +187,8 @@ export async function GET(req: NextRequest) {
             sessionsCompletedAsMentor: fetchUser._count.sessionsAsMentor,
             sessionsCompletedAsMentee: fetchUser._count.sessionsAsMentee,
             hasAcceptedRequest,
-            chatId
+            chatId,
+            hasActiveConfirmedSession
         }
 
         return NextResponse.json({

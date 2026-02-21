@@ -6,6 +6,12 @@ import { useRouter } from 'next/navigation';
 import { fetchAllChatsForAUser } from '@/services/messages.service';
 import { useUser } from '@clerk/nextjs';
 import { Spinner } from '@/components/ui/spinner';
+import { DM_Sans } from "next/font/google"
+
+const DM_Sans_Font = DM_Sans({
+    weight: ["400", "500", "700"],
+    subsets: ["latin"],
+})
 
 type Chat = {
     id: string;
@@ -71,7 +77,7 @@ export default function ChatPage() {
     }
 
     return (
-        <div className="container mx-auto px-4 py-6 max-w-4xl">
+        <div className={`${DM_Sans_Font.className} container mx-auto px-4 py-6 max-w-4xl`}>
             <h1 className="text-2xl font-bold mb-6">Messages</h1>
             <div className="space-y-2">
                 {chats.map((chat) => {

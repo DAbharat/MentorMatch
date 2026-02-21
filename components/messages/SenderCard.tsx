@@ -29,7 +29,7 @@ export default function SenderCard(
       {/* Message Content */}
       <div className="flex flex-col items-end min-w-0 max-w-[85%] sm:max-w-[75%] md:max-w-2xl">
         {/* Message bubble */}
-        <div className="bg-primary text-primary-foreground rounded-2xl rounded-tr-sm px-3 py-2 sm:px-4 sm:py-2.5 inline-flex items-end gap-1.5 sm:gap-2 shadow-sm">
+        <div className="bg-blue-500 text-primary-foreground rounded-2xl rounded-tr-sm px-3 py-2 sm:px-4 sm:py-2.5 inline-flex items-end gap-1.5 sm:gap-2 shadow-sm">
           <p className="text-xs sm:text-sm md:text-base wrap-break-word whitespace-pre-wrap">
             {content}
           </p>

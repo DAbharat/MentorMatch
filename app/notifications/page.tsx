@@ -1,11 +1,23 @@
 "use client"
 
 import NotificationCard from "@/components/notifications/NotificationCard"
-import { FetchAllNotifications } from "@/services/notification.service"
+import { FetchAllNotifications, deleteAllNotifications, markAllNotificationsAsRead } from "@/services/notification.service"
 import React, { useEffect, useState } from "react"
 import { toast } from "sonner"
 import { DM_Sans } from "next/font/google"
 import { Separator } from "@/components/ui/separator"
+import { Button } from "@/components/retroui/Button"
+import { Trash2, CheckCheck, SlidersHorizontal } from "lucide-react"
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 const DM_Sans_Font = DM_Sans({
     weight: ["400", "500", "700"],
@@ -32,46 +44,136 @@ export default function NotificationPage() {
     const [nextCursor, setNextCursor] = useState<string | null>(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
+    const [filter, setFilter] = useState<"all" | "read" | "unread">("all")
+    const [isProcessing, setIsProcessing] = useState(false)
+    const [showDeleteAllDialog, setShowDeleteAllDialog] = useState(false)
+
+    const fetchNotifications = async () => {
+        try {
+            setLoading(true)
+            setError(null)
+
+            const data = await FetchAllNotifications({ limit: 10, filter })
+
+            setNotifications(data.notifications)
+            setNextCursor(data.nextCursor)
+
+        } catch (error: any) {
+            const errorMessage =
+                error?.message || "Failed to load notifications."
+            setError(errorMessage)
+            toast.error(errorMessage)
+        } finally {
+            setLoading(false)
+        }
+    }
 
     useEffect(() => {
-        const fetchNotifications = async () => {
-            try {
-                setLoading(true)
-                setError(null)
-
-                const data = await FetchAllNotifications({ limit: 10 })
-
-                setNotifications(data.notifications)
-                setNextCursor(data.nextCursor)
-
-            } catch (error: any) {
-                const errorMessage =
-                    error?.message || "Failed to load notifications."
-                setError(errorMessage)
-                toast.error(errorMessage)
-            } finally {
-                setLoading(false)
-            }
-        }
-
         fetchNotifications()
-    }, [])
+    }, [filter])
+
+    const handleMarkAllAsRead = async () => {
+        try {
+            setIsProcessing(true)
+            await markAllNotificationsAsRead()
+            toast.success("All notifications marked as read")
+            await fetchNotifications()
+        } catch (error: any) {
+            toast.error(error.message || "Failed to mark notifications as read")
+        } finally {
+            setIsProcessing(false)
+        }
+    }
+
+    const handleDeleteAll = async () => {
+        try {
+            setIsProcessing(true)
+            await deleteAllNotifications()
+            toast.success("All notifications deleted")
+            setNotifications([])
+            setShowDeleteAllDialog(false)
+        } catch (error: any) {
+            toast.error(error.message || "Failed to delete notifications")
+        } finally {
+            setIsProcessing(false)
+        }
+    }
+
+    const handleNotificationDeleted = (notificationId: string) => {
+        setNotifications(prev => prev.filter(n => n.id !== notificationId))
+    }
+
+    const handleNotificationRead = (notificationId: string) => {
+        setNotifications(prev => prev.map(n => 
+            n.id === notificationId ? { ...n, isRead: true } : n
+        ))
+    }
+
+    const unreadCount = notifications.filter(n => !n.isRead).length
 
     return (
         <div className={`${DM_Sans_Font.className} pt-6 md:pt-8`}>
 
             {/* Centered Header */}
             <div className="max-w-3xl mx-auto px-4">
-                <h1 className="text-2xl font-semibold mb-4">
-                    Notifications
-                </h1>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
+                    <h1 className="text-2xl font-semibold">
+                        Notifications {unreadCount > 0 && <span className="text-sm text-gray-500">({unreadCount} unread)</span>}
+                    </h1>
+                    <div className="flex flex-wrap gap-2">
+                        <Button
+                            className="bg-transparent border border-black text-black hover:bg-gray-100 flex items-center gap-2 text-xs sm:text-sm"
+                        >
+                            <SlidersHorizontal className="w-4 h-4" />
+                            <span className="hidden xs:inline sm:inline">Filter</span>
+                        </Button>
+                        <Button
+                            size="sm"
+                            onClick={handleMarkAllAsRead}
+                            disabled={isProcessing || unreadCount === 0}
+                            className="bg-transparent border border-black text-black hover:bg-gray-100 flex items-center gap-2 text-xs sm:text-sm"
+                        >
+                            <CheckCheck className="w-4 h-4" />
+                            <span className="hidden xs:inline sm:inline">Mark All Read</span>
+                            <span className="xs:hidden sm:hidden">Mark Read</span>
+                        </Button>
+                        <Button
+                            size="sm"
+                            onClick={() => setShowDeleteAllDialog(true)}
+                            disabled={isProcessing || notifications.length === 0}
+                            className="bg-transparent border border-red-500 text-red-500 hover:bg-red-50 flex items-center gap-2 text-xs sm:text-sm"
+                        >
+                            <Trash2 className="w-4 h-4" />
+                            <span className="hidden xs:inline sm:inline">Delete All</span>
+                        </Button>
+                    </div>
+                </div>
             </div>
 
             {/* Full Width Separator */}
             <Separator className="w-full" />
 
+            {/* Filters */}
+            <div className="max-w-4xl mx-auto px-4 mt-6">
+                <div className="flex gap-2 mb-4">
+                    {["all", "unread", "read"].map((f) => (
+                        <button
+                            key={f}
+                            onClick={() => setFilter(f as any)}
+                            className={`px-3 py-2 sm:px-4 text-xs sm:text-sm font-medium rounded-lg transition-colors cursor-pointer ${
+                                filter === f
+                                    ? "bg-black text-white"
+                                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                            }`}
+                        >
+                            {f.charAt(0).toUpperCase() + f.slice(1)}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
             {/* Centered Content */}
-            <div className="max-w-4xl mx-auto px-4 mt-6 space-y-4">
+            <div className="max-w-4xl mx-auto px-4 space-y-4">
 
                 {loading && (
                     <p className="text-gray-500">
@@ -89,7 +191,7 @@ export default function NotificationPage() {
                 )}
 
                 {!loading && !error && notifications.length === 0 && (
-                    <p className="text-gray-500">
+                    <p className="text-gray-500 text-center py-8">
                         No notifications yet.
                     </p>
                 )}
@@ -104,10 +206,33 @@ export default function NotificationPage() {
                         isRead={notification.isRead}
                         createdAt={notification.createdAt}
                         sender={notification.sender}
+                        onDeleted={handleNotificationDeleted}
+                        onRead={handleNotificationRead}
                     />
                 ))}
 
             </div>
+
+            {/* Delete All Confirmation Dialog */}
+            <AlertDialog open={showDeleteAllDialog} onOpenChange={setShowDeleteAllDialog}>
+                <AlertDialogContent className="w-[90vw] max-w-md mx-auto">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete all notifications?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete all your notifications.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:gap-0">
+                        <AlertDialogCancel className="w-full sm:w-auto">Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={handleDeleteAll}
+                            className="bg-red-600 hover:bg-red-700 w-full sm:w-auto"
+                        >
+                            Delete All
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     )
 }
