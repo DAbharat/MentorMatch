@@ -106,121 +106,119 @@ export default function SessionsList({
     session.mentor.clerkUserId === currentUserClerkId
 
   return (
-  <div className={`${DM_Sans_Font.className} bg-[#0b090a] min-h-screen`}>
-    
-    {/* Top Filter Bar */}
-    <div className="container max-w-4xl mx-auto px-4 pt-6 pb-2">
-      <div className="flex justify-end">
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button className="bg-white border border-black text-black hover:bg-gray-100 flex items-center gap-2 text-xs sm:text-sm">
-              <SlidersHorizontal className="w-4 h-4" />
-              {/* <span className="hidden sm:inline">Filter</span> */}
-            </Button>
-          </PopoverTrigger>
+    <div className={`${DM_Sans_Font.className} bg-[#0b090a] min-h-screen`}>
 
-          <PopoverContent className="w-44 p-2 bg-[#161a1d]">
-            <div className="space-y-1">
-              {["all", "pending", "confirmed", "completed"].map((f) => {
-                const isActive = filter === f
-                return (
-                  <button
-                    key={f}
-                    onClick={() => setFilter(f as any)}
-                    className={`w-full text-left px-3 py-2 text-sm rounded-md transition ${
-                      isActive
-                        ? "bg-black text-white"
-                        : "hover:bg-gray-800 text-[#d3d3d3]"
-                    }`}
-                  >
-                    {f.charAt(0).toUpperCase() + f.slice(1)}
-                  </button>
-                )
-              })}
-            </div>
-          </PopoverContent>
-        </Popover>
-      </div>
-    </div>
+      {/* Top Filter Bar */}
+      <div className="container max-w-4xl mx-auto px-3 sm:px-4 pt-4 sm:pt-6 pb-2">
+        <div className="flex justify-end">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button className="bg-transparent border border-[#1f1f1f] text-black hover:bg-transparent flex items-center gap-2 text-xs sm:text-sm">
+                <SlidersHorizontal className="w-4 h-4 text-white" />
+              </Button>
+            </PopoverTrigger>
 
-    {/* Sessions List */}
-    <div className="container max-w-4xl mx-auto px-4 pb-6">
-      <div className="space-y-4">
-
-        {loading && (
-          <p className="text-center text-muted-foreground py-6">
-            Loading sessions...
-          </p>
-        )}
-
-        {!loading && filteredSessions.length === 0 && (
-          <Card className="p-6 text-center">
-            <p className="text-muted-foreground">No sessions found</p>
-          </Card>
-        )}
-
-        {!loading &&
-          filteredSessions.map((session) => (
-            <Card
-              key={session.id}
-              className="p-5 bg-[#161a1d] border-none shadow-md shadow-black/30"
-            >
-              <div className="space-y-3">
-
-                <div className="flex items-start justify-between">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-base text-[#d3d3d3]">
-                        {session.skill.name}
-                      </h3>
-                      <Badge className={getStatusColor(session.status)}>
-                        {session.status}
-                      </Badge>
-                    </div>
-
-                    <p className="text-sm text-muted-foreground">
-                      with{" "}
-                      {isMentor(session)
-                        ? session.mentee.name
-                        : session.mentor.name}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div>
-                    <p className="text-muted-foreground">Scheduled</p>
-                    <p className="font-medium text-[#d3d3d3]">
-                      {new Date(session.scheduledAt).toLocaleString()}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground">Duration</p>
-                    <p className="font-medium text-[#d3d3d3]">
-                      {session.totalCallDuration} minutes
-                    </p>
-                  </div>
-                </div>
-
-                {session.status === "CONFIRMED" && (
-                  <div className="pt-1">
-                    <Button
-                      className="w-full bg-white text-black hover:bg-[#d3d3d3] border border-black rounded-2xl"
-                      onClick={() => handleNavigateToChat(session)}
-                      disabled={navigatingToChatId === session.id}
+            <PopoverContent className="w-44 p-2 bg-[#161a1d]">
+              <div className="space-y-1">
+                {["all", "pending", "confirmed", "completed"].map((f) => {
+                  const isActive = filter === f
+                  return (
+                    <button
+                      key={f}
+                      onClick={() => setFilter(f as any)}
+                      className={`w-full text-left px-3 py-2 text-sm rounded-md transition ${
+                        isActive
+                          ? "bg-black text-white"
+                          : "hover:bg-gray-800 text-[#d3d3d3]"
+                      }`}
                     >
-                      <MessageCircleMore className="mr-2 size-4" />
-                      {navigatingToChatId === session.id
-                        ? "Opening..."
-                        : "Message"}
-                    </Button>
-                  </div>
-                )}
+                      {f.charAt(0).toUpperCase() + f.slice(1)}
+                    </button>
+                  )
+                })}
               </div>
+            </PopoverContent>
+          </Popover>
+        </div>
+      </div>
+
+      {/* Sessions List */}
+      <div className="container max-w-4xl mx-auto px-3 sm:px-4 pb-6">
+        <div className="space-y-3 sm:space-y-4">
+
+          {loading && (
+            <p className="text-center text-muted-foreground py-6">
+              Loading sessions...
+            </p>
+          )}
+
+          {!loading && filteredSessions.length === 0 && (
+            <Card className="p-4 sm:p-6 text-center">
+              <p className="text-muted-foreground text-sm">No sessions found</p>
             </Card>
-          ))}
+          )}
+
+          {!loading &&
+            filteredSessions.map((session) => (
+              <Card
+                key={session.id}
+                className="p-4 sm:p-5 bg-[#111315] border border-[#1f1f1f] shadow-md shadow-black/30"
+              >
+                <div className="space-y-2.5 sm:space-y-3">
+
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="font-semibold text-sm sm:text-base text-[#d3d3d3] leading-tight">
+                          {session.skill.name}
+                        </h3>
+                        <Badge className={`${getStatusColor(session.status)} text-xs shrink-0`}>
+                          {session.status}
+                        </Badge>
+                      </div>
+                      <p className="text-xs sm:text-sm text-muted-foreground">
+                        with{" "}
+                        {isMentor(session)
+                          ? session.mentee.name
+                          : session.mentor.name}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 sm:gap-3 text-xs sm:text-sm">
+                    <div>
+                      <p className="text-muted-foreground">Scheduled</p>
+                      <p className="font-medium text-[#d3d3d3] leading-snug">
+                        {new Date(session.scheduledAt).toLocaleString()}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground">Duration</p>
+                      <p className="font-medium text-[#d3d3d3]">
+                        {session.totalCallDuration} min
+                      </p>
+                    </div>
+                  </div>
+
+                  {session.status === "CONFIRMED" && (
+                    <div className="pt-0.5">
+                      <Button
+                        className="w-full bg-[#1c2023] text-[#d3d3d3] hover:bg-[#2a2f34] border border-white/10 rounded-2xl text-xs sm:text-sm py-2"
+                        onClick={() => handleNavigateToChat(session)}
+                        disabled={navigatingToChatId === session.id}
+                      >
+                        <MessageCircleMore className="mr-2 size-3.5 sm:size-4" />
+                        {navigatingToChatId === session.id
+                          ? "Opening..."
+                          : "Message"}
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </Card>
+            ))}
+        </div>
       </div>
     </div>
-  </div>
-)
+  )
 }

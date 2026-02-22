@@ -56,7 +56,7 @@ export default function RequestSidebarCard(
     }
 
     const handleScheduleSession = () => {
-        router.push(`/sessions/schedule/${mentor?.id}`)
+        router.push(`/sessions/schedule/${mentor?.clerkUserId}`)
     }
 
     const getStatusBadge = (status: string) => {
@@ -66,7 +66,7 @@ export default function RequestSidebarCard(
             REJECTED: "bg-red-100 text-red-800"
         }
         return (
-            <Badge className={`${statusColors[status] || "bg-gray-100 text-gray-800"} text-xs`}>
+            <Badge className={`${statusColors[status] || "bg-gray-100 text-gray-800"} text-xs shrink-0`}>
                 {status}
             </Badge>
         )
@@ -77,81 +77,76 @@ export default function RequestSidebarCard(
     const userClerkId = displayUser?.clerkUserId
 
   return (
-    <Card className="p-4 w-full bg-[#161a1d] border-none">
-        <div className="flex gap-4">
+    <Card className="p-3 sm:p-4 w-full bg-[#161a1d] border-none">
+        <div className="flex gap-3">
 
             {/* Avatar */}
-            <div className="shrink-0 w-10 h-10 rounded-full bg-[#d3d3d3] flex items-center justify-center text-black text-lg font-semibold shadow-md">
+            <div className="shrink-0 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[#d3d3d3] flex items-center justify-center text-black text-base sm:text-lg font-semibold shadow-md">
                 {userName.charAt(0).toUpperCase()}
             </div>
 
             {/* Content */}
-            <div className="flex-1 min-w-0 space-y-1">
+            <div className="flex-1 min-w-0 space-y-1.5">
 
-                {/* Name + Timestamp + Status row */}
-                <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-2">
+                {/* Name + Timestamp row */}
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                    {/* Name + badge */}
+                    <div className="flex items-center gap-1.5 min-w-0">
                         {userClerkId && (
-                            <Link href={`/profile/${userClerkId}`} onClick={(e) => e.stopPropagation()}>
-                                <span className="text-[#d3d3d3] text-sm font-semibold truncate hover:underline">
+                            <Link href={`/profile/${userClerkId}`} onClick={(e) => e.stopPropagation()} className="min-w-0">
+                                <span className="text-[#d3d3d3] text-sm font-semibold truncate hover:underline block">
                                     {userName}
                                 </span>
                             </Link>
                         )}
                         {isSentView && status && getStatusBadge(status)}
                     </div>
-                    <span className="text-xs text-gray-400 whitespace-nowrap">
+                    {/* Timestamp — pushed to end but wraps naturally on small screens */}
+                    <span className="text-xs text-gray-400 whitespace-nowrap ml-auto">
                         {new Date(createdAt).toLocaleString()}
                     </span>
                 </div>
 
                 {/* Title */}
-                <h3 className="text-muted-foreground text-sm font-medium">{title}</h3>
+                <h3 className="text-muted-foreground text-sm font-medium leading-snug">{title}</h3>
 
                 {/* Message */}
-                <p className="text-sm text-gray-500 leading-relaxed">{message}</p>
-
-                {/* Skill */}
-                {/* {skill && (
-                    <span className="inline-block px-2 py-1 text-xs bg-gray-100 rounded-md">
-                        {isSentView ? `Requested to learn: ${skill.name}` : `Wants to learn: ${skill.name}`}
-                    </span>
-                )} */}
+                <p className="text-sm text-gray-500 leading-relaxed wrap-break-word">{message}</p>
 
                 {/* Action Buttons */}
                 {!isSentView ? (
-                    <div className="flex gap-3 pt-1">
-                        <button 
+                    <div className="flex flex-wrap gap-2 pt-1">
+                        <button
                             onClick={(e) => {
                                 e.stopPropagation()
                                 handleAction("ACCEPT")
                             }}
                             disabled={isProcessing}
-                            className="px-4 py-1.5 text-sm font-medium rounded-md bg-green-600 text-white hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="flex-1 sm:flex-none px-4 py-1.5 text-sm font-medium rounded-md bg-green-600 text-white hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {isProcessing ? "Processing..." : "Accept"}
                         </button>
-                        <button 
+                        <button
                             onClick={(e) => {
                                 e.stopPropagation()
                                 handleAction("REJECT")
                             }}
                             disabled={isProcessing}
-                            className="px-4 py-1.5 text-sm font-medium rounded-md bg-red-600 text-white hover:bg-red-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="flex-1 sm:flex-none px-4 py-1.5 text-sm font-medium rounded-md bg-red-600 text-white hover:bg-red-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {isProcessing ? "Processing..." : "Reject"}
                         </button>
                     </div>
                 ) : status === "ACCEPTED" && (
                     <div className="flex gap-3 pt-1">
-                        <button 
+                        <button
                             onClick={(e) => {
                                 e.stopPropagation()
                                 handleScheduleSession()
                             }}
-                            className="px-4 py-1.5 text-sm font-medium rounded-md bg-blue-600 text-white hover:bg-blue-700 transition flex items-center gap-2"
+                            className="w-full sm:w-auto px-4 py-1.5 text-sm font-medium bg-[#0f2f85] text-white hover:bg-[#0a2368] transition flex items-center justify-center gap-2 rounded-full"
                         >
-                            <Calendar className="w-4 h-4" />
+                            <Calendar className="w-4 h-4 shrink-0" />
                             Schedule a Session
                         </button>
                     </div>

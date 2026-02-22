@@ -34,7 +34,7 @@ export default function ProfileCard(
     const isOwner = user && clerkUserId && user.id === clerkUserId
 
     return (
-        <Card className={`bg-[#161a1d] border-none px-4 py-4 max-w-4xl w-full mx-auto ${DM_Sans_Font.className} cursor-pointer`} onClick={onClick}>
+        <Card className={`bg-[#111315] border-[#1f1f1f] px-4 py-4 max-w-4xl w-full mx-auto ${DM_Sans_Font.className} cursor-pointer`} onClick={onClick}>
             <div className="flex items-center gap-3">
                 {/* Avatar */}
                 <div className="shrink-0">

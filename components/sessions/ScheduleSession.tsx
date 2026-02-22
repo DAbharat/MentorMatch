@@ -73,44 +73,44 @@ export default function ScheduleSession({
 
     return (
         <div className={`${DM_Sans_Font.className} min-h-screen flex items-center justify-center px-4 py-8`}>
-            <Card className="w-full max-w-3xl p-6 md:p-8 rounded-2xl shadow-lg">
+            <Card className="w-full max-w-2xl p-6 md:p-10 lg:p-12 rounded-2xl shadow-lg bg-[#111315] border-[#1f1f1f]">
 
                 {/* Header */}
                 <div className="space-y-1">
-                    <h1 className="text-xl md:text-2xl font-semibold tracking-tight">
+                    <h1 className="text-[#d3d3d3] text-xl md:text-2xl font-semibold tracking-tight">
                         Schedule Session
                     </h1>
                     <p className="text-sm text-muted-foreground">
                         Request a mentorship session with{" "}
-                        <span className="font-medium text-foreground">
+                        <span className="font-semibold text-muted-foreground">
                             {mentor.name}
                         </span>
                     </p>
                 </div>
 
-                <Separator />
+                <Separator className="bg-[#1f1f1f]"/>
 
-                <form onSubmit={handleSubmit} className="space-y-6">
+                <form onSubmit={handleSubmit} className="space-y-6 md:space-y-8">
 
                     {/* Mentor Info */}
-                    <div className="space-y-2">
-                        <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+                    <div className="space-y-2 md:space-y-3">
+                        <Label className="text-xs uppercase tracking-wide text-[#d3d3d3]">
                             Mentor
                         </Label>
-                        <div className="rounded-lg border border-border px-4 py-3 bg-muted/30">
-                            <p className="text-sm font-medium">
+                        <div className="rounded-lg border border-gray-500 px-4 py-3 bg-transparent">
+                            <p className="text-sm font-medium text-[#d3d3d3]">
                                 {mentor.name}
                             </p>
                         </div>
                     </div>
 
-                    <Separator />
+                    <Separator className="bg-[#1f1f1f]"/>
 
                     {/* Skill + Duration Row */}
                     <div className="grid md:grid-cols-2 gap-5">
 
                         {/* Skill */}
-                        <div className="space-y-2">
+                        <div className="space-y-2 md:space-y-3 text-[#d3d3d3]">
                             <Label htmlFor="skillId">
                                 Select Skill <span className="text-red-500">*</span>
                             </Label>
@@ -123,7 +123,7 @@ export default function ScheduleSession({
                                         skillId: e.target.value
                                     })
                                 }
-                                className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-black disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                className="w-full px-3 py-2 border border-[#1f1f1f] rounded-lg focus:outline-none focus:ring-2 focus:ring-black disabled:bg-transparent text-muted-foreground disabled:cursor-not-allowed"
                                 required
                                 disabled={!!mentorshipRequestSkillId}
                             >
@@ -142,7 +142,7 @@ export default function ScheduleSession({
                         </div>
 
                         {/* Duration */}
-                        <div className="space-y-2">
+                        <div className="space-y-2 md:space-y-3 text-[#d3d3d3]">
                             <Label htmlFor="duration">
                                 Duration (minutes)
                             </Label>
@@ -155,21 +155,21 @@ export default function ScheduleSession({
                                         totalCallDuration: Number(e.target.value)
                                     })
                                 }
-                                className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                                className="w-full px-3 py-2 border border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-black text-muted-foreground"
                             >
                                 <option value={15}>15 minutes</option>
                                 <option value={30}>30 minutes</option>
                             </select>
-                            <p className="text-xs text-muted-foreground">
+                            {/* <p className="text-xs text-muted-foreground">
                                 Maximum 30 minutes
-                            </p>
+                            </p> */}
                         </div>
                     </div>
 
-                    <Separator />
+                    {/* <Separator /> */}
 
                     {/* Date & Time */}
-                    <div className="space-y-2">
+                    <div className="space-y-2 md:space-y-3 text-[#d3d3d3]">
                         <Label htmlFor="scheduledAt">
                             Preferred Date & Time{" "}
                             <span className="text-red-500">*</span>
@@ -184,32 +184,35 @@ export default function ScheduleSession({
                                     scheduledAt: e.target.value
                                 })
                             }
+                            className="border border-gray-500"
                             min={minDateString}
                             required
                         />
-                        <p className="text-xs text-muted-foreground">
+                        {/* <p className="text-xs text-muted-foreground">
                             Must be scheduled at least 1 hour in advance
-                        </p>
+                        </p> */}
                     </div>
 
-                    <Separator />
+                    {/* <Separator /> */}
 
                     {/* Buttons */}
                     <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                        
+                        <Button
+                            type="submit"
+                            className="flex-1 bg-white text-black hover:bg-gray-400 rounded-full"
+                        >
+                            Send Request
+                        </Button>
+
                         <Button
                             type="button"
                             onClick={onCancel}
-                            className="flex-1 bg-gray-200 text-black hover:bg-gray-300"
+                            className="flex-1 bg-transparent text-white rounded-full border border-white/40"
                         >
                             Cancel
                         </Button>
 
-                        <Button
-                            type="submit"
-                            className="flex-1 bg-black text-white hover:bg-black/90"
-                        >
-                            Send Request
-                        </Button>
                     </div>
                 </form>
             </Card>

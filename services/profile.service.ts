@@ -30,10 +30,10 @@ export async function updateMyProfile(profileData: {
     }
 }
 
-export async function fetchUserById(params: { userId: string }) {
+export async function fetchUserById(params: { clerkUserId: string }) {
     try {
-        console.log("userid: ", params.userId)
-        const response = await axios.get(`/api/user/${params.userId}`)
+        //console.log("userid: ", params.clerkUserId)
+        const response = await axios.get(`/api/user/${params.clerkUserId}`)
         return response.data
     } catch (error) {
         const axiosError = error as AxiosError<ApiResponse>

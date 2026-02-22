@@ -54,7 +54,7 @@ export default function RequestForm({
     }
 
     return (
-        <div className="bg-[#161a1d]">
+        <div className="bg-[#111315] p-6 sm:p-8 border-[#1f1f1f]">
             <form onSubmit={handleSubmit} className="w-full">
             <FieldSet className="relative">
                 <div className="flex items-start justify-between gap-4 mb-2">
@@ -115,7 +115,7 @@ export default function RequestForm({
                         <p className="text-sm text-muted-foreground">Message must be at least 10 characters long.</p>
                     </Field>
 
-                    <div className="flex justify-center mt-6">
+                    <div className="flex justify-center mt-2">
                         <Button 
                             type="submit" 
                             disabled={!skillId || loading}

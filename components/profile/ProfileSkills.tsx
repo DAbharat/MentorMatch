@@ -27,7 +27,7 @@ export default function ProfileSkills({
       className={`w-full max-w-4xl mx-auto px-4 sm:px-6 md:px-0 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8 ${DM_Sans_Font.className} bg-[#0b090a]`}
     >
       {/* Skills Offered */}
-      <div className="bg-[#161a1d] rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300 p-4 sm:p-6 flex flex-col">
+      <div className="bg-[#111315] rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300 p-4 sm:p-6 flex flex-col border border-[#1f1f1f]">
         <div className="mb-4 pb-2 border-b border-gray-100">
           <h3 className="text-lg font-semibold text-[#d3d3d3] flex items-center gap-2">
             <svg
@@ -69,7 +69,7 @@ export default function ProfileSkills({
       </div>
 
       {/* Skills Wanted */}
-      <div className="bg-[#161a1d] rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300 p-4 sm:p-6 flex flex-col">
+      <div className="bg-[#111315] rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300 p-4 sm:p-6 flex flex-col border border-[#1f1f1f]">
         <div className="mb-4 pb-2 border-b border-gray-100">
           <h3 className="text-lg font-semibold text-[#d3d3d3] flex items-center gap-2">
             <svg

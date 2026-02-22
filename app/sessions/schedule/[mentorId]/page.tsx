@@ -43,7 +43,7 @@ export default function ScheduleSessionPage({ params }: PageProps) {
         const loadMentor = async () => {
             try {
                 setLoading(true)
-                const response = await fetchUserById({ userId: mentorId })
+                const response = await fetchUserById({ clerkUserId: mentorId })
                 
                 if (!response?.data) {
                     throw new Error("Failed to load mentor information")

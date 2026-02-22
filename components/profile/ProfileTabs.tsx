@@ -48,9 +48,9 @@ export default function ProfileTabs({
     const [activeTab, setActiveTab] = useState<Tab>("Skills");
 
     return (
-        <section className={`mt-4 bg-[#0b090a] ${DM_Sans_Font.className}`}>
+        <section className={`mt-4 md:mt-14 lg:mt-14 bg-[#0b090a] ${DM_Sans_Font.className}`}>
             {/* TAB BAR */}
-            <div className="border-b border-[#1f1f1f] flex justify-center gap-8 text-sm font-medium bg-[#0b090a]">
+            <div className="border-b border-[#1f1f1f] flex justify-center gap-8 text-md font-medium bg-[#0b090a]">
                 {TABS.map((tab) => (
                     <button
                         key={tab}

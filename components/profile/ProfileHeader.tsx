@@ -123,7 +123,7 @@ export default function ProfileHeader(
               {isOwner ? (
                 <Button
                   size="sm"
-                  className="mt-6 bg-transparent border border-[#d3d3d3] border-b-2 text-[#d3d3d3] px-4"
+                  className="mt-6 bg-transparent rounded-full border border-[#d3d3d3]/50 border-b-2 text-[#d3d3d3] px-8 py-2"
                   onClick={() => setIsEditSheetOpen(true)}
                 >
                   Edit Profile
@@ -132,7 +132,7 @@ export default function ProfileHeader(
                 <div className="flex gap-2 mt-6">
                   <Button
                     size="sm"
-                    className="bg-transparent border border-[#d3d3d3] border-b-2 text-[#d3d3d3] px-4 flex items-center gap-2"
+                    className="bg-transparent rounded-full border border-[#d3d3d3]/50 border-b-2 text-[#d3d3d3] px-8 py-2 flex items-center gap-2"
                     onClick={() => router.push(`/chats/${chatId}`)}
                   >
                     <MessageCircleMore className="w-4 h-4" />
@@ -140,7 +140,7 @@ export default function ProfileHeader(
                   </Button>
                   <Button
                     size="sm"
-                    className="bg-transparent border border-[#d3d3d3] border-b-2 text-[#d3d3d3] px-4 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="bg-transparent rounded-full border border-[#d3d3d3]/50 border-b-2 text-[#d3d3d3] px-8 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     onClick={() => setOpen(true)}
                     disabled={hasActiveConfirmedSession}
                     title={hasActiveConfirmedSession ? "You have an active confirmed session. Wait until it completes to send another request." : "Send a new mentorship request"}
@@ -151,7 +151,7 @@ export default function ProfileHeader(
               ) : (
                 <Button
                   size="sm"
-                  className="mt-6 bg-transparent border border-[#d3d3d3] text-[#d3d3d3] border-b-2 px-4"
+                  className="mt-6 bg-transparent rounded-full border border-[#d3d3d3]/50 text-[#d3d3d3] border-b-2 px-8 py-2"
                   onClick={() => setOpen(true)}
                 >
                   Send Request
@@ -160,7 +160,7 @@ export default function ProfileHeader(
             </div>
             {open && (
               <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-                <div className="bg-[#161a1d] p-8 rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                <div className="bg-[#111315] border border-[#1f1f1f] rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
                   <RequestFormContainer
                     mentorId={id}
                     mentorName={name}
