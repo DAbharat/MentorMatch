@@ -4,6 +4,12 @@ import { useState } from "react";
 import ProfileStats from "@/components/profile/ProfileStats";
 import ProfileSkills from "@/components/profile/ProfileSkills";
 import ProfileFeedback from "@/components/profile/ProfileFeedback";
+import { DM_Sans } from "next/font/google";
+
+const DM_Sans_Font = DM_Sans({
+  weight: ["400", "500", "700"],
+  subsets: ["latin"],
+});
 
 type ProfileTabsProps = {
     stats: {
@@ -42,16 +48,16 @@ export default function ProfileTabs({
     const [activeTab, setActiveTab] = useState<Tab>("Skills");
 
     return (
-        <section className="mt-10">
+        <section className={`mt-4 bg-[#0b090a] ${DM_Sans_Font.className}`}>
             {/* TAB BAR */}
-            <div className="border-b flex justify-center gap-8 text-sm font-medium">
+            <div className="border-b border-[#1f1f1f] flex justify-center gap-8 text-sm font-medium bg-[#0b090a]">
                 {TABS.map((tab) => (
                     <button
                         key={tab}
                         onClick={() => setActiveTab(tab)}
-                        className={`pb-3 transition-colors ${activeTab === tab
-                                ? "border-b-2 border-black text-black"
-                                : "text-muted-foreground hover:text-black"
+                        className={`cursor-pointer pb-3 transition-colors ${activeTab === tab
+                                ? "border-b-2 border-[#d3d3d3] text-[#d3d3d3]"
+                                : "text-muted-foreground hover:text-[#d3d3d3]"
                             }`}
                     >
                         {tab}

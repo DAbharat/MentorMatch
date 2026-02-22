@@ -38,7 +38,7 @@ export default function ProfileStats(
     );
   }
   return (
-    <div className={`grid grid-cols-3 gap-6 text-center ${DM_Sans_Font.className}`}>
+    <div className={`grid grid-cols-3 gap-6 text-center ${DM_Sans_Font.className} bg-[#0b090a]`}>
       <div className="p-4 rounded-xl bg-slate-50">
         <p className="text-2xl font-semibold">{stats.sessionsCompleted}</p>
         <p className="text-sm text-muted-foreground">Sessions</p>

@@ -85,85 +85,92 @@ export default function RequestPage() {
         <div className={`${DM_Sans_Font.className} pt-6 md:pt-8`}>
 
             <div className="max-w-4xl mx-auto px-4">
-                <div className="flex items-center justify-between mb-4">
-                    <h1 className="text-2xl font-semibold">
-                        Mentorship Requests
-                    </h1>
-                    <div className="flex gap-2">
-                        <Popover>
-                            <PopoverTrigger asChild>
-                                <Button
-                                    className="bg-transparent border border-black text-black hover:bg-gray-100 flex items-center gap-2 text-xs sm:text-sm"
+    <div className="flex items-center mb-4">
+        
+        <div className="flex gap-2 ml-auto">
+            <Popover>
+                <PopoverTrigger asChild>
+                    <Button
+                        className="bg-transparent border border-[#1f1f1f] text-[#d3d3d3] hover:bg-transparent flex items-center gap-2 text-xs sm:text-sm"
+                    >
+                        <SlidersHorizontal className="w-4 h-4" />
+                        <span className="hidden xs:inline sm:inline">
+                            Type: {mainFilter.charAt(0).toUpperCase() + mainFilter.slice(1)}
+                        </span>
+                        <span className="xs:hidden sm:hidden">
+                            {mainFilter.charAt(0).toUpperCase() + mainFilter.slice(1)}
+                        </span>
+                    </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-44 p-2 border border-[#1f1f1f] bg-[#161a1d]">
+                    <div className="space-y-1">
+                        {["received", "sent"].map((f) => {
+                            const isActive = mainFilter === f
+
+                            return (
+                                <button
+                                    key={f}
+                                    onClick={() => {
+                                        setMainFilter(f as any)
+                                        setStatusFilter("all")
+                                    }}
+                                    className={`w-full text-left px-3 py-2 text-sm rounded-md transition-colors ${
+                                        isActive
+                                            ? "bg-black text-white"
+                                            : "hover:bg-gray-800 text-[#d3d3d3]"
+                                    }`}
                                 >
-                                    <SlidersHorizontal className="w-4 h-4" />
-                                    <span className="hidden xs:inline sm:inline">Type: {mainFilter.charAt(0).toUpperCase() + mainFilter.slice(1)}</span>
-                                    <span className="xs:hidden sm:hidden">{mainFilter.charAt(0).toUpperCase() + mainFilter.slice(1)}</span>
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-44 p-2">
-                                <div className="space-y-1">
-                                    {["received", "sent"].map((f) => {
-                                        const isActive = mainFilter === f
-
-                                        return (
-                                            <button
-                                                key={f}
-                                                onClick={() => {
-                                                    setMainFilter(f as any)
-                                                    setStatusFilter("all")
-                                                }}
-                                                className={`w-full text-left px-3 py-2 text-sm rounded-md transition-colors ${isActive
-                                                        ? "bg-black text-white"
-                                                        : "hover:bg-gray-100 text-gray-700"
-                                                    }`}
-                                            >
-                                                {f.charAt(0).toUpperCase() + f.slice(1)}
-                                            </button>
-                                        )
-                                    })}
-                                </div>
-                            </PopoverContent>
-                        </Popover>
-
-                        {/* Status Filter (only for Sent) */}
-                        {mainFilter === "sent" && (
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                    <Button
-                                        className="bg-transparent border border-black text-black hover:bg-gray-100 flex items-center gap-2 text-xs sm:text-sm"
-                                    >
-                                        <SlidersHorizontal className="w-4 h-4" />
-                                        <span className="hidden xs:inline sm:inline">Status: {statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1)}</span>
-                                        <span className="xs:hidden sm:hidden">{statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1)}</span>
-                                    </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-44 p-2">
-                                    <div className="space-y-1">
-                                        {["all", "pending", "accepted", "rejected"].map((status) => {
-                                            const isActive = statusFilter === status
-
-                                            return (
-                                                <button
-                                                    key={status}
-                                                    onClick={() => setStatusFilter(status as any)}
-                                                    className={`w-full text-left px-3 py-2 text-sm rounded-md transition-colors ${isActive
-                                                            ? "bg-black text-white"
-                                                            : "hover:bg-gray-100 text-gray-700"
-                                                        }`}
-                                                >
-                                                    {status.charAt(0).toUpperCase() + status.slice(1)}
-                                                </button>
-                                            )
-                                        })}
-                                    </div>
-                                </PopoverContent>
-                            </Popover>
-                        )}
+                                    {f.charAt(0).toUpperCase() + f.slice(1)}
+                                </button>
+                            )
+                        })}
                     </div>
-                </div>
-            </div>
+                </PopoverContent>
+            </Popover>
 
-            <Separator className="w-full" />
+            {mainFilter === "sent" && (
+                <Popover>
+                    <PopoverTrigger asChild>
+                        <Button
+                            className="bg-transparent border border-[#1f1f1f] text-[#d3d3d3] hover:bg-transparent flex items-center gap-2 text-xs sm:text-sm"
+                        >
+                            <SlidersHorizontal className="w-4 h-4" />
+                            <span className="hidden xs:inline sm:inline">
+                                Status: {statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1)}
+                            </span>
+                            <span className="xs:hidden sm:hidden">
+                                {statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1)}
+                            </span>
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-44 p-2 bg-[#161a1d] border border-[#1f1f1f]">
+                        <div className="space-y-1">
+                            {["all", "pending", "accepted", "rejected"].map((status) => {
+                                const isActive = statusFilter === status
+
+                                return (
+                                    <button
+                                        key={status}
+                                        onClick={() => setStatusFilter(status as any)}
+                                        className={`w-full text-left px-3 py-2 text-sm rounded-md transition-colors ${
+                                            isActive
+                                                ? "bg-black text-white"
+                                                : "hover:bg-gray-800 text-[#d3d3d3]"
+                                        }`}
+                                    >
+                                        {status.charAt(0).toUpperCase() + status.slice(1)}
+                                    </button>
+                                )
+                            })}
+                        </div>
+                    </PopoverContent>
+                </Popover>
+            )}
+        </div>
+    </div>
+</div>
+
+            {/* <Separator className="w-full" /> */}
 
             <div className="max-w-4xl mx-auto px-4 mt-6">
 

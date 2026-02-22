@@ -73,10 +73,11 @@ export default function Navbar() {
                     {/* Right Side */}
                     <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                         <button
-                            className="relative p-1.5 sm:p-2 text-white hover:bg-blue-500 rounded-lg transition-colors"
+                            className="relative p-1.5 sm:p-2 text-white hover:bg-white rounded-lg transition-colors"
                             aria-label="Notifications"
+                            onClick={() => { router.push(`/notifications`) }}
                         >
-                            <Bell className="w-4 h-4 sm:w-5 sm:h-5" onClick={() => { router.push(`/notifications`) }} />
+                            <Bell className="w-4 h-4 sm:w-5 sm:h-5" />
                             {unreadCount > 0 && (
                                 <span className="absolute top-1 right-1 min-w-4.5 h-4.5 text-xs flex items-center justify-center bg-red-500 text-white rounded-full px-1">
                                     {unreadCount}
@@ -85,7 +86,7 @@ export default function Navbar() {
                         </button>
 
                         <User2
-                            className="w-7 h-7 sm:w-8 sm:h-8 p-1.5 text-black cursor-pointer bg-white rounded-full hover:bg-gray-100 transition-colors"
+                            className="w-7 h-7 sm:w-8 sm:h-8 p-1.5 text-white cursor-pointer bg-transparent rounded-full transition-colors"
                             onClick={() => router.push("/profile")}
                         />
                     </div>
@@ -95,7 +96,7 @@ export default function Navbar() {
                 <div className="hidden md:grid grid-cols-[minmax(300px,1fr)_minmax(600px,900px)_minmax(200px,1fr)] items-center gap-4 lg:gap-6 h-16 max-w-6xl mx-auto">
                     {/* Left Section */}
                     <div className="flex items-center gap-3">
-                        <SidebarTrigger className="text-white hover:bg-blue-500 hover:text-white cursor-pointer" />
+                        <SidebarTrigger className="text-white hover:bg-transparent hover:text-white cursor-pointer" />
                         <Link
                             href="/"
                             className="flex items-center gap-2 group"
@@ -122,7 +123,7 @@ export default function Navbar() {
                         <Tooltip>
                             <TooltipTrigger asChild>
                                 <button
-                                    className="relative p-2 text-white hover:bg-blue-500 rounded-lg transition-colors cursor-pointer"
+                                    className="relative p-2 text-white rounded-lg transition-colors cursor-pointer"
                                     aria-label="Notifications"
                                     onClick={() => router.push('/notifications')}
                                 >
@@ -138,13 +139,13 @@ export default function Navbar() {
                         </Tooltip>
 
                         <Tooltip>
-                            <TooltipTrigger >
+                            <TooltipTrigger asChild>
                                 <User2
-                                    className="w-8 h-8 p-1.5 text-black cursor-pointer bg-white rounded-full hover:bg-gray-100 transition-colors"
+                                    className="w-8 h-8 p-1.5 text-white cursor-pointer bg-transparent rounded-full transition-colors"
                                     onClick={() => router.push("/profile")}
                                 />
-                                <TooltipContent>Profile</TooltipContent>
                             </TooltipTrigger>
+                            <TooltipContent>Profile</TooltipContent>
                         </Tooltip>
 
                     </div>

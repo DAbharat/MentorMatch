@@ -32,22 +32,22 @@ export default function ReceiverCard(
   return (
     <div className="flex items-start gap-2 sm:gap-3 w-full max-w-[85%] sm:max-w-[75%] md:max-w-2xl">
       {/* Avatar */}
-      <div className="shrink-0">
+      {/* <div className="shrink-0">
         <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-linear-to-br from-gray-700 to-gray-900 flex items-center justify-center text-white text-xs sm:text-sm font-semibold shadow-md">
           {sender.name.split(' ').map(n => n.charAt(0).toUpperCase()).join('').slice(0, 2)}
         </div>
-      </div>
+      </div> */}
 
       {/* Message Content */}
       <div className="flex-1 min-w-0">
         {/* Header with name and badge */}
         <div className="flex items-center gap-1.5 sm:gap-2 mb-1 flex-wrap">
-          <Link 
+          {/* <Link 
             href={`/profile/${sender.clerkUserId}`}
-            className="font-semibold text-xs sm:text-sm md:text-base text-foreground truncate hover:text-primary transition-colors hover:underline"
+            className="font-semibold text-xs sm:text-sm md:text-base text-[#d3d3d3] truncate hover:text-primary transition-colors hover:underline"
           >
             {sender.name}
-          </Link>
+          </Link> */}
           {category && (
             <Badge variant="secondary" className="text-[10px] sm:text-xs px-1.5 py-0">
               {category}

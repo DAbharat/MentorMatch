@@ -32,6 +32,7 @@ export async function updateMyProfile(profileData: {
 
 export async function fetchUserById(params: { userId: string }) {
     try {
+        console.log("userid: ", params.userId)
         const response = await axios.get(`/api/user/${params.userId}`)
         return response.data
     } catch (error) {

@@ -83,7 +83,7 @@ export default function ProfilePage() {
     console.log("ProfilePage: Rendering profile page.", profile);
 
     return (
-        <div>
+        <div className='bg-[#0b090a]'>
             <div>
                 <ProfileHeader
                     id={profile.id}

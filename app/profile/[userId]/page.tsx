@@ -55,7 +55,7 @@ export default function PublicProfilePage() {
   if (!profile) return <p>User not found</p>;
 
   return (
-    <div>
+    <div className='bg-[#0b090a]'>
       <ProfileHeader
         id={profile.id}
         name={profile.name}

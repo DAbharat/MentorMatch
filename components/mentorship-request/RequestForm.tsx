@@ -54,11 +54,12 @@ export default function RequestForm({
     }
 
     return (
-        <form onSubmit={handleSubmit} className="w-full">
+        <div className="bg-[#161a1d]">
+            <form onSubmit={handleSubmit} className="w-full">
             <FieldSet className="relative">
                 <div className="flex items-start justify-between gap-4 mb-2">
                     <div className="flex-1 min-w-0">
-                        <FieldLegend>Mentorship Request Form</FieldLegend>
+                        <FieldLegend className="text-[#d3d3d3]">Mentorship Request Form</FieldLegend>
                         <FieldDescription className="mt-1">
                             Request mentorship from {mentorName}
                         </FieldDescription>
@@ -69,7 +70,7 @@ export default function RequestForm({
                         className="shrink-0 p-1 hover:opacity-70 transition-opacity cursor-pointer"
                         aria-label="Close form"
                     >
-                        <X className="w-5 h-5" />
+                        <X className="w-5 h-5 text-[#d3d3d3]" />
                     </button>
                 </div>
 
@@ -77,21 +78,21 @@ export default function RequestForm({
 
                 <FieldGroup>
                     <Field>
-                        <FieldLabel>Mentor's Name</FieldLabel>
-                        <Input value={mentorName} disabled />
+                        <FieldLabel className="text-[#d3d3d3]">Mentor's Name</FieldLabel>
+                        <Input value={mentorName} disabled className="text-muted-foreground" />
                     </Field>
 
                     <Field>
-                        <FieldLabel>Select Skill</FieldLabel>
+                        <FieldLabel className="text-[#d3d3d3]">Select Skill <p className="text-red-700">*</p></FieldLabel>
                         <Select onValueChange={(value) => setSkillId(value)} required>
-                            <SelectTrigger>
+                            <SelectTrigger className="text-[#d3d3d3]">
                                 <SelectValue placeholder="Select a skill you want to learn" />
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent className="bg-[#161a1d]">
                                 <SelectGroup>
-                                    <SelectLabel>Skills</SelectLabel>
+                                    <SelectLabel className="text-[#d3d3d3] font-bold">Skills</SelectLabel>
                                     {skills.map((skill) => (
-                                        <SelectItem key={skill.id} value={skill.id}>
+                                        <SelectItem className="text-muted-foreground" key={skill.id} value={skill.id}>
                                             {skill.name}
                                         </SelectItem>
                                     ))}
@@ -103,21 +104,22 @@ export default function RequestForm({
                     <FieldSeparator />
 
                     <Field>
-                        <FieldLabel>Message</FieldLabel>
+                        <FieldLabel className="text-[#d3d3d3]">Message <p className="text-red-700">*</p></FieldLabel>
                         <Textarea
                             value={message}
                             onChange={(e) => setMessage(e.target.value)}
                             placeholder="Enter your message for the mentor here..."
                             rows={5}
-                            className="resize-none"
+                            className="resize-none text-[#d3d3d3] placeholder:text-gray-500"
                         />
+                        <p className="text-sm text-muted-foreground">Message must be at least 10 characters long.</p>
                     </Field>
 
                     <div className="flex justify-center mt-6">
                         <Button 
                             type="submit" 
                             disabled={!skillId || loading}
-                            className="min-w-45"
+                            className="min-w-45 rounded-full bg-white text-black"
                         >
                             {loading ? "Sending..." : "Submit Request"}
                         </Button>
@@ -125,5 +127,6 @@ export default function RequestForm({
                 </FieldGroup>
             </FieldSet>
         </form>
+        </div>
     )
 }

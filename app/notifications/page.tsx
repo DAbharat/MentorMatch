@@ -119,31 +119,91 @@ export default function NotificationPage() {
             {/* Centered Header */}
             <div className="max-w-3xl mx-auto px-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
-                    <h1 className="text-2xl font-semibold">
-                        Notifications {unreadCount > 0 && <span className="text-sm text-gray-500">({unreadCount} unread)</span>}
-                    </h1>
-                    <div className="flex flex-wrap gap-2">
+
+                    {/* Title */}
+                    <div className="flex justify-between items-center w-full sm:w-auto">
+                        <h1 className="text-2xl font-semibold">
+                            Notifications{" "}
+                            {unreadCount > 0 && (
+                                <span className="text-sm text-gray-500">
+                                    ({unreadCount} unread)
+                                </span>
+                            )}
+                        </h1>
+
+                        {/* Buttons (Mobile Only Right Aligned) */}
+                        <div className="flex gap-2 sm:hidden">
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button
+                                        className="bg-transparent border border-[#1f1f1f] text-[#d3d3d3] hover:bg-transparent flex items-center gap-2 text-xs"
+                                    >
+                                        <SlidersHorizontal className="w-4 h-4" />
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-44 p-2 border border-[#1f1f1f] bg-[#161a1d]">
+                                    <div className="space-y-1">
+                                        {["all", "unread", "read"].map((f) => {
+                                            const isActive = filter === f
+                                            return (
+                                                <button
+                                                    key={f}
+                                                    onClick={() => setFilter(f as any)}
+                                                    className={`w-full text-left px-3 py-2 text-sm rounded-md transition-colors ${isActive
+                                                            ? "bg-black text-white"
+                                                            : "hover:bg-gray-800 text-[#d3d3d3]"
+                                                        }`}
+                                                >
+                                                    {f.charAt(0).toUpperCase() + f.slice(1)}
+                                                </button>
+                                            )
+                                        })}
+                                    </div>
+                                </PopoverContent>
+                            </Popover>
+
+                            <Button
+                                size="sm"
+                                onClick={handleMarkAllAsRead}
+                                disabled={isProcessing || unreadCount === 0}
+                                className="bg-transparent border border-[#1f1f1f] text-[#d3d3d3] hover:bg-transparent flex items-center gap-2 text-xs"
+                            >
+                                <CheckCheck className="w-4 h-4" />
+                            </Button>
+
+                            <Button
+                                size="sm"
+                                onClick={() => setShowDeleteAllDialog(true)}
+                                disabled={isProcessing || notifications.length === 0}
+                                className="bg-transparent border border-[#1f1f1f] text-red-500 hover:bg-transparent flex items-center gap-2 text-xs"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                            </Button>
+                        </div>
+                    </div>
+
+                    {/* Desktop Buttons (Unchanged) */}
+                    <div className="hidden sm:flex flex-wrap gap-2">
                         <Popover>
                             <PopoverTrigger asChild>
                                 <Button
-                                    className="bg-transparent border border-black text-black hover:bg-gray-100 flex items-center gap-2 text-xs sm:text-sm"
+                                    className="bg-transparent border border-[#1f1f1f] text-[#d3d3d3] hover:bg-transparent flex items-center gap-2 text-xs sm:text-sm"
                                 >
                                     <SlidersHorizontal className="w-4 h-4" />
                                     <span className="hidden xs:inline sm:inline">Filter</span>
                                 </Button>
                             </PopoverTrigger>
-                            <PopoverContent className="w-44 p-2">
+                            <PopoverContent className="w-44 p-2 bg-[#161a1d] border border-[#1f1f1f]">
                                 <div className="space-y-1">
                                     {["all", "unread", "read"].map((f) => {
                                         const isActive = filter === f
-
                                         return (
                                             <button
                                                 key={f}
                                                 onClick={() => setFilter(f as any)}
                                                 className={`w-full text-left px-3 py-2 text-sm rounded-md transition-colors ${isActive
                                                         ? "bg-black text-white"
-                                                        : "hover:bg-gray-100 text-gray-700"
+                                                        : "hover:bg-gray-800 text-[#d3d3d3]"
                                                     }`}
                                             >
                                                 {f.charAt(0).toUpperCase() + f.slice(1)}
@@ -153,31 +213,37 @@ export default function NotificationPage() {
                                 </div>
                             </PopoverContent>
                         </Popover>
+
                         <Button
                             size="sm"
                             onClick={handleMarkAllAsRead}
                             disabled={isProcessing || unreadCount === 0}
-                            className="bg-transparent border border-black text-black hover:bg-gray-100 flex items-center gap-2 text-xs sm:text-sm"
+                            className="bg-transparent border border-[#1f1f1f] text-[#d3d3d3] hover:bg-transparent flex items-center gap-2 text-xs sm:text-sm"
                         >
                             <CheckCheck className="w-4 h-4" />
-                            <span className="hidden xs:inline sm:inline">Mark All Read</span>
+                            <span className="hidden xs:inline sm:inline">
+                                Mark All Read
+                            </span>
                             <span className="xs:hidden sm:hidden">Mark Read</span>
                         </Button>
+
                         <Button
                             size="sm"
                             onClick={() => setShowDeleteAllDialog(true)}
                             disabled={isProcessing || notifications.length === 0}
-                            className="bg-transparent border border-red-500 text-red-500 hover:bg-red-50 flex items-center gap-2 text-xs sm:text-sm"
+                            className="bg-transparent border border-[#1f1f1f] text-red-500 hover:bg-transparent flex items-center gap-2 text-xs sm:text-sm"
                         >
                             <Trash2 className="w-4 h-4" />
-                            <span className="hidden xs:inline sm:inline">Delete All</span>
+                            <span className="hidden xs:inline sm:inline">
+                                Delete All
+                            </span>
                         </Button>
                     </div>
                 </div>
             </div>
 
             {/* Full Width Separator */}
-            <Separator className="w-full" />
+            {/* <Separator className="w-full" /> */}
 
             {/* Filters */}
             {/* <div className="max-w-4xl mx-auto px-4 mt-6">

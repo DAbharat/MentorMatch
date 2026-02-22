@@ -56,7 +56,7 @@ export default function RequestSidebarCard(
     }
 
     const handleScheduleSession = () => {
-        router.push('/sessions/schedule')
+        router.push(`/sessions/schedule/${mentor?.id}`)
     }
 
     const getStatusBadge = (status: string) => {
@@ -77,11 +77,11 @@ export default function RequestSidebarCard(
     const userClerkId = displayUser?.clerkUserId
 
   return (
-    <Card className="p-4 w-full">
+    <Card className="p-4 w-full bg-[#161a1d] border-none">
         <div className="flex gap-4">
 
             {/* Avatar */}
-            <div className="shrink-0 w-10 h-10 rounded-full bg-black flex items-center justify-center text-white text-lg font-semibold shadow-md">
+            <div className="shrink-0 w-10 h-10 rounded-full bg-[#d3d3d3] flex items-center justify-center text-black text-lg font-semibold shadow-md">
                 {userName.charAt(0).toUpperCase()}
             </div>
 
@@ -93,7 +93,7 @@ export default function RequestSidebarCard(
                     <div className="flex items-center gap-2">
                         {userClerkId && (
                             <Link href={`/profile/${userClerkId}`} onClick={(e) => e.stopPropagation()}>
-                                <span className="text-sm font-semibold truncate hover:underline">
+                                <span className="text-[#d3d3d3] text-sm font-semibold truncate hover:underline">
                                     {userName}
                                 </span>
                             </Link>
@@ -106,17 +106,17 @@ export default function RequestSidebarCard(
                 </div>
 
                 {/* Title */}
-                <h3 className="text-sm font-medium">{title}</h3>
+                <h3 className="text-muted-foreground text-sm font-medium">{title}</h3>
 
                 {/* Message */}
                 <p className="text-sm text-gray-500 leading-relaxed">{message}</p>
 
                 {/* Skill */}
-                {skill && (
+                {/* {skill && (
                     <span className="inline-block px-2 py-1 text-xs bg-gray-100 rounded-md">
                         {isSentView ? `Requested to learn: ${skill.name}` : `Wants to learn: ${skill.name}`}
                     </span>
-                )}
+                )} */}
 
                 {/* Action Buttons */}
                 {!isSentView ? (

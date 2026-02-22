@@ -79,9 +79,9 @@ export default function ChatRoom({
         .toUpperCase();
 
     return (
-        <div className="flex flex-col h-full w-full bg-background overflow-hidden">
+        <div className="flex flex-col h-full w-full bg-[#0b090a] overflow-hidden">
             {/* Header */}
-            <div className="flex items-center justify-between px-3 sm:px-5 py-2.5 sm:py-3 border-b bg-card/50 shrink-0">
+            <div className="flex items-center justify-between px-3 sm:px-5 py-2.5 sm:py-3 border-b border-[#1f1f1f] bg-[#0b090a] shrink-0">
                 {/* Left: Back button */}
                 <Button
                     variant="ghost"
@@ -89,12 +89,12 @@ export default function ChatRoom({
                     className="shrink-0 rounded-lg sm:rounded-xl h-8 w-8 sm:h-9 sm:w-9"
                     onClick={onBack}
                 >
-                    <ArrowLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                    <ArrowLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#d3d3d3]" />
                 </Button>
 
                 {/* Center: Avatar + Room info */}
                 <div className="flex items-center gap-2 sm:gap-3 justify-center flex-1">
-                    <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+                    <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-[#d3d3d3] border border-[#1f1f1f] flex items-center justify-center shrink-0">
                         <span className="text-[10px] sm:text-xs font-semibold text-primary tracking-wide">
                             {initials}
                         </span>
@@ -103,16 +103,16 @@ export default function ChatRoom({
                         {otherUserClerkId ? (
                             <Link 
                                 href={`/profile/${otherUserClerkId}`}
-                                className="font-semibold text-xs sm:text-sm text-foreground leading-tight truncate hover:text-primary transition-colors"
+                                className="font-semibold text-xs sm:text-sm text-[#d3d3d3] leading-tight truncate hover:text-primary transition-colors"
                             >
                                 {roomName}
                             </Link>
                         ) : (
-                            <h2 className="font-semibold text-xs sm:text-sm text-foreground leading-tight truncate">
+                            <h2 className="font-semibold text-xs sm:text-sm text-[#d3d3d3] leading-tight truncate">
                                 {roomName}
                             </h2>
                         )}
-                        <p className="text-[10px] sm:text-xs text-muted-foreground leading-tight truncate">{lastSeen}</p>
+                        <p className="text-[10px] sm:text-xs text-muted-foreground leading-tight truncate mt-1">{lastSeen}</p>
                     </div>
                 </div>
 
@@ -138,11 +138,11 @@ export default function ChatRoom({
                         <div key={date} className="space-y-2.5 sm:space-y-3">
                             {/* Date separator */}
                             <div className="flex items-center justify-center gap-2 sm:gap-3 my-4 sm:my-6">
-                                <Separator className="flex-1" />
-                                <span className="text-[10px] sm:text-xs text-muted-foreground font-medium px-2 sm:px-3 py-0.5 sm:py-1 bg-muted rounded-full whitespace-nowrap">
+                                <Separator className="flex-1 bg-[#1f1f1f]"/>
+                                <span className="text-[10px] sm:text-xs text-muted-foreground font-semibold px-2 sm:px-3 py-0.5 sm:py-1 bg-[#d3d3d3] rounded-full whitespace-nowrap">
                                     {date}
                                 </span>
-                                <Separator className="flex-1" />
+                                <Separator className="flex-1 bg-[#1f1f1f]"/>
                             </div>
 
                             {/* Messages for this date */}

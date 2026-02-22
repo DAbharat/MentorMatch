@@ -99,7 +99,7 @@ export default function ProfileHeader(
   return (
     <div className={`bg-linear-to-br bg-[#0b090a] ${DM_Sans_Font.className}`}>
       <div className="max-w-4xl mx-auto px-4">
-        <header className="pt-10 pb-8">
+        <header className="pt-10 pb-4">
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
 
             {/* LEFT: Avatar */}
@@ -123,7 +123,7 @@ export default function ProfileHeader(
               {isOwner ? (
                 <Button
                   size="sm"
-                  className="mt-6 bg-transparent border border-black border-b-2 text-black px-4"
+                  className="mt-6 bg-transparent border border-[#d3d3d3] border-b-2 text-[#d3d3d3] px-4"
                   onClick={() => setIsEditSheetOpen(true)}
                 >
                   Edit Profile
@@ -160,7 +160,7 @@ export default function ProfileHeader(
             </div>
             {open && (
               <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-                <div className="bg-white p-8 rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                <div className="bg-[#161a1d] p-8 rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
                   <RequestFormContainer
                     mentorId={id}
                     mentorName={name}

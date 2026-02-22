@@ -164,18 +164,18 @@ export default function ChatRoomPage() {
 
             {/* Connection Status */}
             {isConnecting && (
-                <div className="px-3 sm:px-4 py-1.5 text-[10px] sm:text-xs text-amber-600 bg-amber-50 dark:bg-amber-950/30 text-center shrink-0">
+                <div className="px-3 sm:px-4 py-1.5 text-[10px] sm:text-xs text-[#d3d3d3] bg-[#0b090a] dark:bg-amber-950/30 text-center shrink-0">
                     Connecting to chat...
                 </div>
             )}
             {socketError && (
-                <div className="px-3 sm:px-4 py-1.5 text-[10px] sm:text-xs text-red-600 bg-red-50 dark:bg-red-950/30 text-center shrink-0">
+                <div className="px-3 sm:px-4 py-1.5 text-[10px] sm:text-xs text-red-600 bg-[#0b090a] dark:bg-red-950/30 text-center shrink-0">
                     Connection error. Messages may not update in real-time.
                 </div>
             )}
 
             {/* Message Input */}
-            <div className="border-t bg-background p-2 sm:p-3 md:p-4 shrink-0">
+            <div className=" bg-[#0b090a] p-2 sm:p-3 md:p-4 shrink-0">
                 <form onSubmit={handleSendMessage} className="flex items-center gap-2">
                     <Input
                         ref={inputRef}
@@ -183,14 +183,14 @@ export default function ChatRoomPage() {
                         onChange={handleInputChange}
                         placeholder="Type a message..."
                         disabled={isSending}
-                        className="flex-1 text-xs sm:text-sm"
+                        className="flex-1 text-xs sm:text-sm border border-[#222222] text-[#d3d3d3]"
                         autoComplete="off"
                     />
                     <Button
                         type="submit"
                         size="icon"
                         disabled={!messageInput.trim() || isSending}
-                        className="h-9 w-9 sm:h-10 sm:w-10"
+                        className="h-9 w-9 sm:h-10 sm:w-10 bg-[#00ff2a] text-white"
                     >
                         {isSending ? (
                             <Spinner className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
