@@ -17,6 +17,9 @@ export async function FetchAllNotifications(params?: {
         console.log("Fetching notifications with params:", params)
         const response = await axios.get(`/api/notifications?${query.toString()}`)
         console.log("Notifications response:", response.data)
+        console.log("Notifications array:", response.data.notifications)
+        console.log("Notifications count:", response.data.notifications?.length || 0)
+        console.log("Unread count:", response.data.unreadCount)
         return response.data
     } catch (error) {
         const axiosError = error as AxiosError<ApiResponse>
@@ -79,7 +82,7 @@ export async function markAllNotificationsAsRead() {
 
 export async function markSingleNotificationAsRead(notificationId: string) {
     try {
-        console.log("marking one noti as read...")
+        console.log("marking one noti as read...", notificationId)
         const response = await axios.patch(`/api/notifications/${notificationId}/read`)
         return response.data
     } catch (error) {

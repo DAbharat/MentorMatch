@@ -9,7 +9,7 @@ import { checkMentorshipSessionStatus } from '@/services/session.service';
 import { Badge } from '../ui/badge';
 import { deleteNotificationById, markSingleNotificationAsRead } from '@/services/notification.service';
 import { toast } from 'sonner';
-import { Trash2, Check } from 'lucide-react';
+import { Trash2, Check, MoreVertical } from 'lucide-react';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -20,6 +20,12 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '../ui/alert-dialog';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '../ui/dropdown-menu';
 
 type NotificationCardProps = {
     id: string;
@@ -146,11 +152,11 @@ export default function NotificationCard(
     }
 
     return (
-        <Card className={`p-4 w-full relative ${!isRead ? 'bg-blue-50/30 border-blue-200' : ''}`}>
+        <Card className={`bg-[#111315] p-4 w-full relative ${!isRead ? 'bg-blue-50/30 border-blue-200' : ''}`}>
             <div className="flex gap-4">
 
                 {/* Avatar */}
-                <div className="shrink-0 w-10 h-10 rounded-full bg-black flex items-center justify-center text-white text-lg font-semibold shadow-md">
+                <div className="shrink-0 w-10 h-10 rounded-full bg-[#d3d3d3] flex items-center justify-center text-black text-lg font-semibold shadow-md">
                     {senderName?.charAt(0).toUpperCase()}
                 </div>
 
@@ -162,7 +168,7 @@ export default function NotificationCard(
                         <div className="flex items-center gap-2">
                             {sender?.clerkUserId ? (
                                 <Link href={`/profile/${sender.clerkUserId}`} onClick={(e) => e.stopPropagation()}>
-                                    <span className="text-sm font-semibold truncate hover:underline">{senderName}</span>
+                                    <span className="text-sm font-semibold truncate hover:underline text-[#d3d3d3]">{senderName}</span>
                                 </Link>
                             ) : (
                                 <span className="text-sm font-semibold truncate">{senderName}</span>
@@ -174,35 +180,42 @@ export default function NotificationCard(
                         <div className="flex items-center gap-2">
                             <span className="text-xs text-gray-400 whitespace-nowrap">{new Date(createdAt).toLocaleString()}</span>
                             
-                            {/* Action buttons */}
-                            <div className="flex gap-1">
-                                {!isRead && (
+                            {/* Dropdown Menu */}
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
                                     <button
-                                        onClick={handleMarkAsRead}
-                                        disabled={isMarkingRead}
-                                        className="p-1.5 hover:bg-gray-100 rounded-md transition-colors disabled:opacity-50"
-                                        title="Mark as read"
+                                        className="p-1.5 hover:bg-gray-700 rounded-md transition-colors"
+                                        title="More options"
                                     >
-                                        <Check className="w-4 h-4 text-green-600" />
+                                        <MoreVertical className="w-4 h-4 text-gray-400" />
                                     </button>
-                                )}
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation()
-                                        setShowDeleteDialog(true)
-                                    }}
-                                    disabled={isDeleting}
-                                    className="p-1.5 hover:bg-red-50 rounded-md transition-colors disabled:opacity-50"
-                                    title="Delete notification"
-                                >
-                                    <Trash2 className="w-4 h-4 text-red-600" />
-                                </button>
-                            </div>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-48">
+                                    <DropdownMenuItem
+                                        onClick={handleMarkAsRead}
+                                        disabled={isMarkingRead || isRead}
+                                    >
+                                        <Check className="w-4 h-4 mr-2 text-green-600" />
+                                        <span>Mark as read</span>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                        variant="destructive"
+                                        onClick={(e) => {
+                                            e.stopPropagation()
+                                            setShowDeleteDialog(true)
+                                        }}
+                                        disabled={isDeleting}
+                                    >
+                                        <Trash2 className="w-4 h-4 mr-2" />
+                                        <span>Delete</span>
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                         </div>
                     </div>
 
                     {/* Title */}
-                    <h3 className="text-sm font-medium">{title}</h3>
+                    {/* <h3 className="text-sm font-medium text-muted-foreground">{title}</h3> */}
 
                     {/* Message */}
                     <p className="text-sm text-gray-500 leading-relaxed">{message}</p>

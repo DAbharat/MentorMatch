@@ -3,7 +3,7 @@ import { auth } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
 
 export async function DELETE(Req: NextRequest,
-    { params } : { params : { id : string }}
+    { params } : { params : Promise<{ id : string }>}
 ) {
     const { userId } = await auth()
 
@@ -15,7 +15,7 @@ export async function DELETE(Req: NextRequest,
         })
     }
     
-    const { id } = params
+    const { id } = await params
 
     try {
         const dbUser = await prisma.user.findUnique({

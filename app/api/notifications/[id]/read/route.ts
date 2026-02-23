@@ -3,7 +3,7 @@ import { auth } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
 
 export async function PATCH(request: NextRequest,
-    { params } : { params : { id: string } }
+    { params } : { params : Promise<{ id: string }> }
 ) {
     const { userId } = await auth()
 
@@ -15,7 +15,7 @@ export async function PATCH(request: NextRequest,
         })
     }
 
-    const { id } = params
+    const { id } = await params
 
     try {
         const dbUser = await prisma.user.findUnique({
@@ -59,7 +59,7 @@ export async function PATCH(request: NextRequest,
             },
             select: {
                 id: true,
-                type: true,
+                type: true, 
                 title: true,
                 message: true,
                 isRead: true,

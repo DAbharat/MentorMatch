@@ -42,6 +42,13 @@ export async function GET(request: NextRequest) {
         const dbUserId = dbUser.id
         console.log("Found dbUser:", dbUserId)
         
+        const totalNotifications = await prisma.notification.count({
+            where: {
+                userId: dbUserId
+            }
+        })
+        console.log("Total notifications in database for this user:", totalNotifications)
+        
         const whereClause: { userId: string, isRead?: boolean } = {
             userId: dbUserId
         }
@@ -51,6 +58,8 @@ export async function GET(request: NextRequest) {
         } else if(filter === "unread") {
             whereClause.isRead = false
         }
+
+        console.log("Query where clause:", JSON.stringify(whereClause))
 
         const [fetchNotifications, unreadCount] = await Promise.all([
             prisma.notification.findMany({
