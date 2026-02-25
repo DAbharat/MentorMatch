@@ -9,7 +9,7 @@ import { checkMentorshipSessionStatus } from '@/services/session.service';
 import { Badge } from '../ui/badge';
 import { deleteNotificationById, markSingleNotificationAsRead } from '@/services/notification.service';
 import { toast } from 'sonner';
-import { Trash2, Check, MoreVertical } from 'lucide-react';
+import { Trash2, Check, MoreVertical, CheckCheck } from 'lucide-react';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -26,6 +26,12 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
+import { DM_Sans } from "next/font/google"
+
+const DM_Sans_Font = DM_Sans({
+  weight: ["400", "500", "700"],
+  subsets: ["latin"],
+})
 
 type NotificationCardProps = {
     id: string;
@@ -152,78 +158,84 @@ export default function NotificationCard(
     }
 
     return (
-        <Card className={`bg-[#111315] p-4 w-full relative ${!isRead ? 'bg-blue-50/30 border-blue-200' : ''}`}>
-            <div className="flex gap-4">
+        <Card className={`${DM_Sans_Font.className} bg-[#111315] p-4 w-full max-w-3xl mx-auto relative transition-all ${!isRead ? 'bg-blue-50/30 border-blue-200' : 'border-gray-800'}`}>
+            <div className="flex items-start gap-3 sm:gap-4">
 
-                {/* Avatar */}
-                <div className="shrink-0 w-10 h-10 rounded-full bg-[#d3d3d3] flex items-center justify-center text-black text-lg font-semibold shadow-md">
+                {/* Avatar - Fixed size to prevent shrinking */}
+                <div className="shrink-0 w-10 h-10 rounded-full bg-[#d3d3d3] flex items-center justify-center text-black text-lg font-bold shadow-sm">
                     {senderName?.charAt(0).toUpperCase()}
                 </div>
 
-                {/* Content */}
-                <div className="flex-1 min-w-0 space-y-1">
+                {/* Content Container */}
+                <div className="flex-1 min-w-0">
 
-                    {/* Name + Timestamp + Actions row */}
-                    <div className="flex items-center justify-between gap-4">
-                        <div className="flex items-center gap-2">
+                    {/* Header Row */}
+                    <div className="flex flex-wrap items-start justify-between gap-x-2 mb-1">
+                        <div className="flex items-center gap-2 min-w-0 max-w-[70%]">
                             {sender?.clerkUserId ? (
-                                <Link href={`/profile/${sender.clerkUserId}`} onClick={(e) => e.stopPropagation()}>
-                                    <span className="text-sm font-semibold truncate hover:underline text-[#d3d3d3]">{senderName}</span>
+                                <Link href={`/profile/${sender.clerkUserId}`} onClick={(e) => e.stopPropagation()} className="truncate">
+                                    <span className="text-sm font-semibold truncate hover:underline text-[#d3d3d3]">
+                                        {senderName}
+                                    </span>
                                 </Link>
                             ) : (
-                                <span className="text-sm font-semibold truncate">{senderName}</span>
+                                <span className="text-sm font-semibold truncate text-[#d3d3d3]">{senderName}</span>
                             )}
                             {!isRead && (
-                                <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                                <span className="shrink-0 w-2 h-2 bg-blue-500 rounded-full" aria-hidden="true"></span>
                             )}
                         </div>
-                        <div className="flex items-center gap-2">
-                            <span className="text-xs text-gray-400 whitespace-nowrap">{new Date(createdAt).toLocaleString()}</span>
+
+                        <div className="flex items-center gap-1 sm:gap-2 ml-auto">
+                            <span className="text-[10px] sm:text-xs text-gray-400 whitespace-nowrap">
+                                {new Date(createdAt).toLocaleDateString()}
+                            </span>
                             
-                            {/* Dropdown Menu */}
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <button
-                                        className="p-1.5 hover:bg-gray-700 rounded-md transition-colors"
+                                        className="p-1 hover:bg-gray-700/50 rounded-md transition-colors focus:outline-none"
                                         title="More options"
                                     >
                                         <MoreVertical className="w-4 h-4 text-gray-400" />
                                     </button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-48">
+                                <DropdownMenuContent align="end" className="w-48  bg-[#111315]">
                                     <DropdownMenuItem
                                         onClick={handleMarkAsRead}
                                         disabled={isMarkingRead || isRead}
+                                        className=' hover:bg-[#161a1d]'
                                     >
-                                        <Check className="w-4 h-4 mr-2 text-green-600" />
-                                        <span>Mark as read</span>
+                                        <CheckCheck className="w-4 h-4 mr-2 text-green-400" />
+                                        <span className='text-white'>Mark as read</span>
                                     </DropdownMenuItem>
                                     <DropdownMenuItem
-                                        variant="destructive"
+                                        className="text-red-500 focus:text-red-500 hover:bg-[#161a1d]"
                                         onClick={(e) => {
                                             e.stopPropagation()
                                             setShowDeleteDialog(true)
                                         }}
                                         disabled={isDeleting}
                                     >
-                                        <Trash2 className="w-4 h-4 mr-2" />
-                                        <span>Delete</span>
+                                        <Trash2 className="w-4 h-4 mr-2 text-red-500" />
+                                        <span className=''>Delete</span>
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         </div>
                     </div>
 
-                    {/* Title */}
-                    {/* <h3 className="text-sm font-medium text-muted-foreground">{title}</h3> */}
+                    {/* Message Body */}
+                    <p className="text-sm text-gray-400 leading-snug wrap-break-word pr-2">
+                        {message}
+                    </p>
 
-                    {/* Message */}
-                    <p className="text-sm text-gray-500 leading-relaxed">{message}</p>
-
-                    {/* Action Button */}
-                    <div className="mt-3">
-                        {renderActionButton()}
-                    </div>
+                    {/* Action Area */}
+                    {showScheduleButton && (
+                        <div className="mt-3 flex items-center">
+                            {renderActionButton()}
+                        </div>
+                    )}
 
                 </div>
             </div>
@@ -241,7 +253,7 @@ export default function NotificationCard(
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
                         <AlertDialogAction
                             onClick={handleDelete}
-                            className="bg-red-600 hover:bg-red-700"
+                            className="bg-red-600 hover:bg-red-700 text-white"
                         >
                             Delete
                         </AlertDialogAction>
