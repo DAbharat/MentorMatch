@@ -129,6 +129,7 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
+        {/* Account Section */}
         <SidebarGroup className="px-2 mt-4">
           <SidebarGroupLabel className="px-3 mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
             Account

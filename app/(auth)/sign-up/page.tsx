@@ -81,16 +81,9 @@ export default function SignUp() {
       const result = await signUp.attemptEmailAddressVerification({ code });
 
       if (result.status === "complete" && result.createdUserId) {
-
         const clerkUserId = result.createdUserId;
-
         console.log("Frontend: Sending request to /api/user/create");
-        const createUser = await createAccount({
-          name,
-          email,
-          clerkUserId
-        })
-
+        const createUser = await createAccount({ name, email, clerkUserId });
         console.log("Frontend: User created successfully", createUser.data);
         toast.success("Email verified successfully! Redirecting...");
         await setActive({ session: result.createdSessionId });
@@ -106,15 +99,16 @@ export default function SignUp() {
   }
 
   return (
-    <div className={`min-h-screen flex items-center justify-center bg-linear-to-br from-slate-50 via-blue-50 to-indigo-50 p-3 sm:p-4 md:p-6 ${DM_Sans_Font.className}`}>
-      <div className="w-full max-w-6xl bg-white lg:bg-transparent rounded-2xl sm:rounded-3xl lg:rounded-none shadow-xl sm:shadow-2xl lg:shadow-none overflow-hidden grid grid-cols-1 lg:grid-cols-2 my-4 lg:my-0">
+    <div className={`min-h-screen flex items-center justify-center bg-[#0b090a] p-3 sm:p-4 md:p-6 ${DM_Sans_Font.className}`}>
+      <div className="w-full max-w-6xl bg-[#0b090a] rounded-2xl sm:rounded-3xl shadow-xl sm:shadow-2xl overflow-hidden grid grid-cols-1 md:grid-cols-2 my-4">
+
         {/* Left: Form area */}
-        <div className="p-6 sm:p-8 md:p-10 lg:p-12">
-          <div className="max-w-md mx-auto lg:mx-0">
+        <div className="bg-[#0b090a] p-6 sm:p-8 md:p-10 lg:p-12">
+          <div className="max-w-md mx-auto md:mx-0">
             {!pendingVerification ? (
               <>
                 <div className="mb-6 sm:mb-8">
-                  <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 tracking-tight">
+                  <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#d3d3d3] tracking-tight">
                     Get Started Now
                   </h1>
                   <p className="text-sm sm:text-base text-gray-600 mt-1 sm:mt-2 font-light">
@@ -126,7 +120,7 @@ export default function SignUp() {
                   <Button
                     type="button"
                     variant="outline"
-                    className="w-full h-11 sm:h-12 rounded-lg sm:rounded-xl border-2 border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300 text-gray-700 font-medium text-sm transition-all duration-200 shadow-sm"
+                    className="w-full h-11 sm:h-12 rounded-lg sm:rounded-xl border-2 border-gray-200 bg-[#111315] text-[#d3d3d3] font-medium text-sm transition-all duration-200 shadow-sm"
                     onClick={handleGoogleSignUp}
                   >
                     <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3" viewBox="0 0 24 24">
@@ -144,13 +138,13 @@ export default function SignUp() {
                     <div className="w-full border-t border-gray-200" />
                   </div>
                   <div className="relative flex justify-center text-xs sm:text-sm">
-                    <span className="px-3 sm:px-4 bg-slate-50 text-gray-500 font-medium">or</span>
+                    <span className="px-3 sm:px-4 bg-[#0b090a] text-gray-500 font-medium">or</span>
                   </div>
                 </div>
 
                 <form onSubmit={submit} className="space-y-4 sm:space-y-5">
                   <div>
-                    <Label htmlFor="name" className="text-xs sm:text-sm text-gray-700 font-semibold mb-1.5 sm:mb-2 block">
+                    <Label htmlFor="name" className="text-xs sm:text-sm text-muted-foreground font-semibold mb-1.5 sm:mb-2 block">
                       Name
                     </Label>
                     <Input
@@ -158,13 +152,13 @@ export default function SignUp() {
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       placeholder="Enter your full name"
-                      className="h-11 sm:h-12 rounded-lg sm:rounded-xl border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all text-sm sm:text-base"
+                      className="h-11 sm:h-12 rounded-lg sm:rounded-xl bg-[#1a1a1d] border-white/10 text-[#d3d3d3] placeholder:text-white/25 focus-visible:ring-white/20 focus-visible:border-white/30 transition-all text-sm sm:text-base"
                       required
                     />
                   </div>
 
                   <div>
-                    <Label htmlFor="email" className="text-xs sm:text-sm text-gray-700 font-semibold mb-1.5 sm:mb-2 block">
+                    <Label htmlFor="email" className="text-xs sm:text-sm text-muted-foreground font-semibold mb-1.5 sm:mb-2 block">
                       Email address
                     </Label>
                     <Input
@@ -173,13 +167,13 @@ export default function SignUp() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="Enter your email address"
-                      className="h-11 sm:h-12 rounded-lg sm:rounded-xl border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all text-sm sm:text-base"
+                      className="h-11 sm:h-12 rounded-lg sm:rounded-xl bg-[#1a1a1d] border-white/10 text-[#d3d3d3] placeholder:text-white/25 focus-visible:ring-white/20 focus-visible:border-white/30 transition-all text-sm sm:text-base"
                       required
                     />
                   </div>
 
                   <div>
-                    <Label htmlFor="password" className="text-xs sm:text-sm text-gray-700 font-semibold mb-1.5 sm:mb-2 block">
+                    <Label htmlFor="password" className="text-xs sm:text-sm text-muted-foreground font-semibold mb-1.5 sm:mb-2 block">
                       Password
                     </Label>
                     <div className="relative">
@@ -189,7 +183,7 @@ export default function SignUp() {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="Enter a password"
-                        className="h-11 sm:h-12 pr-11 sm:pr-12 rounded-lg sm:rounded-xl border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all text-sm sm:text-base"
+                        className="h-11 sm:h-12 pr-11 sm:pr-12 rounded-lg sm:rounded-xl bg-[#1a1a1d] border-white/10 text-[#d3d3d3] placeholder:text-white/25 focus-visible:ring-white/20 focus-visible:border-white/30 transition-all text-sm sm:text-base"
                         required
                       />
                       <button
@@ -229,40 +223,38 @@ export default function SignUp() {
 
                   <Button
                     type="submit"
-                    className="w-full h-11 sm:h-12 bg-linear-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white font-semibold text-sm sm:text-base rounded-lg sm:rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 mt-5 sm:mt-6"
+                    className="w-full h-11 sm:h-12 bg-[#d3d3d3] hover:bg-[#bcbcbc] text-black font-semibold text-sm sm:text-base rounded-full shadow-lg hover:shadow-xl transition-all duration-200 mt-5 sm:mt-6"
                   >
                     Create Account
                   </Button>
-
                 </form>
 
                 <p className="text-xs sm:text-sm text-gray-600 text-center mt-6 sm:mt-8">
                   Already have an account?{" "}
-                  <Link href="/sign-in" className="text-indigo-600 hover:text-indigo-700 font-semibold">
+                  <Link href="/sign-in" className="text-[#d3d3d3] hover:text-[#bcbcbc] font-semibold">
                     Sign in
                   </Link>
                 </p>
 
-                <p className="text-xs text-gray-400 text-center mt-6 sm:mt-8">
+                <p className="text-xs text-gray-400 text-center mt-4 sm:mt-6">
                   © {new Date().getFullYear()} Acme. All rights reserved
                 </p>
               </>
             ) : (
               <>
                 <div className="mb-6 sm:mb-8">
-
-                  <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 tracking-tight">
+                  <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#d3d3d3] tracking-tight">
                     Verify Your Email
                   </h1>
                   <p className="text-sm sm:text-base text-gray-600 mt-1 sm:mt-2 font-light">
                     We've sent a verification code to{" "}
-                    <span className="font-semibold text-gray-900 break-all">{email}</span>
+                    <span className="font-semibold text-[#d3d3d3] break-all">{email}</span>
                   </p>
                 </div>
 
                 <form onSubmit={verify} className="space-y-5 sm:space-y-6">
                   <div>
-                    <Label htmlFor="code" className="text-xs sm:text-sm text-gray-700 font-semibold mb-1.5 sm:mb-2 block">
+                    <Label htmlFor="code" className="text-xs sm:text-sm text-muted-foreground font-semibold mb-1.5 sm:mb-2 block">
                       Verification Code
                     </Label>
                     <Input
@@ -270,7 +262,7 @@ export default function SignUp() {
                       value={code}
                       onChange={(e) => setCode(e.target.value)}
                       placeholder="000000"
-                      className="h-12 sm:h-14 text-center text-xl sm:text-2xl tracking-[0.5em] font-bold rounded-lg sm:rounded-xl border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all"
+                      className="h-12 sm:h-14 text-center text-xl sm:text-2xl tracking-[0.5em] font-bold rounded-lg sm:rounded-xl bg-[#1a1a1d] border-white/10 text-[#d3d3d3] placeholder:text-white/15 focus-visible:ring-white/20 focus-visible:border-white/30 transition-all"
                       maxLength={6}
                       required
                     />
@@ -287,7 +279,7 @@ export default function SignUp() {
 
                   <Button
                     type="submit"
-                    className="w-full h-11 sm:h-12 bg-linear-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white font-semibold text-sm sm:text-base rounded-lg sm:rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
+                    className="w-full h-11 sm:h-12 bg-[#d3d3d3] hover:bg-[#bcbcbc] text-black font-semibold text-sm sm:text-base rounded-full shadow-lg hover:shadow-xl transition-all duration-200"
                   >
                     Verify Email
                   </Button>
@@ -298,7 +290,7 @@ export default function SignUp() {
                       setPendingVerification(false)
                       router.push("/sign-up")
                     }}
-                    className="w-full text-xs sm:text-sm text-indigo-600 hover:text-indigo-700 font-medium cursor-pointer"
+                    className="w-full text-xs sm:text-sm text-gray-500 hover:text-gray-400 font-medium cursor-pointer transition-colors"
                   >
                     Use a different email
                   </button>
@@ -312,9 +304,8 @@ export default function SignUp() {
           </div>
         </div>
 
-        {/* Right: Promo panel */}
-        <div className="hidden lg:flex items-center justify-center bg-linear-to-br from-indigo-600 via-indigo-700 to-blue-700 text-white p-8 xl:p-12 relative overflow-hidden rounded-4xl">
-          {/* Decorative background elements */}
+        {/* Right: Promo panel — hidden on mobile, visible from md up */}
+        <div className="hidden md:flex items-center justify-center bg-[#111315] text-white p-8 xl:p-10 relative overflow-hidden rounded-4xl">
           <div className="absolute top-0 right-0 w-72 h-72 xl:w-96 xl:h-96 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
           <div className="absolute bottom-0 left-0 w-64 h-64 xl:w-80 xl:h-80 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
 
@@ -327,7 +318,6 @@ export default function SignUp() {
             </p>
 
             <div className="w-full bg-white/10 backdrop-blur-sm rounded-xl xl:rounded-2xl p-4 xl:p-6 mb-6 xl:mb-8 border border-white/20 shadow-2xl">
-              {/* Placeholder for dashboard preview */}
               <div className="h-40 xl:h-48 w-full bg-linear-to-br from-white/20 to-white/5 rounded-lg xl:rounded-xl flex items-center justify-center">
                 <div className="text-center">
                   <CheckCircle2 className="w-12 h-12 xl:w-16 xl:h-16 mx-auto mb-2 xl:mb-3 text-white/80" />
@@ -343,6 +333,7 @@ export default function SignUp() {
             </div>
           </div>
         </div>
+
       </div>
     </div>
   );

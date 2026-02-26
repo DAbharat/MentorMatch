@@ -7,8 +7,11 @@ const isPublicRoute = createRouteMatcher([
     "/sign-in(.*)?",
     "/sign-up(.*)?",
     "/home",
-    "/api/webhook/clerk",
-    "/api/user/create" // Allow unauthenticated requests to this route
+    "/search(.*)?",
+    "/profile/(.*)?", // Allow viewing public profiles
+    "/api/users", // Allow searching for users/skills
+    "/api/user/(.*)?", // Allow viewing user profiles (protected routes check auth themselves)
+    "/api/webhook/clerk"
 ])
 
 

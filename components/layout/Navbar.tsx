@@ -10,6 +10,8 @@ import { useEffect, useState } from "react";
 import { FetchAllNotifications } from "@/services/notification.service";
 import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
+import { useUser } from "@clerk/nextjs";
+import { Button } from "../retroui/Button";
 
 const DM_Sans_Font = DM_Sans({
     weight: ["400", "500", "700"],
@@ -20,10 +22,14 @@ const DM_Sans_Font = DM_Sans({
 
 export default function Navbar() {
     const router = useRouter();
+    const { user, isLoaded } = useUser();
 
     const [unreadCount, setUnreadCount] = useState(0)
 
     useEffect(() => {
+        // Only fetch notifications for authenticated users
+        if (!user) return;
+        
         const fetchNotifications = async () => {
             try {
                 const response = await FetchAllNotifications()
@@ -37,11 +43,10 @@ export default function Navbar() {
                 }
             } catch (error) {
                 console.error("Error fetching notifications:", error)
-                toast.error("Failed to load notifications. Please try again later.")
             }
         }
         fetchNotifications()
-    }, [])
+    }, [user])
 
     return (
         <nav
@@ -72,23 +77,35 @@ export default function Navbar() {
 
                     {/* Right Side */}
                     <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-                        <button
-                            className="relative p-1.5 sm:p-2 text-white hover:bg-white rounded-lg transition-colors"
-                            aria-label="Notifications"
-                            onClick={() => { router.push(`/notifications`) }}
-                        >
-                            <Bell className="w-4 h-4 sm:w-5 sm:h-5" />
-                            {unreadCount > 0 && (
-                                <span className="absolute top-1 right-1 min-w-4.5 h-4.5 text-xs flex items-center justify-center bg-red-500 text-white rounded-full px-1">
-                                    {unreadCount}
-                                </span>
-                            )}
-                        </button>
+                        {user ? (
+                            <>
+                                <button
+                                    className="relative p-1.5 sm:p-2 text-white hover:bg-white rounded-lg transition-colors"
+                                    aria-label="Notifications"
+                                    onClick={() => { router.push(`/notifications`) }}
+                                >
+                                    <Bell className="w-4 h-4 sm:w-5 sm:h-5" />
+                                    {unreadCount > 0 && (
+                                        <span className="absolute top-1 right-1 min-w-4.5 h-4.5 text-xs flex items-center justify-center bg-red-500 text-white rounded-full px-1">
+                                            {unreadCount}
+                                        </span>
+                                    )}
+                                </button>
 
-                        <User2
-                            className="w-7 h-7 sm:w-8 sm:h-8 p-1.5 text-white cursor-pointer bg-transparent rounded-full transition-colors"
-                            onClick={() => router.push("/profile")}
-                        />
+                                <User2
+                                    className="w-7 h-7 sm:w-8 sm:h-8 p-1.5 text-white cursor-pointer bg-transparent rounded-full transition-colors"
+                                    onClick={() => router.push("/profile")}
+                                />
+                            </>
+                        ) : (
+                            <Button
+                                size="sm"
+                                className="bg-transparent rounded-full border border-[#d3d3d3]/50 text-[#d3d3d3] text-xs sm:text-sm px-3 sm:px-4 py-1.5 sm:py-2"
+                                onClick={() => router.push("/sign-in")}
+                            >
+                                Sign In
+                            </Button>
+                        )}
                     </div>
                 </div>
 
@@ -120,34 +137,45 @@ export default function Navbar() {
 
                     {/* Right Section */}
                     <div className="flex items-center gap-3 justify-end">
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <button
-                                    className="relative p-2 text-white rounded-lg transition-colors cursor-pointer"
-                                    aria-label="Notifications"
-                                    onClick={() => router.push('/notifications')}
-                                >
-                                    <Bell className="w-5 h-5" />
-                                    {unreadCount > 0 && (
-                                        <span className="absolute top-1 right-1 min-w-4.5 h-4.5 text-xs flex items-center justify-center bg-red-500 text-white rounded-full px-1">
-                                            {unreadCount}
-                                        </span>
-                                    )}
-                                </button>
-                            </TooltipTrigger>
-                            <TooltipContent>Notifications</TooltipContent>
-                        </Tooltip>
+                        {user ? (
+                            <>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <button
+                                            className="relative p-2 text-white rounded-lg transition-colors cursor-pointer"
+                                            aria-label="Notifications"
+                                            onClick={() => router.push('/notifications')}
+                                        >
+                                            <Bell className="w-5 h-5" />
+                                            {unreadCount > 0 && (
+                                                <span className="absolute top-1 right-1 min-w-4.5 h-4.5 text-xs flex items-center justify-center bg-red-500 text-white rounded-full px-1">
+                                                    {unreadCount}
+                                                </span>
+                                            )}
+                                        </button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>Notifications</TooltipContent>
+                                </Tooltip>
 
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <User2
-                                    className="w-8 h-8 p-1.5 text-white cursor-pointer bg-transparent rounded-full transition-colors"
-                                    onClick={() => router.push("/profile")}
-                                />
-                            </TooltipTrigger>
-                            <TooltipContent>Profile</TooltipContent>
-                        </Tooltip>
-
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <User2
+                                            className="w-8 h-8 p-1.5 text-white cursor-pointer bg-transparent rounded-full transition-colors"
+                                            onClick={() => router.push("/profile")}
+                                        />
+                                    </TooltipTrigger>
+                                    <TooltipContent>Profile</TooltipContent>
+                                </Tooltip>
+                            </>
+                        ) : (
+                            <Button
+                                size="sm"
+                                className="bg-transparent rounded-full border border-[#d3d3d3]/50 text-[#d3d3d3] px-6 py-2"
+                                onClick={() => router.push("/sign-in")}
+                            >
+                                Sign In
+                            </Button>
+                        )}
                     </div>
                 </div>
             </div>

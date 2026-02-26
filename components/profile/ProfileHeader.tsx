@@ -90,11 +90,7 @@ export default function ProfileHeader(
     }
   };
 
-  if (!user) {
-    return null;
-  }
-
-  const isOwner = user.id === clerkUserId
+  const isOwner = user?.id === clerkUserId
 
   return (
     <div className={`bg-linear-to-br bg-[#0b090a] ${DM_Sans_Font.className}`}>
@@ -121,14 +117,16 @@ export default function ProfileHeader(
 
               {/* Button exactly below "Member since" */}
               {isOwner ? (
-                <Button
-                  size="sm"
-                  className="mt-6 bg-transparent rounded-full border border-[#d3d3d3]/50 border-b-2 text-[#d3d3d3] px-8 py-2"
-                  onClick={() => setIsEditSheetOpen(true)}
-                >
-                  Edit Profile
-                </Button>
-              ) : hasAcceptedRequest && chatId ? (
+                user && (
+                  <Button
+                    size="sm"
+                    className="mt-6 bg-transparent rounded-full border border-[#d3d3d3]/50 border-b-2 text-[#d3d3d3] px-8 py-2"
+                    onClick={() => setIsEditSheetOpen(true)}
+                  >
+                    Edit Profile
+                  </Button>
+                )
+              ) : user && hasAcceptedRequest && chatId ? (
                 <div className="flex gap-2 mt-6">
                   <Button
                     size="sm"
@@ -141,24 +139,24 @@ export default function ProfileHeader(
                   <Button
                     size="sm"
                     className="bg-transparent rounded-full border border-[#d3d3d3]/50 border-b-2 text-[#d3d3d3] px-8 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                    onClick={() => setOpen(true)}
+                    onClick={() => user ? setOpen(true) : router.push("/sign-in")}
                     disabled={hasActiveConfirmedSession}
                     title={hasActiveConfirmedSession ? "You have an active confirmed session. Wait until it completes to send another request." : "Send a new mentorship request"}
                   >
                     Send Request
                   </Button>
                 </div>
-              ) : (
+              ) : !isOwner && (
                 <Button
                   size="sm"
                   className="mt-6 bg-transparent rounded-full border border-[#d3d3d3]/50 text-[#d3d3d3] border-b-2 px-8 py-2"
-                  onClick={() => setOpen(true)}
+                  onClick={() => user ? setOpen(true) : router.push("/sign-in")}
                 >
                   Send Request
                 </Button>
               )}
             </div>
-            {open && (
+            {user && open && (
               <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
                 <div className="bg-[#111315] border border-[#1f1f1f] rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
                   <RequestFormContainer
@@ -172,8 +170,9 @@ export default function ProfileHeader(
             )}
 
             {/* Edit Profile Sheet */}
-            <Sheet open={isEditSheetOpen} onOpenChange={setIsEditSheetOpen}>
-              <SheetContent className={`${DM_Sans_Font.className} flex flex-col p-0 sm:max-w-lg w-full`}>
+            {user && isOwner && (
+              <Sheet open={isEditSheetOpen} onOpenChange={setIsEditSheetOpen}>
+                <SheetContent className={`${DM_Sans_Font.className} flex flex-col p-0 sm:max-w-lg w-full`}>
 
                 {/* Header */}
                 <div className="px-6 pt-6 pb-4 border-b bg-muted/40">
@@ -285,8 +284,9 @@ export default function ProfileHeader(
 
               </SheetContent>
             </Sheet>
+            )}
 
-            <UserButton />
+            {user && <UserButton />}
 
           </div>
         </header>

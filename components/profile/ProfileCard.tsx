@@ -64,7 +64,14 @@ export default function ProfileCard(
                 {!isOwner && (
                     <BellPlus
                         className='shrink-0 cursor-pointer text-[#d3d3d3] w-4 h-4 sm:w-5 sm:h-5 ml-1'
-                        onClick={() => setOpen(true)}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            if (user) {
+                                setOpen(true);
+                            } else {
+                                router.push("/sign-in");
+                            }
+                        }}
                     />
                 )}
             </div>
