@@ -80,7 +80,6 @@ export default function ProfileHeader(
       });
       toast.success("Profile updated successfully!");
       setIsEditSheetOpen(false);
-      // Refresh the page to show updated data
       router.refresh();
     } catch (error) {
       const axiosError = error as AxiosError<ApiResponse>;
@@ -172,11 +171,11 @@ export default function ProfileHeader(
             {/* Edit Profile Sheet */}
             {user && isOwner && (
               <Sheet open={isEditSheetOpen} onOpenChange={setIsEditSheetOpen}>
-                <SheetContent className={`${DM_Sans_Font.className} flex flex-col p-0 sm:max-w-lg w-full`}>
+                <SheetContent className={`${DM_Sans_Font.className} bg-[#111315] flex flex-col p-0 sm:max-w-lg w-full`}>
 
                 {/* Header */}
-                <div className="px-6 pt-6 pb-4 border-b bg-muted/40">
-                  <SheetTitle className="text-xl font-semibold">
+                <div className="px-6 pt-6 pb-4 border-b bg-[#111315] border-[#1f1f1f]">
+                  <SheetTitle className="text-[#d3d3d3] text-xl font-semibold">
                     Edit Profile
                   </SheetTitle>
                   <SheetDescription className="text-sm text-muted-foreground mt-1">
@@ -190,7 +189,7 @@ export default function ProfileHeader(
 
                     {/* Name */}
                     <div className="space-y-2">
-                      <Label htmlFor="name" className="font-medium">
+                      <Label htmlFor="name" className="text-[#d3d3d3] font-medium">
                         Full Name
                       </Label>
                       <Input
@@ -199,14 +198,14 @@ export default function ProfileHeader(
                         value={formData.name}
                         onChange={handleInputChange}
                         placeholder="Enter your full name"
-                        className="h-11"
+                        className="h-11 text-[#d3d3d3]"
                         required
                       />
                     </div>
 
                     {/* Bio */}
                     <div className="space-y-2">
-                      <Label htmlFor="bio" className="font-medium">
+                      <Label htmlFor="bio" className="text-[#d3d3d3] font-medium">
                         Bio
                       </Label>
                       <Textarea
@@ -216,7 +215,7 @@ export default function ProfileHeader(
                         onChange={handleInputChange}
                         placeholder="Tell others about yourself..."
                         rows={4}
-                        className="resize-none"
+                        className="resize-none text-[#d3d3d3]"
                       />
                       <p className="text-xs text-muted-foreground">
                         Keep it short and meaningful.
@@ -224,11 +223,11 @@ export default function ProfileHeader(
                     </div>
 
                     {/* Divider */}
-                    <div className="border-t pt-6 space-y-6">
+                    <div className="border-t border-[#1f1f1f] pt-6 space-y-6">
 
                       {/* Skills Offered */}
                       <div className="space-y-2">
-                        <Label htmlFor="skillsOffered" className="font-medium">
+                        <Label htmlFor="skillsOffered" className="text-[#d3d3d3] font-medium">
                           Skills You Can Offer
                         </Label>
                         <Input
@@ -237,7 +236,7 @@ export default function ProfileHeader(
                           value={formData.skillsOffered}
                           onChange={handleInputChange}
                           placeholder="React, Node.js, PostgreSQL"
-                          className="h-11"
+                          className="h-11 text-[#d3d3d3]"
                         />
                         <p className="text-xs text-muted-foreground">
                           Separate skills with commas
@@ -246,7 +245,7 @@ export default function ProfileHeader(
 
                       {/* Skills Wanted */}
                       <div className="space-y-2">
-                        <Label htmlFor="skillsWanted" className="font-medium">
+                        <Label htmlFor="skillsWanted" className="text-[#d3d3d3] font-medium">
                           Skills You Want to Learn
                         </Label>
                         <Input
@@ -255,7 +254,7 @@ export default function ProfileHeader(
                           value={formData.skillsWanted}
                           onChange={handleInputChange}
                           placeholder="Machine Learning, Cloud"
-                          className="h-11"
+                          className="h-11 text-[#d3d3d3]"
                         />
                       </div>
 
@@ -265,18 +264,18 @@ export default function ProfileHeader(
                 </div>
 
                 {/* Sticky Footer Buttons */}
-                <div className="border-t bg-white p-6 flex gap-3">
+                <div className="border-t border-[#1f1f1f] bg-[#111315] p-6 flex gap-3">
                   <Button
                     type="button"
                     onClick={() => setIsEditSheetOpen(false)}
-                    className="flex-1 h-11 bg-transparent border border-black text-black hover:bg-gray-100 rounded-lg"
+                    className="flex-1 h-11 bg-transparent border border-white text-[#d3d3d3] rounded-full"
                   >
                     Cancel
                   </Button>
                   <Button
                     type="submit"
                     onClick={handleSubmit}
-                    className="flex-1 h-11 bg-black hover:bg-gray-800 text-white rounded-lg"
+                    className="flex-1 h-11 bg-white hover:bg-gray-200 text-black rounded-full"
                   >
                     Save Changes
                   </Button>

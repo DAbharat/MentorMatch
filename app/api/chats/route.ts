@@ -85,15 +85,30 @@ export async function GET(req: NextRequest) {
                         }
                     }
                 },
+                _count: {
+                    select: {
+                        messages: {
+                            where: {
+                                isRead: false,
+                                senderId: {
+                                    not: dbUserId
+                                }
+                            }
+                        }
+                    }
+                }
             },
             orderBy: {
                 createdAt: "desc"
             }
         })
 
+        const totalUnreadMessages = fetchChatsForAUser.reduce((sum, chat) => sum + chat._count.messages, 0)
+
         return NextResponse.json({
             message: "Chats fetched successfully",
-            chats: fetchChatsForAUser
+            chats: fetchChatsForAUser,
+            unreadCount: totalUnreadMessages
         }, {
             status: 200
         })
