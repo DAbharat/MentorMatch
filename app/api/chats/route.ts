@@ -13,6 +13,9 @@ export async function GET(req: NextRequest) {
         })
     }
 
+    const url = new URL(req.url)
+    const searchChatByName = url.searchParams.get("name")?.trim()
+
     try {
         const dbUser = await prisma.user.findUnique({
             where: {
@@ -34,17 +37,60 @@ export async function GET(req: NextRequest) {
 
         const dbUserId = dbUser.id
 
+        const whereClause: any = {
+            OR: [
+                {
+                    mentorId: dbUserId
+                },
+                {
+                    menteeId: dbUserId
+                }
+            ]
+        };
+
+        if (searchChatByName) {
+            if (searchChatByName.length < 1 || searchChatByName.length > 50) {
+                return NextResponse.json({
+                    message: "Chat name must be between 1 and 50 characters"
+                }, {
+                    status: 400
+                })
+            }
+            
+            whereClause.AND = [
+                {
+                    OR: [
+                        {
+                            mentor: {
+                                name: {
+                                    contains: searchChatByName,
+                                    mode: "insensitive"
+                                }
+                            }
+                        },
+                        {
+                            mentee: {
+                                name: {
+                                    contains: searchChatByName,
+                                    mode: "insensitive"
+                                }
+                            }
+                        },
+                        {
+                            skill: {
+                                name: {
+                                    contains: searchChatByName,
+                                    mode: "insensitive"
+                                }
+                            }
+                        }
+                    ]
+                }
+            ];
+        }
+
         const fetchChatsForAUser = await prisma.chat.findMany({
-            where: {
-                OR: [
-                    {
-                        mentorId: dbUserId
-                    },
-                    {
-                        menteeId: dbUserId
-                    }
-                ]
-            },
+            where: whereClause,
             include: {
                 mentor: {
                     select: {

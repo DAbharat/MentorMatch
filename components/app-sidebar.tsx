@@ -69,8 +69,8 @@ export function AppSidebar() {
     <Sidebar collapsible="icon" className={`border-r border-[#1f1f1f] ${DM_Sans_Font.className}`}>
       <SidebarHeader className="bg-[#0b090a] h-14 sm:h-16 border-b border-[#1f1f1f] flex items-center px-4">
         <Link href="/" className="flex items-center gap-2 group">
-          <div className="w-8 h-8 bg-linear-to-br from-indigo-500 to-blue-600 rounded-lg flex items-center justify-center shadow-sm">
-            <span className="text-white font-bold text-sm">MM</span>
+          <div className="w-8 h-8 bg-[#d3d3d3] rounded-full flex items-center justify-center shadow-sm">
+            <span className="text-black font-bold text-xs">MM</span>
           </div>
           <span className="font-semibold text-[#d3d3d3] group-data-[collapsible=icon]:hidden">MentorMatch</span>
         </Link>

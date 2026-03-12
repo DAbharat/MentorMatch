@@ -81,8 +81,8 @@ export default function Navbar() {
                             href="/"
                             className="flex items-center gap-1.5 sm:gap-2 group"
                         >
-                            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-linear-to-br from-indigo-500 to-blue-600 rounded-xl flex items-center justify-center shadow-md group-hover:shadow-lg transition-all duration-300">
-                                <span className="text-white font-bold text-xs sm:text-base tracking-wide">
+                            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#d3d3d3] rounded-full flex items-center justify-center shadow-md group-hover:shadow-lg transition-all duration-300">
+                                <span className="text-black font-bold text-xs sm:text-base tracking-wide">
                                     MM
                                 </span>
                             </div>
@@ -161,8 +161,8 @@ export default function Navbar() {
                             href="/"
                             className="flex items-center gap-2 group"
                         >
-                            <div className="w-10 h-10 bg-linear-to-br from-indigo-500 to-blue-600 rounded-xl flex items-center justify-center shadow-md group-hover:shadow-lg transition-all duration-300">
-                                <span className="text-white font-bold text-base tracking-wide">
+                            <div className="w-9 h-9 bg-[#d3d3d3] rounded-full flex items-center justify-center shadow-md group-hover:shadow-lg transition-all duration-300">
+                                <span className="text-black font-semibold text-base tracking-wide">
                                     MM
                                 </span>
                             </div>

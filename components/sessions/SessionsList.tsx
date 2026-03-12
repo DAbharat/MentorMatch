@@ -153,9 +153,7 @@ export default function SessionsList({
           )}
 
           {!loading && filteredSessions.length === 0 && (
-            <Card className="p-4 sm:p-6 text-center">
-              <p className="text-muted-foreground text-sm">No sessions found</p>
-            </Card>
+              <p className="text-center text-muted-foreground text-sm bg-none">No sessions found</p>
           )}
 
           {!loading &&

@@ -49,22 +49,38 @@ export default function ReceiverCard(
             {sender.name}
           </Link> */}
           {category && (
-            <Badge variant="secondary" className="text-[10px] sm:text-xs px-1.5 py-0">
+            <Badge
+              variant="secondary"
+              className="text-[10px] sm:text-xs px-1.5 py-0"
+              style={{ background: '#2d2a3e', color: '#a78bfa', border: '1px solid #3d3654' }}
+            >
               {category}
             </Badge>
           )}
         </div>
 
         {/* Message bubble */}
-        <div className="bg-muted rounded-2xl rounded-tl-sm px-3 py-2 sm:px-4 sm:py-2.5 inline-block">
-          <p className="text-xs sm:text-sm md:text-base text-foreground wrap-break-word whitespace-pre-wrap">
+        <div
+          className="rounded-2xl rounded-tl-sm px-3 py-2 sm:px-4 sm:py-2.5 inline-block shadow-sm"
+          style={{
+            background: '#1e1e2e',
+            border: '1px solid #2a2a3d',
+          }}
+        >
+          <p
+            className="text-xs sm:text-sm md:text-base wrap-break-word whitespace-pre-wrap leading-relaxed"
+            style={{ color: '#e2e0f0' }}
+          >
             {content}
           </p>
         </div>
 
         {/* Timestamp */}
         <div className="mt-0.5 sm:mt-1 ml-1">
-          <span className="text-[10px] sm:text-xs text-muted-foreground">
+          <span
+            className="text-[10px] sm:text-xs"
+            style={{ color: '#6b6880' }}
+          >
             {formatTime(createdAt)}
           </span>
         </div>
@@ -72,4 +88,3 @@ export default function ReceiverCard(
     </div>
   )
 }
-

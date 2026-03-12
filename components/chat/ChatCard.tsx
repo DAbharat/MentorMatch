@@ -24,8 +24,6 @@ type ChatCardProps = {
 export default function ChatCard(
     { id, content, sender, createdAt, unreadCount = 0, isYourMessage = false, isPinned = false, onClick }: ChatCardProps
 ) {
-    const completeTime = new Date(createdAt).toLocaleString()
-
     const formatRelativeTime = (dateString: string) => {
         const now = new Date();
         const date = new Date(dateString);
@@ -39,7 +37,7 @@ export default function ChatCard(
     };
 
     // Truncate message preview
-    const truncateMessage = (text: string, maxLength: number = 30) => {
+    const truncateMessage = (text: string, maxLength: number = 35) => {
         if (text.length <= maxLength) return text;
         return text.slice(0, maxLength) + '...';
     };
@@ -49,35 +47,36 @@ export default function ChatCard(
             className="bg-[#111315] cursor-pointer hover:bg-[#16181b] transition-colors p-4 border shadow-none border-[#1f1f1f]"
             onClick={onClick}
         >
-            <div className="flex items-start gap-3">
+            <div className="flex items-center gap-3">
                 {/* Avatar */}
                 <div className="shrink-0">
-                    <div className="w-12 h-12 rounded-full bg-[#d3d3d3] flex items-center justify-center text-black text-xl font-semibold shadow-sm overflow-hidden">
+                    <div className="w-11 h-11 rounded-full bg-[#d3d3d3] flex items-center justify-center text-black text-base font-semibold shadow-sm overflow-hidden">
                         {sender.name.split(' ').map(n => n.charAt(0).toUpperCase()).join('').slice(0, 2)}
                     </div>
                 </div>
 
                 {/* Content */}
                 <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2">
-                        <h3 className="font-semibold text-base text-[#d3d3d3] truncate">
+                    {/* Name + time row */}
+                    <div className="flex items-baseline justify-between gap-2">
+                        <h3 className="font-semibold text-sm text-[#e2e0f0] truncate">
                             {sender.name}
                         </h3>
-
-                        <span className="text-xs text-muted-foreground shrink-0">
-                            {completeTime}
+                        <span className="text-[11px] text-[#6b6880] shrink-0 tabular-nums">
+                            {formatRelativeTime(createdAt)}
                         </span>
                     </div>
 
+                    {/* Message + badge row */}
                     <div className="flex items-center justify-between gap-2 mt-1">
-                        <p className="text-sm text-muted-foreground truncate">
+                        <p className="text-xs text-[#6b6880] truncate">
                             {isYourMessage && (
-                                <span className="text-primary font-medium">You: </span>
+                                <span className="text-muted-foreground font-semibold">You: </span>
                             )}
                             {truncateMessage(content)}
                         </p>
 
-                        <div className="flex items-center gap-2 shrink-0">
+                        <div className="flex items-center gap-1.5 shrink-0">
                             {unreadCount > 0 && (
                                 <Badge
                                     variant="default"
@@ -88,8 +87,8 @@ export default function ChatCard(
                             )}
 
                             {isPinned && (
-                                <div className="text-primary">
-                                    <Bookmark className="w-4 h-4 fill-current" />
+                                <div className="text-[#a78bfa]">
+                                    <Bookmark className="w-3.5 h-3.5 fill-current" />
                                 </div>
                             )}
                         </div>
@@ -99,4 +98,3 @@ export default function ChatCard(
         </Card>
     )
 }
-

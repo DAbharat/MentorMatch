@@ -81,21 +81,24 @@ export default function ChatRoom({
     return (
         <div className="flex flex-col h-full w-full bg-[#0b090a] overflow-hidden">
             {/* Header */}
-            <div className="flex items-center justify-between px-3 sm:px-5 py-2.5 sm:py-3 border-b border-[#1f1f1f] bg-[#0b090a] shrink-0">
+            <div className="flex items-center justify-between px-3 sm:px-5 py-2.5 sm:py-3 border-b border-[#1e1c1e] bg-[#0b090a] shrink-0">
                 {/* Left: Back button */}
                 <Button
                     variant="ghost"
                     size="icon"
-                    className="shrink-0 rounded-lg sm:rounded-xl h-8 w-8 sm:h-9 sm:w-9"
+                    className="shrink-0 rounded-lg sm:rounded-xl h-8 w-8 sm:h-9 sm:w-9 hover:bg-[#1a1a2e] transition-colors"
                     onClick={onBack}
                 >
-                    <ArrowLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#d3d3d3]" />
+                    <ArrowLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" style={{ color: '#b0aec0' }} />
                 </Button>
 
                 {/* Center: Avatar + Room info */}
                 <div className="flex items-center gap-2 sm:gap-3 justify-center flex-1">
-                    <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-[#d3d3d3] border border-[#1f1f1f] flex items-center justify-center shrink-0">
-                        <span className="text-[10px] sm:text-xs font-semibold text-primary tracking-wide">
+                    <div
+                        className="w-8 h-8 sm:w-9 sm:h-9 bg-[#d3d3d3] rounded-full sm:rounded-xl flex items-center justify-center shrink-0"
+                        
+                    >
+                        <span className="text-[10px] sm:text-xs font-semibold text-black tracking-wide">
                             {initials}
                         </span>
                     </div>
@@ -103,16 +106,25 @@ export default function ChatRoom({
                         {otherUserClerkId ? (
                             <Link 
                                 href={`/profile/${otherUserClerkId}`}
-                                className="font-semibold text-xs sm:text-sm text-[#d3d3d3] leading-tight truncate hover:text-primary transition-colors"
+                                className="font-semibold text-xs sm:text-sm leading-tight truncate transition-colors"
+                                style={{ color: '#e2e0f0' }}
                             >
                                 {roomName}
                             </Link>
                         ) : (
-                            <h2 className="font-semibold text-xs sm:text-sm text-[#d3d3d3] leading-tight truncate">
+                            <h2
+                                className="font-semibold text-xs sm:text-sm leading-tight truncate"
+                                style={{ color: '#e2e0f0' }}
+                            >
                                 {roomName}
                             </h2>
                         )}
-                        <p className="text-[10px] sm:text-xs text-muted-foreground leading-tight truncate mt-1">{lastSeen}</p>
+                        <p
+                            className="text-[10px] sm:text-xs leading-tight truncate mt-0.5"
+                            style={{ color: '#6b6880' }}
+                        >
+                            {lastSeen}
+                        </p>
                     </div>
                 </div>
 
@@ -120,10 +132,10 @@ export default function ChatRoom({
                 <Button
                     variant="ghost"
                     size="icon"
-                    className="shrink-0 rounded-lg sm:rounded-xl h-8 w-8 sm:h-9 sm:w-9"
+                    className="shrink-0 rounded-lg sm:rounded-xl h-8 w-8 sm:h-9 sm:w-9 hover:bg-[#1a1a2e] transition-colors"
                     onClick={onVideoCall}
                 >
-                    <Video className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                    <Video className="w-3.5 h-3.5 sm:w-4 sm:h-4" style={{ color: '#b0aec0' }} />
                 </Button>
             </div>
 
@@ -131,18 +143,25 @@ export default function ChatRoom({
             <div className="flex-1 overflow-y-auto overflow-x-hidden px-3 sm:px-4 py-3 sm:py-4 space-y-3 sm:space-y-4">
                 {Object.entries(groupedMessages).length === 0 ? (
                     <div className="flex items-center justify-center h-full">
-                        <p className="text-xs sm:text-sm text-muted-foreground">No messages yet</p>
+                        <p className="text-xs sm:text-sm" style={{ color: '#6b6880' }}>No messages yet</p>
                     </div>
                 ) : (
                     Object.entries(groupedMessages).map(([date, dateMessages]) => (
                         <div key={date} className="space-y-2.5 sm:space-y-3">
                             {/* Date separator */}
                             <div className="flex items-center justify-center gap-2 sm:gap-3 my-4 sm:my-6">
-                                <Separator className="flex-1 bg-[#1f1f1f]"/>
-                                <span className="text-[10px] sm:text-xs text-muted-foreground font-semibold px-2 sm:px-3 py-0.5 sm:py-1 bg-[#d3d3d3] rounded-full whitespace-nowrap">
+                                <Separator className="flex-1" style={{ backgroundColor: '#1e1c2e' }} />
+                                <span
+                                    className="text-[10px] sm:text-xs font-medium px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full whitespace-nowrap"
+                                    style={{
+                                        color: '#9d9ab0',
+                                        background: '#1a1828',
+                                        border: '1px solid #2a2740',
+                                    }}
+                                >
                                     {date}
                                 </span>
-                                <Separator className="flex-1 bg-[#1f1f1f]"/>
+                                <Separator className="flex-1" style={{ backgroundColor: '#1e1c2e' }} />
                             </div>
 
                             {/* Messages for this date */}
