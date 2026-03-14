@@ -1,8 +1,8 @@
 import { z } from "zod";
 
-export const socketHandshakeSchema = z.object({
+export const socketHandshakeSchemaForChat = z.object({
     token: z.string().min(1),
-    chatId: z.string().uuid(),
+    chatId: z.string().uuid().optional(),
 })
 
-export type SocketHandshake = z.infer<typeof socketHandshakeSchema>;
+export type SocketHandshake = z.infer<typeof socketHandshakeSchemaForChat>;

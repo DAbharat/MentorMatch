@@ -3,7 +3,7 @@ import { Server } from "socket.io"
 import prisma from "@/lib/prisma";
 import { verifyToken } from "@clerk/backend";
 import { sendMessageSchema } from "@/schema/messageSchema";
-import { socketHandshakeSchema } from "@/schema/socketHandshakeSchema";
+import { socketHandshakeSchemaForChat } from "@/schema/socketHandshakeSchema";
 
 
 const PORT = Number(process.env.SOCKET_PORT) || 4000
@@ -19,73 +19,110 @@ const io = new Server(httpServer, {
 })
 
 if (!process.env.CLERK_SECRET_KEY) {
-  throw new Error("CLERK_SECRET_KEY is missing")
+    throw new Error("CLERK_SECRET_KEY is missing")
 }
 
 io.use(async (socket, next) => {
     try {
-        const parsed = socketHandshakeSchema.safeParse(socket.handshake.auth)
+        const parsed = socketHandshakeSchemaForChat.safeParse(socket.handshake.auth)
 
-        if(!parsed.success) {
+        if (!parsed.success) {
             return next(new Error("Invalid handshake data"))
         }
 
         const { token, chatId } = parsed.data
 
-        if (!token || !chatId) {
+        if (!token) {
             return next(new Error("Unauthorized"))
         }
 
         const session = await verifyToken(token, {
             secretKey: process.env.CLERK_SECRET_KEY!
         })
+
         const userId = session.sub
-
-        const chat = await prisma.chat.findUnique({
-            where: {
-                id: chatId
-            }
-        })
-
-        if (!chat) {
-            return next(new Error("Chat not found"))
-        }
-
-        const isMentor = userId === chat?.mentorId
-        const isMentee = userId === chat?.menteeId
-
-        if (!isMentor && !isMentee) {
-            return next(new Error("Unauthorized"))
-        }
-
         socket.data.userId = userId
-        socket.data.chatId = chatId
+
+        if (chatId) {
+            const chat = await prisma.chat.findUnique({
+                where: {
+                    id: chatId
+                }
+            })
+
+            if (!chat) {
+                return next(new Error("Chat not found"))
+            }
+
+            const isMentor = userId === chat?.mentorId
+            const isMentee = userId === chat?.menteeId
+
+            if (!isMentor && !isMentee) {
+                return next(new Error("Unauthorized"))
+            }
+
+            socket.data.chatId = chatId
+        }
 
         next()
-    } catch (error) {
+    } catch (error: any) {
         next(new Error("Unauthorized"))
     }
 })
+
+async function validateSession(sessionId: string, userId: string) {
+    try {
+        const findSession = await prisma.session.findUnique({
+            where: {
+                id: sessionId
+            }
+        })
+
+        if (!findSession) {
+            throw new Error("Session not found")
+        }
+
+        const isMentor = findSession.mentorId === userId
+        const isMentee = findSession.menteeId === userId
+
+        if (!isMentor && !isMentee) {
+            throw new Error("Unauthorized")
+        }
+
+        if (findSession.status !== "IN_PROGRESS") {
+            throw new Error("Session is not active")
+        }
+
+        return findSession
+    } catch (error: any) {
+        console.error("Session validation error:", error)
+        throw new Error(error.message || "Session validation failed")
+    }
+}
 
 io.on("connection", (socket) => {
     const { chatId, userId } = socket.data
 
     try {
-        socket.join(`chat_${chatId}`)
-        console.log(`User: ${userId}, has joined the chat: ${chatId}`)
 
-        try {
-            socket.on("send_message", async (payload) => {
+        if (chatId) {
+            socket.join(`chat_${chatId}`)
+            console.log(`User: ${userId} joined chat: ${chatId}`)
+        }
+
+        socket.on("send_message", async (payload) => {
+            try {
+
                 const parsed = sendMessageSchema.safeParse(payload)
                 if (!parsed.success) {
                     console.error("Invalid message payload")
                     return
                 }
-    
+
                 const { content } = parsed.data
 
                 if (!content.trim()) return
-    
+
                 const createMessage = await prisma.message.create({
                     data: {
                         chatId: chatId,
@@ -100,17 +137,166 @@ io.on("connection", (socket) => {
                         createdAt: true
                     }
                 })
-                io.to(`chat_${socket.data.chatId}`).emit("new_message", createMessage)
-            })
-        } catch (error) {
-            console.error("Error handling send_message event:", error)
-        }
 
-        socket.on("disconnect", () => {
-            console.log(`User: ${userId} has left the chat: ${chatId}`)
+                io.to(`chat_${socket.data.chatId}`).emit("new_message", createMessage)
+
+            } catch (error: any) {
+                console.error("Error creating message:", error)
+                socket.emit("error", {
+                    message: "Failed to send message",
+                    details: error.message || "Unknown error"
+                })
+            }
         })
 
-        socket.on("error", (error) => {
+
+        socket.on("webrtc:join", async ({ sessionId }) => {
+            try {
+                if (!sessionId) {
+                    throw new Error("Session ID is required")
+                }
+
+                await validateSession(sessionId, socket.data.userId)
+
+                const callRoom = `call_${sessionId}`
+                socket.join(callRoom)
+                socket.data.sessionId = sessionId
+
+                socket.to(callRoom).emit("webrtc:peer-joined", {
+                    userId: socket.data.userId
+                })
+            } catch (error: any) {
+                socket.emit("webrtc:error", {
+                    message: "Join call failed",
+                    details: error.message || "Unknown error"
+                })
+            }
+        })
+
+        socket.on("webrtc:offer", async ({ sessionId, offer }) => {
+            try {
+                if (!sessionId || !offer) {
+                    throw new Error("Session ID and offer are required")
+                }
+
+                if (!(socket.data.sessionId === sessionId)) {
+                    throw new Error("You must join the call before sending an offer")
+                }
+
+                await validateSession(sessionId, socket.data.userId)
+
+                const callRoom = `call_${sessionId}`
+
+                socket.to(callRoom).emit("webrtc:offer", {
+                    offer,
+                    from: socket.data.userId
+                })
+
+            } catch (error: any) {
+                socket.emit("webrtc:error", {
+                    message: "Offer failed",
+                    details: error.message || "Unknown error"
+                })
+            }
+        })
+
+        socket.on("webrtc:answer", async ({ sessionId, answer }) => {
+            try {
+
+                if (!sessionId || !answer) {
+                    throw new Error("Session ID and answer are required")
+                }
+
+                if (!(socket.data.sessionId === sessionId)) {
+                    throw new Error("You must join the call before sending signaling data")
+                }
+
+                await validateSession(sessionId, socket.data.userId)
+
+                const callRoom = `call_${sessionId}`
+
+                socket.to(callRoom).emit("webrtc:answer", {
+                    answer,
+                    from: socket.data.userId
+                })
+
+            } catch (error: any) {
+                socket.emit("webrtc:error", {
+                    message: "Answer failed",
+                    details: error.message || "Unknown error"
+                })
+            }
+        })
+
+        socket.on("webrtc:ice-candidate", async ({ sessionId, candidate }) => {
+
+            try {
+                if (!sessionId || !candidate) {
+                    throw new Error("Session ID and candidate are required")
+                }
+
+                if (!(socket.data.sessionId === sessionId)) {
+                    throw new Error("You must join the call before sending signaling data")
+                }
+
+                await validateSession(sessionId, socket.data.userId)
+
+                const callRoom = `call_${sessionId}`
+
+                socket.to(callRoom).emit("webrtc:ice-candidate", {
+                    candidate,
+                    from: socket.data.userId
+                })
+
+            } catch (error: any) {
+                socket.emit("webrtc:error", {
+                    message: "ICE candidate failed",
+                    details: error.message || "Unknown error"
+                })
+            }
+        })
+
+        socket.on("webrtc:leave", async ({ sessionId }) => {
+            try {
+                if (!sessionId) {
+                    throw new Error("Session ID is required")
+                }
+
+                if (socket.data.sessionId !== sessionId) return
+
+                const callRoom = `call_${sessionId}`
+
+                socket.leave(callRoom)
+                socket.data.sessionId = null
+
+                socket.to(callRoom).emit("webrtc:peer-left", {
+                    userId: socket.data.userId
+                })
+
+            } catch (error: any) {
+                socket.emit("webrtc:error", {
+                    message: "Leave call failed",
+                    details: error.message || "Unknown error"
+                })
+            }
+        })
+
+        socket.on("disconnect", () => {
+            const { userId, sessionId } = socket.data
+
+            console.log(`User: ${userId} disconnected`)
+
+            if (sessionId) {
+                const callRoom = `call_${sessionId}`
+
+                socket.to(callRoom).emit("webrtc:peer-left", {
+                    userId
+                })
+                socket.data.sessionId = null
+            }
+        })
+
+        socket.on("chat:error", (error) => {
             console.error("Socket error:", error)
         })
 
@@ -134,7 +320,7 @@ io.on("connection", (socket) => {
             socket.to(`chat_${socket.data.chatId}`).emit("stop_typing", { userId: socket.data.userId })
         })
 
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error in socket connection:", error)
     }
 })
@@ -142,3 +328,4 @@ io.on("connection", (socket) => {
 httpServer.listen(PORT, () => {
     console.log(`Socket server is running on port: ${PORT}`)
 })
+
