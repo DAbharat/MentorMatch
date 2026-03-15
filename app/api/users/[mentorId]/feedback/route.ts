@@ -191,10 +191,10 @@ export async function GET(req: NextRequest,
     {
         params
     }: {
-        params: { mentorId: string }
+        params: Promise<{ mentorId: string }>
     }
 ) {
-    const { mentorId } = params
+    const { mentorId } = await params
 
     if (!mentorId) {
         return NextResponse.json({

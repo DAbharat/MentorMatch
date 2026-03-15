@@ -3,7 +3,7 @@ import { auth } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
 
 export async function DELETE(req: NextRequest,
-    { params }: { params: { mentorId: string; feedbackId: string } }
+    { params }: { params: Promise<{ mentorId: string; feedbackId: string }> }
 ) {
     const { userId } = await auth()
 
@@ -15,7 +15,7 @@ export async function DELETE(req: NextRequest,
         })
     }
 
-    const { mentorId, feedbackId } = params
+    const { mentorId, feedbackId } = await params
 
     if (!mentorId || !feedbackId) {
         return NextResponse.json(
@@ -86,7 +86,7 @@ export async function DELETE(req: NextRequest,
 
                 await tx.user.update({
                     where: {
-                        id: params.mentorId
+                        id: mentorId
                     },
                     data: {
                         averageRating: newAvg,

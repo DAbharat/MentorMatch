@@ -5,7 +5,7 @@ import { callEventSchema } from "@/schema/callEventSchema";
 import { z } from "zod";
 
 export async function POST(req: NextRequest, 
-{ params }: { params: { sessionId : string }} )  {
+{ params }: { params: Promise<{ sessionId : string }>} )  {
     const { userId } = await auth()
 
     if(!userId) {
@@ -16,7 +16,7 @@ export async function POST(req: NextRequest,
         })
     }
 
-    const { sessionId } = params
+    const { sessionId } = await params
 
     const body = await req.json()
     const parsed = callEventSchema.safeParse(body)
