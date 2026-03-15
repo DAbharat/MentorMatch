@@ -70,6 +70,32 @@ io.use(async (socket, next) => {
     }
 })
 
+async function validateChat(chatId: string, userId: string) {
+    try {
+        const findChat = await prisma.chat.findUnique({
+            where: {
+                id: chatId
+            }
+        })
+
+        if (!findChat) {
+            throw new Error("Chat not found")
+        }
+
+        const isMentor = findChat.mentorId === userId
+        const isMentee = findChat.menteeId === userId
+
+        if (!isMentor && !isMentee) {
+            throw new Error("Unauthorized")
+        }
+
+        return findChat
+    } catch (error: any) {
+        console.error("Chat validation error:", error)
+        throw new Error(error.message || "Chat validation failed")
+    }
+}
+
 async function validateSession(sessionId: string, userId: string) {
     try {
         const findSession = await prisma.session.findUnique({
@@ -100,18 +126,30 @@ async function validateSession(sessionId: string, userId: string) {
     }
 }
 
-io.on("connection", (socket) => {
+io.on("connection", async (socket) => {
     const { chatId, userId } = socket.data
 
     try {
 
         if (chatId) {
+            await validateChat(chatId, userId)
+
             socket.join(`chat_${chatId}`)
             console.log(`User: ${userId} joined chat: ${chatId}`)
         }
 
         socket.on("send_message", async (payload) => {
             try {
+                const chatId = socket.data.chatId
+
+                if (!chatId) {
+                    socket.emit("chat:error", {
+                        message: "Chat context missing"
+                    })
+                    return
+                }
+
+                await validateChat(chatId, socket.data.userId)
 
                 const parsed = sendMessageSchema.safeParse(payload)
                 if (!parsed.success) {
@@ -142,7 +180,7 @@ io.on("connection", (socket) => {
 
             } catch (error: any) {
                 console.error("Error creating message:", error)
-                socket.emit("error", {
+                socket.emit("chat:error", {
                     message: "Failed to send message",
                     details: error.message || "Unknown error"
                 })
@@ -312,11 +350,35 @@ io.on("connection", (socket) => {
             console.log(`User offline: ${socket.data.userId}`)
         })
 
-        socket.on("typing", () => {
+        socket.on("typing", async () => {
+            const chatId = socket.data.chatId
+
+            if (!chatId) {
+                socket.emit("chat:error", {
+                    message: "Chat context missing",
+                    details: "Typing event without chat"
+                })
+                return
+            }
+
+            await validateChat(chatId, socket.data.userId)
+
             socket.to(`chat_${socket.data.chatId}`).emit("typing", { userId: socket.data.userId })
         })
 
-        socket.on("stop_typing", () => {
+        socket.on("stop_typing", async () => {
+            const chatId = socket.data.chatId
+
+            if (!chatId) {
+                socket.emit("chat:error", {
+                    message: "Chat context missing",
+                    details: "Stop typing event without chat"
+                })
+                return
+            }
+
+            await validateChat(chatId, socket.data.userId)
+
             socket.to(`chat_${socket.data.chatId}`).emit("stop_typing", { userId: socket.data.userId })
         })
 
