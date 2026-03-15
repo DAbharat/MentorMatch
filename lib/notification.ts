@@ -1,17 +1,5 @@
+import { NotificationType } from "@prisma/client";
 import prisma from "./prisma";
-
-export type NotificationKind =
-    | "MENTORSHIP_REQUEST_RECEIVED"
-    | "MENTORSHIP_REQUEST_SENT"
-    | "MENTORSHIP_REQUEST_ACCEPTED"
-    | "MENTORSHIP_REQUEST_REJECTED"
-    | "SESSION_SCHEDULED"
-    | "SESSION_CONFIRMED"
-    | "SESSION_STARTED"
-    | "SESSION_CANCELLED"
-    | "SESSION_REMINDER"
-    | "FEEDBACK_RECEIVED"
-    | "FEEDBACK_SENT";
 
 export async function createNotification({
     userId,
@@ -22,7 +10,7 @@ export async function createNotification({
 } : {
     userId: string;
     senderId?: string;
-    type: NotificationKind;
+    type: NotificationType;
     title: string;
     message: string;
 }) {

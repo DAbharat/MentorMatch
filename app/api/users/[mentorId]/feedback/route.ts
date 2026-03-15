@@ -4,6 +4,7 @@ import prisma from "@/lib/prisma";
 import { createFeedbackSchema } from "@/schema/createFeedbackSchema";
 import { z } from "zod";
 import { createNotification } from "@/lib/notification";
+import { NotificationType } from "@prisma/client";
 
 export async function POST(req: NextRequest) {
     const { userId } = await auth();
@@ -158,7 +159,7 @@ export async function POST(req: NextRequest) {
                 data: {
                     userId: mentorId,
                     senderId: userId,
-                    type: "FEEDBACK_RECEIVED",
+                    type: NotificationType.FEEDBACK_RECEIVED,
                     title: "New feedback received",
                     message: `${user.name} rated you ${rating} stars`
                 }

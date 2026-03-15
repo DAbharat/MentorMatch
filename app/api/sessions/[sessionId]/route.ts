@@ -6,6 +6,7 @@ import { z } from "zod";
 import { computeSessionMetrices } from "@/lib/session-metrics";
 import { stat } from "fs";
 import { createNotification } from "@/lib/notification";
+import { NotificationType } from "@prisma/client";
 
 type TransitionRule = {
     from: SessionStatus[];
@@ -227,9 +228,9 @@ export async function PATCH(req: NextRequest,
         const sendNotification = await createNotification({
             userId: isMentor ? getSession.menteeId : getSession.mentorId,
             senderId: dbUserId,
-            type: action === "CONFIRM" ? "SESSION_CONFIRMED" :
-                action === "START" ? "SESSION_STARTED" :
-                "SESSION_CANCELLED",
+            type: action === "CONFIRM" ? NotificationType.SESSION_CONFIRMED :
+                action === "START" ? NotificationType.SESSION_STARTED :
+                NotificationType.SESSION_CANCELLED,
             title: `Session ${action === "CONFIRM" ? "confirmed" : action === "START" ? "started" : "cancelled"}`,
             message: `Your session for the skill ${getSession.skill.name} scheduled at ${new Date(getSession.scheduledAt).toLocaleString()} has been ${action === "CONFIRM" ? "confirmed" : action === "START" ? "started" : "cancelled"} by the ${isMentor ? "mentor" : "mentee"}`
         })
