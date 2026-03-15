@@ -149,7 +149,10 @@ export async function GET(req: NextRequest) {
             }
         })
 
-        const totalUnreadMessages = fetchChatsForAUser.reduce((sum, chat) => sum + chat._count.messages, 0)
+        const totalUnreadMessages = fetchChatsForAUser.reduce(
+            (sum: number, chat: { _count: { messages: number } }) => sum + chat._count.messages,
+            0
+        )
 
         return NextResponse.json({
             message: "Chats fetched successfully",
