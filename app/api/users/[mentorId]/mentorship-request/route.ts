@@ -4,7 +4,6 @@ import prisma from "@/lib/prisma";
 import { createMentorshipRequestSchema } from "@/schema/createMentorshipRequestSchema";
 import { z } from "zod";
 import { createNotification } from "@/lib/notification";
-import { NotificationType } from "@prisma/client";
 
 export async function POST(req: NextRequest,
     { params }: { params: Promise<{ mentorId: string }> }
@@ -179,7 +178,7 @@ export async function POST(req: NextRequest,
             const sendNotificationToMentor = await createNotification({
                 userId: mentorId,
                 senderId: dbUserId,
-                type: NotificationType.MENTORSHIP_REQUEST_RECEIVED,
+                type: "MENTORSHIP_REQUEST_RECEIVED",
                 title: "Received a mentorship request",
                 message: `You received a mentorship request from ${dbUser.name} for the skill ${skill?.name || 'Unknown'}`
             })

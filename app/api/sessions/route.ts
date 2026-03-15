@@ -4,7 +4,6 @@ import prisma from "@/lib/prisma";
 import { createSessionSchema } from "@/schema/sessionSchema";
 import { z } from "zod";
 import { createNotification } from "@/lib/notification";
-import { NotificationType } from "@prisma/client";
 
 export async function GET(req: NextRequest) {
     const { userId } = await auth()
@@ -197,7 +196,7 @@ export async function POST(req: NextRequest) {
         const sendNotificationToMentor = await createNotification({
             userId: mentorId,
             senderId: dbUserId,
-            type: NotificationType.SESSION_SCHEDULED,
+            type: "SESSION_SCHEDULED",
             title: `New Session request`,
             message: `${dbUser.name} requested session for the skill ${mentorExists.skillsOffered.find(s => s.id === skillId)?.name || "Unknown Skill"} scheduled at ${new Date(scheduledAt).toLocaleString()}`
         })
