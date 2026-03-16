@@ -87,7 +87,7 @@ export default function SignUp() {
         console.log("Frontend: User created successfully", createUser.data);
         toast.success("Email verified successfully! Redirecting...");
         await setActive({ session: result.createdSessionId });
-        router.push("/profile/edit");
+        router.push("/profile");
       } else {
         toast.error("Verification failed. Please check your code and try again.");
         setError("Verification failed");
