@@ -44,6 +44,7 @@ type SessionsListProps = {
   loading: boolean
   onConfirm: (sessionId: string) => void
   onCancel: (sessionId: string) => void
+  onStartSession: (sessionId: string) => void
 }
 
 export default function SessionsList({
@@ -52,14 +53,15 @@ export default function SessionsList({
   loading,
   onConfirm,
   onCancel,
+  onStartSession,
 }: SessionsListProps) {
   const router = useRouter()
   const [filter, setFilter] = useState<
     "all" | "pending" | "confirmed" | "completed"
   >("all")
-  const [navigatingToChatId, setNavigatingToChatId] = useState<string | null>(
-    null
-  )
+
+  const [navigatingToChatId, setNavigatingToChatId] = useState<string | null>(null)
+  const [loadingSessionId, setLoadingSessionId] = useState<string | null>(null)
 
   const filteredSessions = sessions.filter((session) => {
     if (filter === "all") return true
@@ -88,6 +90,19 @@ export default function SessionsList({
       toast.error("Failed to open chat")
     } finally {
       setNavigatingToChatId(null)
+    }
+  }
+
+  const handleStartSession = async (session: Session) => {
+    setLoadingSessionId(session.id)
+    try {
+      await onStartSession(session.id)
+      toast.success("Session starting. Redirecting to video call...")
+      router.push(`/sessions/video-call/${session.id}`)
+    } catch (error:any) {
+      toast.error(error.message || "Failed to start session")
+    } finally {
+      setLoadingSessionId(null)
     }
   }
 
@@ -209,6 +224,19 @@ export default function SessionsList({
                         {navigatingToChatId === session.id
                           ? "Opening..."
                           : "Message"}
+                      </Button>
+                    </div>
+                  )}
+                  {session.status === "CONFIRMED" && isMentor(session) && (
+                    <div className="pt-0.5">
+                      <Button
+                        className="w-full bg-[#1c2023] text-[#d3d3d3] hover:bg-[#2a2f34] border border-white/10 rounded-2xl text-xs sm:text-sm py-2"
+                        onClick={() => handleStartSession(session)}
+                        disabled={loadingSessionId === session.id}
+                      >
+                        {loadingSessionId === session.id
+                          ? "Starting..."
+                          : "Start Session"}
                       </Button>
                     </div>
                   )}

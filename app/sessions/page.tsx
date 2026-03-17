@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import SessionsList from "@/components/sessions/SessionsList"
-import { fetchAllSessions, confirmSession, cancelSession } from "@/services/session.service"
+import { fetchAllSessions, confirmSession, cancelSession, startSession } from "@/services/session.service"
 import { fetchMyProfile } from "@/services/profile.service"
 
 type Session = {
@@ -72,6 +72,16 @@ export default function SessionsPage() {
         }
     }
 
+    const handleStartSession = async (sessionId: string) => {
+        try {
+            await startSession(sessionId)
+            toast.success("Session started successfully!")
+            await loadSessions()
+        } catch (error: any) {
+            toast.error(error.message || "Failed to start session")
+        }
+    }
+
     return (
         <SessionsList
             sessions={sessions}
@@ -79,6 +89,7 @@ export default function SessionsPage() {
             loading={loading}
             onConfirm={handleConfirm}
             onCancel={handleCancel}
+            onStartSession={handleStartSession}
         />
     )
 }

@@ -24,6 +24,17 @@ export async function confirmSession(sessionId: string) {
     }
 }
 
+export async function startSession(sessionId: string) {
+    try {
+        const response = await axios.patch(`/api/sessions/${sessionId}`, { action: "START"})
+        return response.data
+    } catch (error) {
+        const axiosError = error as AxiosError<ApiResponse>
+        console.error("Error starting session:", axiosError.response?.data.message || axiosError.message)
+        throw new Error(axiosError.response?.data.message || "An error occurred while starting session.")
+    }
+}
+
 export async function cancelSession(sessionId: string) {
     try {
         const response = await axios.patch(`/api/sessions/${sessionId}`, { action: "CANCEL" })
