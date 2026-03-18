@@ -101,9 +101,23 @@ export async function computeSessionMetrices(sessionId: string) {
 
 export function shouldAutoCompleteSession(metrics: {
     totalActiveMinutes: number
+    startedAt: Date | null
+    now: Date
 }) {
-    const { totalActiveMinutes } = metrics
-    return totalActiveMinutes >= 30
+    const { totalActiveMinutes, startedAt, now } = metrics
+    
+    if (totalActiveMinutes >= 30) {
+        return true
+    }
+    
+    if (startedAt) {
+        const elapsedMinutes = (now.getTime() - startedAt.getTime()) / 60000
+        if (elapsedMinutes >= 30) {
+            return true
+        }
+    }
+    
+    return false
 }
 
 export function canMentorManuallyCompleteSession(metrics: {

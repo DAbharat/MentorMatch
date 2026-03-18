@@ -73,7 +73,7 @@ export default function Navbar() {
         >
             <div className="w-full pl-2 pr-3 sm:pl-3 sm:pr-4 md:pl-4 md:pr-6 lg:pl-6 lg:pr-8">
 
-                <div className="flex md:hidden items-center gap-2 sm:gap-3 h-14 sm:h-16">
+                <div className="flex md:hidden items-center gap-2 sm:gap-3 h-15 sm:h-30">
 
                     <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                         <SidebarTrigger className=" text-white hover:bg-blue-500 hover:text-white cursor-pointer" />

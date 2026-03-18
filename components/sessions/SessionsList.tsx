@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
@@ -21,6 +21,7 @@ type Session = {
   id: string
   status: string
   scheduledAt: string
+  callStartedAt?: string
   totalCallDuration: number
   mentor: {
     id: string
@@ -62,6 +63,27 @@ export default function SessionsList({
 
   const [navigatingToChatId, setNavigatingToChatId] = useState<string | null>(null)
   const [loadingSessionId, setLoadingSessionId] = useState<string | null>(null)
+
+  // Auto-check for sessions that should be completed after 30 minutes
+  useEffect(() => {
+    const checkAndCompleteSessions = () => {
+      sessions.forEach((session) => {
+        if (session.status === "IN_PROGRESS" && session.callStartedAt) {
+          const elapsedMinutes = 
+            (new Date().getTime() - new Date(session.callStartedAt).getTime()) / 60000
+          
+          // If 30 minutes have passed, trigger a page refresh to sync with backend
+          if (elapsedMinutes >= 30) {
+            router.refresh()
+          }
+        }
+      })
+    }
+
+    // Check every minute
+    const interval = setInterval(checkAndCompleteSessions, 60000)
+    return () => clearInterval(interval)
+  }, [sessions, router])
 
   const filteredSessions = sessions.filter((session) => {
     if (filter === "all") return true
