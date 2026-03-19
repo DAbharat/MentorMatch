@@ -250,3 +250,73 @@ export async function PATCH(req: NextRequest,
         );
     }
 }
+
+export async function GET(req: NextRequest,
+    { params } : { params: Promise<{sessionId : string}> }
+) {
+    const { userId } = await auth()
+
+    if (!userId) {
+        return NextResponse.json({
+            message: "Unauthenticated"
+        }, {
+            status: 401
+        })
+    }
+
+    const { sessionId } = await params
+
+    try {
+        const session = await prisma.session.findUnique({
+            where: {
+                id: sessionId
+            },
+            include: {
+                mentor: {
+                    select: {
+                        id: true,
+                        name: true,
+                        clerkUserId: true
+                    }
+                },
+                mentee: {
+                    select: {
+                        id: true,
+                        name: true,
+                        clerkUserId: true
+                    }
+                }
+            }
+        })
+
+        if(!session) {
+            return NextResponse.json({
+                message: "Session not found"
+            }, {
+                status: 404
+            })
+        }
+
+        if(userId !== session?.mentor?.clerkUserId && userId !== session?.mentee?.clerkUserId) {
+            return NextResponse.json({
+                message: "Unauthorized"
+            }, {
+                status: 403
+            })
+        }
+
+        return NextResponse.json({
+            message: "Session fetched successfully",
+            session
+        }, {
+            status: 200
+        })
+    } catch (error) {
+        console.error("Session GET error:", error);
+        return NextResponse.json({ 
+            message: "Internal server error" 
+        },{ 
+            status: 500 
+        });
+    }
+}

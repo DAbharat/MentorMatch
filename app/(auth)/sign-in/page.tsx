@@ -26,6 +26,8 @@ export default function SignIn() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [needsSecondFactor, setNeedsSecondFactor] = useState(false);
+  const [code, setCode] = useState("");
 
   if (!isLoaded) return null;
 
@@ -56,15 +58,150 @@ export default function SignIn() {
       if (result.status === "complete") {
         await setActive({ session: result.createdSessionId });
         router.push("/profile");
-      } else {
-        toast.error("Sign in failed, try again");
+      }
+      else if (result.status === "needs_second_factor") {
+        setNeedsSecondFactor(true);
+
+        await signIn.prepareSecondFactor({
+          strategy: "email_code",
+        });
+
+        toast.success("Verification code sent to your email");
+      }
+      else {
+        toast.error("Sign in failed");
         setError("Sign in failed");
-        console.error(JSON.stringify(result, null, 2));
       }
     } catch (err: any) {
       toast.error("Sign in failed");
       setError(err?.errors?.[0]?.message || "Sign in failed");
     }
+  }
+
+  async function verifySecondFactor(e: React.FormEvent) {
+    e.preventDefault();
+
+    try {
+      const result = await signIn.attemptSecondFactor({
+        strategy: "email_code",
+        code,
+      });
+
+      if (result.status === "complete") {
+        await setActive({ session: result.createdSessionId });
+        router.push("/profile");
+      } else {
+        toast.error("Invalid code");
+      }
+    } catch (err: any) {
+      toast.error("Verification failed");
+    }
+  }
+
+  if (needsSecondFactor) {
+    return (
+      <div className={`min-h-screen flex items-center justify-center bg-[#0b090a] p-3 sm:p-4 md:p-6 ${DM_Sans_Font.className}`}>
+        <div className="w-full max-w-6xl bg-[#0b090a] rounded-2xl sm:rounded-3xl shadow-xl sm:shadow-2xl overflow-hidden grid grid-cols-1 md:grid-cols-2 my-4">
+
+          {/* Left: Verification */}
+          <div className="bg-[#0b090a] p-6 sm:p-8 md:p-10 lg:p-12">
+            <div className="max-w-md mx-auto md:mx-0">
+
+              <div className="mb-6 sm:mb-8">
+                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#d3d3d3] tracking-tight">
+                  Verify Your Email
+                </h1>
+                <p className="text-sm sm:text-base text-gray-600 mt-1 sm:mt-2 font-light">
+                  We've sent a verification code to{" "}
+                  <span className="font-semibold text-[#d3d3d3] break-all">
+                    {emailAddress}
+                  </span>
+                </p>
+              </div>
+
+              <form onSubmit={verifySecondFactor} className="space-y-5 sm:space-y-6">
+                <div>
+                  <Label className="text-xs sm:text-sm text-muted-foreground font-semibold mb-2 block">
+                    Verification Code
+                  </Label>
+                  <Input
+                    value={code}
+                    onChange={(e) => setCode(e.target.value)}
+                    placeholder="000000"
+                    maxLength={6}
+                    className="h-12 sm:h-14 text-center text-xl sm:text-2xl tracking-[0.5em] font-bold rounded-lg sm:rounded-xl bg-[#1a1a1d] border-white/10 text-[#d3d3d3]"
+                    required
+                  />
+                  <p className="text-xs text-gray-500 text-center mt-2 sm:mt-3">
+                    Check your email inbox and spam folder
+                  </p>
+                </div>
+
+                {error && (
+                  <Alert className="rounded-lg sm:rounded-xl border-red-200 bg-red-50">
+                    <AlertDescription className="text-xs sm:text-sm text-red-800">
+                      {error}
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                <Button
+                  type="submit"
+                  className="w-full h-11 sm:h-12 bg-[#d3d3d3] hover:bg-[#bcbcbc] text-black font-semibold text-sm sm:text-base rounded-full shadow-lg hover:shadow-xl transition-all duration-200"
+                >
+                  Verify Email
+                </Button>
+
+                <button
+                  type="button"
+                  onClick={() => setNeedsSecondFactor(false)}
+                  className="w-full text-xs sm:text-sm text-gray-500 hover:text-gray-400 font-medium"
+                >
+                  Back to sign in
+                </button>
+              </form>
+
+              <p className="text-xs text-gray-400 text-center mt-10 sm:mt-12">
+                © {new Date().getFullYear()} Acme. All rights reserved
+              </p>
+            </div>
+          </div>
+
+          {/* Right panel (unchanged) */}
+          <div className="hidden md:flex items-center justify-center bg-[#111315] text-white p-8 xl:p-10 relative overflow-hidden rounded-4xl">
+            <div className="absolute top-0 right-0 w-72 h-72 xl:w-96 xl:h-96 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+            <div className="absolute bottom-0 left-0 w-64 h-64 xl:w-80 xl:h-80 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
+
+            <div className="max-w-md text-center relative z-10">
+              <h2 className="text-2xl xl:text-3xl font-bold mb-3 xl:mb-4 leading-tight">
+                Find mentors. Share skills. Grow faster
+              </h2>
+              <p className="text-sm xl:text-base mb-6 xl:mb-8 text-indigo-100 font-light">
+                Continue your learning journey
+              </p>
+
+              <div className="w-full bg-white/10 backdrop-blur-sm rounded-xl xl:rounded-2xl p-4 xl:p-6 mb-6 xl:mb-8 border border-white/20 shadow-2xl">
+                <div className="h-40 xl:h-48 w-full bg-linear-to-br from-white/20 to-white/5 rounded-lg xl:rounded-xl flex items-center justify-center">
+                  <div className="text-center">
+                    <CheckCircle2 className="w-12 h-12 xl:w-16 xl:h-16 mx-auto mb-2 xl:mb-3 text-white/80" />
+                    <p className="text-xs xl:text-sm font-medium text-white/90">
+                      Dashboard Preview
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-center gap-4 xl:gap-6 text-xs xl:text-sm text-indigo-100/80 font-medium">
+                <span className="hover:text-white">Github</span>
+                <span className="text-white/30">•</span>
+                <span className="hover:text-white">Google</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    );
   }
 
   return (

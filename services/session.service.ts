@@ -12,6 +12,17 @@ export async function fetchAllSessions() {
     }
 }
 
+export async function fetchSessionById(sessionId: string) {
+    try {
+        const response = await axios.get(`/api/sessions/${sessionId}`)
+        return response.data
+    } catch (error) {
+        const axiosError = error as AxiosError<ApiResponse>
+        console.error("Error fetching session:", axiosError.response?.data.message || axiosError.message)
+        throw new Error(axiosError.response?.data.message || "An error occurred while fetching session.")
+    }
+}
+
 export async function confirmSession(sessionId: string) {
     try {
         const response = await axios.patch(`/api/sessions/${sessionId}`, { action: "CONFIRM" })

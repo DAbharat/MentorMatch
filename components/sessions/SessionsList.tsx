@@ -6,8 +6,18 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/retroui/Button"
 import { DM_Sans } from "next/font/google"
-import { MessageCircleMore, SlidersHorizontal } from "lucide-react"
+import { MessageCircleMore, SlidersHorizontal, X, Check } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 import { fetchAllChatsForAUser } from "@/services/messages.service"
@@ -65,26 +75,36 @@ export default function SessionsList({
   const [navigatingToChatId, setNavigatingToChatId] = useState<string | null>(null)
   const [loadingSessionId, setLoadingSessionId] = useState<string | null>(null)
   const [isCleaningUp, setIsCleaningUp] = useState(false)
+  const [cancelingSessionId, setCancelingSessionId] = useState<string | null>(null)
+  const [showCancelDialog, setShowCancelDialog] = useState(false)
+  const [sessionTimers, setSessionTimers] = useState<Record<string, number>>({})
 
-  // Auto-check for sessions that should be completed after 30 minutes
+  // Auto-check for sessions that should be completed after time limit
   useEffect(() => {
-    const checkAndCompleteSessions = () => {
-      sessions.forEach((session) => {
-        if (session.status === "IN_PROGRESS" && session.callStartedAt) {
-          const elapsedMinutes = 
-            (new Date().getTime() - new Date(session.callStartedAt).getTime()) / 60000
-          
-          // If 30 minutes have passed, trigger a page refresh to sync with backend
-          if (elapsedMinutes >= 30) {
-            router.refresh()
+    const timer = setInterval(() => {
+      setSessionTimers(prevTimers => {
+        const newTimers = { ...prevTimers }
+        
+        sessions.forEach((session) => {
+          if (session.status === "IN_PROGRESS" && session.callStartedAt) {
+            const elapsedSeconds = 
+              (new Date().getTime() - new Date(session.callStartedAt).getTime()) / 1000
+            
+            newTimers[session.id] = Math.floor(elapsedSeconds)
+            
+            // Auto-complete if time limit reached
+            const durationSeconds = session.totalCallDuration * 60
+            if (elapsedSeconds >= durationSeconds) {
+              router.refresh()
+            }
           }
-        }
+        })
+        
+        return newTimers
       })
-    }
+    }, 1000)
 
-    // Check every minute
-    const interval = setInterval(checkAndCompleteSessions, 60000)
-    return () => clearInterval(interval)
+    return () => clearInterval(timer)
   }, [sessions, router])
 
   const filteredSessions = sessions.filter((session) => {
@@ -128,6 +148,41 @@ export default function SessionsList({
     } finally {
       setLoadingSessionId(null)
     }
+  }
+
+  const handleConfirmSession = async (session: Session) => {
+    setLoadingSessionId(session.id)
+    try {
+      await onConfirm(session.id)
+      toast.success("Session confirmed successfully!")
+      router.refresh()
+    } catch (error: any) {
+      toast.error(error.message || "Failed to confirm session")
+    } finally {
+      setLoadingSessionId(null)
+    }
+  }
+
+  const handleCancelSession = async () => {
+    if (!cancelingSessionId) return
+    setLoadingSessionId(cancelingSessionId)
+    try {
+      await onCancel(cancelingSessionId)
+      toast.success("Session cancelled successfully!")
+      setShowCancelDialog(false)
+      setCancelingSessionId(null)
+      router.refresh()
+    } catch (error: any) {
+      toast.error(error.message || "Failed to cancel session")
+    } finally {
+      setLoadingSessionId(null)
+    }
+  }
+
+  const formatTimer = (seconds: number) => {
+    const mins = Math.floor(seconds / 60)
+    const secs = seconds % 60
+    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`
   }
 
   const handleCleanupStuckSessions = async () => {
@@ -261,6 +316,32 @@ export default function SessionsList({
                     </div>
                   </div>
 
+                  {session.status === "PENDING" && isMentor(session) && (
+                    <div className="flex gap-2 pt-0.5">
+                      <Button
+                        className="flex-1 bg-[#0f2f85] text-white hover:bg-[#0a2368] rounded-2xl text-xs sm:text-sm py-2 flex items-center justify-center gap-2"
+                        onClick={() => handleConfirmSession(session)}
+                        disabled={loadingSessionId === session.id}
+                      >
+                        <Check className="w-4 h-4" />
+                        {loadingSessionId === session.id
+                          ? "Confirming..."
+                          : "Confirm"}
+                      </Button>
+                      <Button
+                        className="flex-1 bg-red-600/20 text-red-400 hover:bg-red-600/30 rounded-2xl text-xs sm:text-sm py-2 flex items-center justify-center gap-2 border border-red-600/30"
+                        onClick={() => {
+                          setCancelingSessionId(session.id)
+                          setShowCancelDialog(true)
+                        }}
+                        disabled={loadingSessionId === session.id}
+                      >
+                        <X className="w-4 h-4" />
+                        Cancel
+                      </Button>
+                    </div>
+                  )}
+
                   {session.status === "CONFIRMED" && (
                     <div className="pt-0.5">
                       <Button
@@ -288,11 +369,61 @@ export default function SessionsList({
                       </Button>
                     </div>
                   )}
+
+                  {session.status === "IN_PROGRESS" && session.callStartedAt && (
+                    <div className="space-y-2 pt-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="text-center flex-1">
+                          <p className="text-xs text-muted-foreground mb-1">Elapsed Time</p>
+                          <p className="font-mono text-lg font-bold text-[#d3d3d3]">
+                            {formatTimer(sessionTimers[session.id] || 0)}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            / {session.totalCallDuration}:00
+                          </p>
+                        </div>
+                        <div className="w-1 h-16 bg-[#1f1f1f] rounded-full overflow-hidden shrink-0">
+                          <div
+                            className="w-full bg-green-500 transition-all duration-300"
+                            style={{
+                              height: `${Math.min(
+                                ((sessionTimers[session.id] || 0) / (session.totalCallDuration * 60)) * 100,
+                                100
+                              )}%`,
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </Card>
             ))}
         </div>
       </div>
+
+      <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+        <AlertDialogContent className="bg-[#111315] border-[#1f1f1f]">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-[#d3d3d3]">Cancel Session</AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground">
+              Are you sure you want to cancel this session? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-white text-black hover:bg-gray-200 border-[#1f1f1f] rounded-full">
+              Keep Session
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleCancelSession}
+              disabled={loadingSessionId === cancelingSessionId}
+              className="bg-red-600 hover:bg-red-700 text-white rounded-full"
+            >
+              {loadingSessionId === cancelingSessionId ? "Cancelling..." : "Cancel Session"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
