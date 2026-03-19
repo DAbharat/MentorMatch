@@ -90,4 +90,18 @@ export async function checkMentorshipSessionStatus(mentorClerkId: string) {
     }
 }
 
+export async function cleanupStuckSessions() {
+    try {
+        const response = await axios.post("/api/sessions/cleanup-stuck")
+        console.log("Cleanup response:", response.data)
+        return response.data
+    } catch (error) {
+        const axiosError = error as AxiosError<ApiResponse>
+        console.error("Error response:", axiosError.response?.data)
+        console.error("Error status:", axiosError.response?.status)
+        console.error("Error message:", axiosError.message)
+        throw new Error(axiosError.response?.data?.message || "An error occurred while cleaning up stuck sessions.")
+    }
+}
+
 

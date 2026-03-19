@@ -25,6 +25,7 @@ export async function GET(req: NextRequest) {
                 clerkUserId: true,
                 name: true,
                 bio: true,
+                ratingCount: true,
                 skillsOffered: {
                     select: {
                         id: true,
@@ -56,7 +57,7 @@ export async function GET(req: NextRequest) {
             }
         })
 
-        if(!fetchUser) {
+        if (!fetchUser) {
             return NextResponse.json({
                 message: "User not found"
             }, {
@@ -97,7 +98,7 @@ export async function GET(req: NextRequest) {
 
                 if (acceptedRequest) {
                     hasAcceptedRequest = true;
-                    
+
                     const fullRequest = await prisma.mentorshipRequest.findFirst({
                         where: {
                             OR: [
@@ -157,7 +158,7 @@ export async function GET(req: NextRequest) {
                                 skillId: fullRequest.skillId,
                                 status: "CONFIRMED",
                                 scheduledAt: {
-                                    gte: new Date() 
+                                    gte: new Date()
                                 }
                             },
                             select: {
@@ -180,12 +181,23 @@ export async function GET(req: NextRequest) {
         const joinedAt = new Date(fetchUser.createdAt).toLocaleDateString("en-US", options);
 
         const data = {
-            ...fetchUser,
-            // skillsOffered: fetchUser.skillsOffered.map(s => s.name),
-            // skillsWanted: fetchUser.skillsWanted.map(s => s.name),
+            id: fetchUser.id,
+            clerkUserId: fetchUser.clerkUserId,
+            name: fetchUser.name,
+            bio: fetchUser.bio,
+            createdAt: fetchUser.createdAt,
             joinedAt,
-            sessionsCompletedAsMentor: fetchUser._count.sessionsAsMentor,
-            sessionsCompletedAsMentee: fetchUser._count.sessionsAsMentee,
+
+            stats: {
+                averageRating: fetchUser.averageRating,
+                ratingCount: fetchUser.ratingCount,
+                sessionsCompletedAsMentor: fetchUser._count.sessionsAsMentor,
+                sessionsCompletedAsMentee: fetchUser._count.sessionsAsMentee,
+            },
+
+            skillsOffered: fetchUser.skillsOffered,
+            skillsWanted: fetchUser.skillsWanted,
+
             hasAcceptedRequest,
             chatId,
             hasActiveConfirmedSession

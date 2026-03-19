@@ -11,6 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 import { fetchAllChatsForAUser } from "@/services/messages.service"
+import { cleanupStuckSessions } from "@/services/session.service"
 
 const DM_Sans_Font = DM_Sans({
   weight: ["400", "500", "700"],
@@ -63,6 +64,7 @@ export default function SessionsList({
 
   const [navigatingToChatId, setNavigatingToChatId] = useState<string | null>(null)
   const [loadingSessionId, setLoadingSessionId] = useState<string | null>(null)
+  const [isCleaningUp, setIsCleaningUp] = useState(false)
 
   // Auto-check for sessions that should be completed after 30 minutes
   useEffect(() => {
@@ -128,6 +130,22 @@ export default function SessionsList({
     }
   }
 
+  const handleCleanupStuckSessions = async () => {
+    setIsCleaningUp(true)
+    try {
+      console.log("Starting cleanup...")
+      const result = await cleanupStuckSessions()
+      console.log("Cleanup result:", result)
+      toast.success(`Cleaned up ${result.completedCount} stuck session(s)`)
+      router.refresh()
+    } catch (error: any) {
+      console.error("Cleanup error:", error)
+      toast.error(error.message || "Failed to cleanup stuck sessions")
+    } finally {
+      setIsCleaningUp(false)
+    }
+  }
+
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
       PENDING: "bg-yellow-100 text-yellow-800",
@@ -147,7 +165,15 @@ export default function SessionsList({
 
       {/* Top Filter Bar */}
       <div className="container max-w-4xl mx-auto px-3 sm:px-4 pt-4 sm:pt-6 pb-2">
-        <div className="flex justify-end">
+        <div className="flex justify-end gap-2">
+          <Button
+            onClick={handleCleanupStuckSessions}
+            disabled={isCleaningUp}
+            className="bg-transparent border border-red-500 text-red-500 hover:bg-red-500/10 flex items-center gap-2 text-xs sm:text-sm"
+            title="Clean up old stuck IN_PROGRESS sessions"
+          >
+            {isCleaningUp ? "Cleaning..." : "Cleanup Stuck Sessions"}
+          </Button>
           <Popover>
             <PopoverTrigger asChild>
               <Button className="bg-transparent border border-[#1f1f1f] text-black hover:bg-transparent flex items-center gap-2 text-xs sm:text-sm">

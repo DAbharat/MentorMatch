@@ -30,9 +30,34 @@ export async function GET(req: NextRequest) {
                 clerkUserId: true,
                 name: true,
                 bio: true,
-                skillsOffered: true,
-                skillsWanted: true,
                 averageRating: true,
+                ratingCount: true,
+                skillsOffered: {
+                    select: {
+                        id: true,
+                        name: true
+                    }
+                },
+                skillsWanted: {
+                    select: {
+                        id: true,
+                        name: true
+                    }
+                },
+                _count: {
+                    select: {
+                        sessionsAsMentor: {
+                            where: {
+                                status: "COMPLETED"
+                            }
+                        },
+                        sessionsAsMentee: {
+                            where: {
+                                status: "COMPLETED"
+                            }
+                        }
+                    }
+                },
                 createdAt: true
             }
         })
@@ -45,9 +70,35 @@ export async function GET(req: NextRequest) {
             })
         }
 
+
+        const joinedAt = new Date(userProfile.createdAt).toLocaleDateString(
+            "en-US",
+            { year: "numeric", month: "short" }
+        );
+
+        const data = {
+            id: userProfile.id,
+            clerkUserId: userProfile.clerkUserId,
+            name: userProfile.name,
+            bio: userProfile.bio,
+            createdAt: userProfile.createdAt,
+            joinedAt,
+            stats: {
+                averageRating: userProfile.averageRating,
+                ratingCount: userProfile.ratingCount,
+                sessionsCompletedAsMentor: userProfile._count.sessionsAsMentor,
+                sessionsCompletedAsMentee: userProfile._count.sessionsAsMentee,
+            },
+            skillsOffered: userProfile.skillsOffered,
+            skillsWanted: userProfile.skillsWanted,
+            hasAcceptedRequest: false,
+            chatId: null,
+            hasActiveConfirmedSession: false
+        }
+
         return NextResponse.json({
             message: "User profile fetched successfully",
-            data: userProfile
+            data,
         }, {
             status: 200
         })
@@ -125,14 +176,14 @@ export async function PATCH(req: NextRequest) {
         if (skillsOffered) {
             const skillIds = await resolveSkills(skillsOffered);
             data.skillsOffered = {
-                connect: skillIds.map((id) => ({ id })) 
+                connect: skillIds.map((id) => ({ id }))
             }
         }
 
         if (skillsWanted) {
             const skillIds = await resolveSkills(skillsWanted);
             data.skillsWanted = {
-                connect: skillIds.map((id) => ({ id })) // Use connect instead of set
+                connect: skillIds.map((id) => ({ id })) 
             }
         }
 

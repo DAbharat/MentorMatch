@@ -20,7 +20,7 @@ export async function updateMyProfile(profileData: {
     skillsWanted?: string[];
 }) {
     try {
-        console.log("Updating profile with data:", profileData);
+        console.log("Updating profile with data...");
         const response = await axios.patch(`/api/user/profile`, profileData);
         return response.data.data;
     } catch (error) {
@@ -39,5 +39,17 @@ export async function fetchUserById(params: { clerkUserId: string }) {
         const axiosError = error as AxiosError<ApiResponse>
         console.error("Error fetching user:", axiosError.response?.data.message || axiosError.message)
         throw new Error(axiosError.response?.data.message || "An error occurred while fetching user.")
+    }
+}
+
+export async function fetchAUserProfile(userId: string) {
+    try {
+        console.log("fetching another user's profile...")
+        const response = await axios.get(`/api/user/${userId}`)
+        return response.data.data;
+    } catch (error) {
+        const axiosError = error as AxiosError<ApiResponse>
+        console.error("Error fetching user profile:", axiosError.response?.data.message || error);
+        throw new Error(axiosError.response?.data.message || "An error occurred while fetching user profile.");
     }
 }

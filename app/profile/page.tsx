@@ -34,7 +34,7 @@ export default function ProfilePage() {
             toast.error("You must be signed in to view your profile");
             router.replace("/sign-in");
         } else {
-            console.log("ProfilePage: User is signed in.", user);
+            console.log("ProfilePage: User is signed in.");
         }
     }, [isLoaded, isSignedIn, router, user]);
 
@@ -45,8 +45,8 @@ export default function ProfilePage() {
         const loadProfile = async () => {
             try {
                 const data = await fetchMyProfile();
-                console.log("ProfilePage: Profile fetched successfully.", data);
-                toast.success("Profile loaded successfully!");
+                // console.log("ProfilePage: Profile fetched successfully.", data);
+                // toast.success("Profile loaded successfully!");
                 setProfile(data);
             } catch (error) {
                 const axiosError = error as AxiosError<ApiResponse>;
@@ -80,7 +80,7 @@ export default function ProfilePage() {
         return <p className="text-center text-red-500">Profile not found.</p>;
     }
 
-    console.log("ProfilePage: Rendering profile page.", profile);
+    // console.log("ProfilePage: Rendering profile page.", profile);
 
     return (
         <div className='bg-[#0b090a]'>

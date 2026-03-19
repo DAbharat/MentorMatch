@@ -13,7 +13,8 @@ const DM_Sans_Font = DM_Sans({
 
 type ProfileTabsProps = {
     stats: {
-        sessionsCompleted: number;
+        sessionsCompletedAsMentor: number;
+        sessionsCompletedAsMentee: number;
         averageRating: number | null;
         ratingCount: number;
     };

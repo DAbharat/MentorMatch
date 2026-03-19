@@ -9,11 +9,14 @@ import ProfileTabs from "@/components/profile/ProfileTabs";
 import { toast } from "sonner";
 import { useUser } from "@clerk/nextjs";
 import { Skeleton } from "@/components/ui/skeleton";
+import { fetchAUserProfile } from "@/services/profile.service";
 
 export default function PublicProfilePage() {
-  const { userId } = useParams();
   const router = useRouter();
   const { user } = useUser();
+  const params = useParams<{ userId: string }>()
+
+  const userId = params.userId;
 
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -22,9 +25,10 @@ export default function PublicProfilePage() {
     if (!userId) return;
 
     const loadUser = async () => {
+
       try {
-        const res = await axios.get(`/api/user/${userId}`);
-        setProfile(res.data.data);
+        const data = await fetchAUserProfile(userId)
+        setProfile(data);
       } catch (error: any) {
         toast.error(error.response?.data?.message || "User not found");
         router.replace("/");
@@ -70,7 +74,7 @@ export default function PublicProfilePage() {
       />
 
       <ProfileTabs
-        stats={{ averageRating: profile.averageRating, ratingCount: profile._count.sessionsAsMentor + profile._count.sessionsAsMentee, sessionsCompleted: profile.sessionsCompleted }}
+        stats={profile.stats}
         skillsOffered={profile.skillsOffered}
         skillsWanted={profile.skillsWanted}
         feedbacks={profile.feedbacks}

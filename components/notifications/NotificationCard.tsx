@@ -204,13 +204,13 @@ export default function NotificationCard(
                                     <DropdownMenuItem
                                         onClick={handleMarkAsRead}
                                         disabled={isMarkingRead || isRead}
-                                        className=' hover:bg-[#161a1d]'
+                                        className=' hover:font-bold'
                                     >
                                         <CheckCheck className="w-4 h-4 mr-2 text-green-400" />
                                         <span className='text-white'>Mark as read</span>
                                     </DropdownMenuItem>
                                     <DropdownMenuItem
-                                        className="text-red-500 focus:text-red-500 hover:bg-[#161a1d]"
+                                        className="text-red-500 focus:text-red-500 hover:font-bold hover:bg-muted"
                                         onClick={(e) => {
                                             e.stopPropagation()
                                             setShowDeleteDialog(true)
