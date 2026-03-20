@@ -67,8 +67,8 @@ const ACTION_HANDLERS: Record<string, ActionHandler> = {
         }
 
         const metrics = await computeSessionMetrices(sessionId)
-        if(!metrics || metrics.totalActiveMinutes < 15) {
-            throw new Error("Session cannot be completed manually before 15 minutes of active participation")
+        if(!metrics || metrics.totalActiveMinutes < 10) {
+            throw new Error("Session cannot be completed manually before 10 minutes of active participation")
         }
 
         return {

@@ -57,6 +57,17 @@ export async function cancelSession(sessionId: string) {
     }
 }
 
+export async function completeSession(sessionId: string) {
+    try {
+        const response = await axios.patch(`/api/sessions/${sessionId}`, { action: "COMPLETE" })
+        return response.data
+    } catch (error) {
+        const axiosError = error as AxiosError<ApiResponse>
+        console.error("Error completing session:", axiosError.response?.data.message || axiosError.message)
+        throw new Error(axiosError.response?.data.message || "An error occurred while completing session.")
+    }
+}
+
 export async function createSession(sessionData: {
     mentorId: string
     menteeId: string

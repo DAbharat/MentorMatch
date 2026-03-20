@@ -1,6 +1,6 @@
 "use client"
 
-import React from 'react'
+import React, { useEffect, useRef } from 'react'
 
 type InitialScreenProps = {
     id: string;
@@ -19,6 +19,7 @@ type InitialScreenProps = {
     onToggleMic: () => void;
     onToggleCamera: () => void;
     onJoinCall: () => void;
+    localStream: MediaStream | null;
 }
 
 export default function InitialScreen({
@@ -29,8 +30,18 @@ export default function InitialScreen({
     cameraEnabled,
     onToggleMic,
     onToggleCamera,
-    onJoinCall
+    onJoinCall,
+    localStream
 }: InitialScreenProps) {
+
+    const videoRef = useRef<HTMLVideoElement>(null)
+
+    useEffect(() => {
+        if(videoRef.current && localStream) {
+            videoRef.current.srcObject = localStream
+        }
+    }, [localStream])
+
     return (
         <div
             className="min-h-screen w-full flex flex-col items-center justify-center px-4 py-10"
@@ -78,7 +89,13 @@ export default function InitialScreen({
                     {/* Camera on */}
                     {cameraEnabled && (
                         <div className="w-full h-full bg-[#111] flex items-center justify-center">
-                            <p className="text-[#555] text-xs">Camera stream</p>
+                            <video
+                                ref={videoRef}
+                                autoPlay
+                                playsInline
+                                muted
+                                className="w-full h-full object-cover"
+                            />
                         </div>
                     )}
 

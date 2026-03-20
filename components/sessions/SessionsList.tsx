@@ -21,7 +21,7 @@ import {
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 import { fetchAllChatsForAUser } from "@/services/messages.service"
-import { cleanupStuckSessions } from "@/services/session.service"
+import { cleanupStuckSessions, completeSession } from "@/services/session.service"
 
 const DM_Sans_Font = DM_Sans({
   weight: ["400", "500", "700"],
@@ -78,8 +78,15 @@ export default function SessionsList({
   const [cancelingSessionId, setCancelingSessionId] = useState<string | null>(null)
   const [showCancelDialog, setShowCancelDialog] = useState(false)
   const [sessionTimers, setSessionTimers] = useState<Record<string, number>>({})
+  const [mounted, setMounted] = useState(false)
 
-  // Auto-check for sessions that should be completed after time limit
+  // Ensure component is mounted before rendering Popover to avoid hydration mismatch
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+  const completedSessionsRef = React.useRef<Set<string>>(new Set())
+
+  // Update elapsed time for IN_PROGRESS sessions
   useEffect(() => {
     const timer = setInterval(() => {
       setSessionTimers(prevTimers => {
@@ -90,13 +97,11 @@ export default function SessionsList({
             const elapsedSeconds = 
               (new Date().getTime() - new Date(session.callStartedAt).getTime()) / 1000
             
-            newTimers[session.id] = Math.floor(elapsedSeconds)
-            
-            // Auto-complete if time limit reached
+            // Cap elapsed time at session duration
             const durationSeconds = session.totalCallDuration * 60
-            if (elapsedSeconds >= durationSeconds) {
-              router.refresh()
-            }
+            const cappedSeconds = Math.min(Math.floor(elapsedSeconds), durationSeconds)
+            
+            newTimers[session.id] = cappedSeconds
           }
         })
         
@@ -105,6 +110,33 @@ export default function SessionsList({
     }, 1000)
 
     return () => clearInterval(timer)
+  }, [sessions])
+
+  // Handle auto-completion when time limit is reached
+  useEffect(() => {
+    sessions.forEach((session) => {
+      if (session.status === "IN_PROGRESS" && session.callStartedAt) {
+        const elapsedSeconds = 
+          (new Date().getTime() - new Date(session.callStartedAt).getTime()) / 1000
+        const durationSeconds = session.totalCallDuration * 60
+        
+        // Auto-complete only once per session
+        if (elapsedSeconds >= durationSeconds && !completedSessionsRef.current.has(session.id)) {
+          completedSessionsRef.current.add(session.id)
+          
+          // Call API to mark session as COMPLETED
+          completeSession(session.id)
+            .then(() => {
+              router.refresh()
+              toast.success("Session completed!")
+            })
+            .catch((error) => {
+              console.error("Failed to complete session:", error)
+              toast.error("Failed to complete session automatically")
+            })
+        }
+      }
+    })
   }, [sessions, router])
 
   const filteredSessions = sessions.filter((session) => {
@@ -229,34 +261,36 @@ export default function SessionsList({
           >
             {isCleaningUp ? "Cleaning..." : "Cleanup Stuck Sessions"}
           </Button>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button className="bg-transparent border border-[#1f1f1f] text-black hover:bg-transparent flex items-center gap-2 text-xs sm:text-sm">
-                <SlidersHorizontal className="w-4 h-4 text-white" />
-              </Button>
-            </PopoverTrigger>
+          {mounted && (
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button className="bg-transparent border border-[#1f1f1f] text-black hover:bg-transparent flex items-center gap-2 text-xs sm:text-sm">
+                  <SlidersHorizontal className="w-4 h-4 text-white" />
+                </Button>
+              </PopoverTrigger>
 
-            <PopoverContent className="w-44 p-2 bg-[#161a1d]">
-              <div className="space-y-1">
-                {["all", "pending", "confirmed", "completed"].map((f) => {
-                  const isActive = filter === f
-                  return (
-                    <button
-                      key={f}
-                      onClick={() => setFilter(f as any)}
-                      className={`w-full text-left px-3 py-2 text-sm rounded-md transition ${
-                        isActive
-                          ? "bg-black text-white"
-                          : "hover:bg-gray-800 text-[#d3d3d3]"
-                      }`}
-                    >
-                      {f.charAt(0).toUpperCase() + f.slice(1)}
-                    </button>
-                  )
-                })}
-              </div>
-            </PopoverContent>
-          </Popover>
+              <PopoverContent className="w-44 p-2 bg-[#161a1d]">
+                <div className="space-y-1">
+                  {["all", "pending", "confirmed", "completed"].map((f) => {
+                    const isActive = filter === f
+                    return (
+                      <button
+                        key={f}
+                        onClick={() => setFilter(f as any)}
+                        className={`w-full text-left px-3 py-2 text-sm rounded-md transition ${
+                          isActive
+                            ? "bg-black text-white"
+                            : "hover:bg-gray-800 text-[#d3d3d3]"
+                        }`}
+                      >
+                        {f.charAt(0).toUpperCase() + f.slice(1)}
+                      </button>
+                    )
+                  })}
+                </div>
+              </PopoverContent>
+            </Popover>
+          )}
         </div>
       </div>
 
@@ -374,7 +408,7 @@ export default function SessionsList({
                     <div className="space-y-2 pt-2">
                       <div className="flex items-center justify-between gap-2">
                         <div className="text-center flex-1">
-                          <p className="text-xs text-muted-foreground mb-1">Elapsed Time</p>
+                          <p className="text-xs text-muted-foreground mb-1">Session Duration</p>
                           <p className="font-mono text-lg font-bold text-[#d3d3d3]">
                             {formatTimer(sessionTimers[session.id] || 0)}
                           </p>

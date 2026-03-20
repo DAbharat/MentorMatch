@@ -57,7 +57,7 @@ export async function GET(req: NextRequest,
             })
         }
 
-        if(userId !== findSession?.mentor?.clerkUserId && userId !== findSession?.mentee?.clerkUserId) {
+        if (userId !== findSession?.mentor?.clerkUserId && userId !== findSession?.mentee?.clerkUserId) {
             return NextResponse.json({
                 message: "Unauthorized"
             }, {
@@ -78,6 +78,14 @@ export async function GET(req: NextRequest,
                 message: "Call has not started yet"
             }, {
                 status: 400
+            })
+        }
+
+        if (findSession.callEndedAt) {
+            return NextResponse.json({
+                message: "Call already ended"
+            }, { 
+                status: 400 
             })
         }
 

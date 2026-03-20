@@ -32,9 +32,11 @@ export const useWebRTC = ({
 
     const [error, setError] = useState<string | null>(null)
 
+    const [isPeerConnected, setIsPeerConnected] = useState(false)
+
     async function initMedia() {
 
-        if(localStreamRef.current) return
+        if (localStreamRef.current) return
 
         try {
             const stream = await navigator.mediaDevices.getUserMedia({
@@ -46,10 +48,27 @@ export const useWebRTC = ({
             setLocalStream(stream)
             setIsReady(true)
 
-        } catch {
-            console.error("Failed to access media devices.")
-            setError("Failed to access media devices.")
+        } catch (err: any) {
+            const errorMessage = getMediaErrorMessage(err)
+            console.error("Failed to access media devices:", err)
+            setError(errorMessage)
         }
+    }
+
+    function getMediaErrorMessage(error: any): string {
+        if (error.name === "NotAllowedError" || error.name === "PermissionDeniedError") {
+            return "Permission denied. Please allow access to camera and microphone."
+        }
+        if (error.name === "NotFoundError" || error.name === "DevicesNotFoundError") {
+            return "No camera or microphone found on this device."
+        }
+        if (error.name === "NotReadableError" || error.name === "TrackStartError") {
+            return "Camera or microphone is already in use by another application."
+        }
+        if (error.name === "TypeError") {
+            return "MediaDevices API not supported in this browser."
+        }
+        return "Failed to access media devices. Please check your permissions and try again."
     }
 
     function createPeerConnection() {
@@ -66,6 +85,7 @@ export const useWebRTC = ({
 
         pc.ontrack = (event) => {
             setRemoteStream(event.streams[0])
+            setIsPeerConnected(true)
         }
 
         pc.onicecandidate = (event) => {
@@ -94,12 +114,32 @@ export const useWebRTC = ({
 
         if (!socket.connected) return
 
+        pcRef.current?.close()
+        pcRef.current = null
+
         const pc = createPeerConnection()
 
         socket.emit("webrtc:join", { sessionId })
 
-        const retryJoin = () => {
+        const retryJoin = async () => {
+            console.log("Reconnecting...")
+
+            pcRef.current?.close()
+            pcRef.current = null
+
+            const pc = createPeerConnection()
             socket.emit("webrtc:join", { sessionId })
+
+            if (role === "MENTOR" && pc.signalingState === "stable") {
+                try {
+                    const offer = await pc.createOffer()
+                    await pc.setLocalDescription(offer)
+
+                    socket.emit("webrtc:offer", { sessionId, offer })
+                } catch (error) {
+                    console.error("Error creating offer:", error)
+                }
+            }
         }
 
         const handlePeerJoined = async () => {
@@ -146,7 +186,7 @@ export const useWebRTC = ({
 
         const handleAnswer = async ({ answer }: any) => {
 
-            if(pc.signalingState !== "have-local-offer") return
+            if (pc.signalingState !== "have-local-offer") return
 
             if (role !== "MENTOR") return
 
@@ -186,13 +226,24 @@ export const useWebRTC = ({
         const handlePeerLeft = () => {
             setRemoteStream(null)
             setConnectionState("disconnected")
+            setIsPeerConnected(false)
+
+            console.log("Peer left, waiting for them to reconnect...")
         }
 
         const handleError = ({ message, details }: any) => {
             setError(`${message}: ${details}`)
         }
 
-        socket.on("connect", retryJoin)
+        const handleConnect = () => {
+            console.log("Socket connected, joining room...")
+
+            if (isJoined) {
+                retryJoin()
+            }
+        }
+
+        socket.on("connect", handleConnect)
 
         socket.on("webrtc:peer-joined", handlePeerJoined)
         socket.on("webrtc:offer", handleOffer)
@@ -200,10 +251,14 @@ export const useWebRTC = ({
         socket.on("webrtc:ice-candidate", handleIceCandidate)
         socket.on("webrtc:peer-left", handlePeerLeft)
         socket.on("webrtc:error", handleError)
+        socket.on("disconnect", () => {
+            console.log("Socket disconnected")
+            setIsPeerConnected(false)
+        })
 
         return () => {
 
-            socket.off("connect", retryJoin)
+            socket.off("connect", handleConnect)
             socket.off("webrtc:peer-joined", handlePeerJoined)
             socket.off("webrtc:offer", handleOffer)
             socket.off("webrtc:answer", handleAnswer)
@@ -279,10 +334,12 @@ export const useWebRTC = ({
         isCameraOff,
         isReady,
         error,
+        isPeerConnected,
         initMedia,
         joinRoom,
         toggleMute,
         toggleCamera,
         endCall
     }
+    
 }

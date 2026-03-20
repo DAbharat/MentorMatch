@@ -124,5 +124,5 @@ export function canMentorManuallyCompleteSession(metrics: {
     totalActiveMinutes: number
 }) {
     const { totalActiveMinutes } = metrics
-    return totalActiveMinutes >= 15
+    return totalActiveMinutes >= 10
 }
