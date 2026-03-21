@@ -33,6 +33,9 @@ export const useWebRTC = ({
     const [error, setError] = useState<string | null>(null)
 
     const [isPeerConnected, setIsPeerConnected] = useState(false)
+    const [isReconnected, setIsReconnected] = useState(false)
+
+    const hasConnectedOnceRef = useRef(false)
 
     async function initMedia() {
 
@@ -85,7 +88,6 @@ export const useWebRTC = ({
 
         pc.ontrack = (event) => {
             setRemoteStream(event.streams[0])
-            setIsPeerConnected(true)
         }
 
         pc.onicecandidate = (event) => {
@@ -102,6 +104,22 @@ export const useWebRTC = ({
 
         pc.onconnectionstatechange = () => {
             setConnectionState(pc.connectionState)
+
+            if(pc.connectionState === "connected") {
+                setIsPeerConnected(true)
+
+                if(hasConnectedOnceRef.current) {
+                    console.log("Peer reconnected")
+                    setIsReconnected(true)
+                } else {
+                    hasConnectedOnceRef.current = true
+                }
+            }
+
+            if(pc.connectionState === "disconnected" || pc.connectionState === "failed" || pc.connectionState === "closed") {
+                setIsPeerConnected(false)
+                setIsReconnected(false)
+            }
         }
 
         pcRef.current = pc
@@ -335,6 +353,7 @@ export const useWebRTC = ({
         isReady,
         error,
         isPeerConnected,
+        isReconnected,
         initMedia,
         joinRoom,
         toggleMute,

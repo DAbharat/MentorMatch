@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react'
 import { Phone, Mic, MicOff, Video, VideoOff } from 'lucide-react'
+import { toast } from 'sonner';
 
 type VideoCallScreenProps = {
     sessionId: string;
@@ -26,6 +27,7 @@ type VideoCallScreenProps = {
     elapsedTime: string;
     connectionState: RTCPeerConnectionState;
     isPeerConnected: boolean;
+    isReconnected: boolean;
 }
 
 export default function VideoCallScreen({
@@ -42,12 +44,44 @@ export default function VideoCallScreen({
     isUserMentor,
     elapsedTime,
     connectionState,
-    isPeerConnected
+    isPeerConnected,
+    isReconnected,
 }: VideoCallScreenProps) {
 
     const localVideoRef = useRef<HTMLVideoElement>(null)
     const remoteVideoRef = useRef<HTMLVideoElement>(null)
     const [isMobileView, setIsMobileView] = useState(false)
+
+    const hasShownReconnectToast = useRef(false)
+    const hasShownDisconnectToast = useRef(false)
+
+    useEffect(() => {
+        if (isReconnected) {
+            if (!hasShownReconnectToast.current) {
+                toast.success("Peer reconnected!")
+                hasShownReconnectToast.current = true
+            }
+        }
+    }, [isReconnected])
+
+    useEffect(() => {
+        if (!isPeerConnected) {
+            hasShownReconnectToast.current = false
+        }
+    }, [isPeerConnected])
+
+    useEffect(() => {
+        if (!isPeerConnected && connectionState === "disconnected") {
+            if (!hasShownDisconnectToast.current) {
+                toast.error("Peer disconnected!")
+                hasShownDisconnectToast.current = true
+            }
+        }
+
+        if (isPeerConnected) {
+            hasShownDisconnectToast.current = false
+        }
+    }, [isPeerConnected, connectionState])
 
     useEffect(() => {
         if (localVideoRef.current && localStream) {
@@ -88,7 +122,7 @@ export default function VideoCallScreen({
 
     return (
         <div
-            className="min-h-screen w-full flex flex-col"
+            className="min-h-screen w-full flex flex-col transition-opacity duration-300 opacity-100"
             style={{ backgroundColor: '#0b090a', fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif" }}
         >
             {!isPeerConnected && (

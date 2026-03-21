@@ -3,42 +3,52 @@ import { io, Socket } from "socket.io-client";
 const sockets = new Map<string, Socket>();
 
 export function getChatSocket(token: string, chatId: string): Socket {
-	const existing = sockets.get(chatId);
+  const existing = sockets.get(chatId);
 
-	if (existing && existing.connected) return existing;
+  if (existing) {
+    if (existing.connected) return existing;
 
-	const url = process.env.NEXT_PUBLIC_SOCKET_URL;
-	if (!url) {
-		throw new Error("NEXT_PUBLIC_SOCKET_URL is not defined");
-	}
+    existing.disconnect();
+    sockets.delete(chatId);
+  }
 
-	const socket = io(url, {
-		transports: ["websocket"],
-		auth: { token, chatId },
-	});
+  const url = process.env.NEXT_PUBLIC_SOCKET_URL;
+  if (!url) {
+    throw new Error("NEXT_PUBLIC_SOCKET_URL is not defined");
+  }
 
-	sockets.set(chatId, socket);
-	return socket;
+  const socket = io(url, {
+    transports: ["websocket"],
+    auth: { token, chatId },
+    withCredentials: true,
+
+    reconnection: true,
+    reconnectionAttempts: 5,
+    reconnectionDelay: 1000,
+  });
+
+  sockets.set(chatId, socket);
+  return socket;
 }
 
 export function resetChatSocket(chatId?: string) {
   if (chatId !== undefined) {
-    const socket = sockets.get(chatId)
-    socket?.disconnect()
-    sockets.delete(chatId)
-    return
+    const socket = sockets.get(chatId);
+    socket?.disconnect();
+    sockets.delete(chatId);
+    return;
   }
 
   for (const socket of sockets.values()) {
-    socket.disconnect()
+    socket.disconnect();
   }
-  sockets.clear()
+  sockets.clear();
 }
 
 export function hasChatSocket(chatId: string) {
-  return sockets.has(chatId)
+  return sockets.has(chatId);
 }
 
 export function closeAllSockets() {
-  resetChatSocket()
+  resetChatSocket();
 }
