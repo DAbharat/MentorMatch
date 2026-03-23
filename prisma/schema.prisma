@@ -134,7 +134,6 @@ model UserFeedback {
   @@index([mentorId])
   @@index([menteeId])
   @@index([sessionId])
-  @@unique([mentorId, menteeId])
 }
 
 model MentorshipRequest {
@@ -156,7 +155,6 @@ model MentorshipRequest {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([mentorId, menteeId, skillId])
   @@index([mentorId])
   @@index([menteeId])
   @@index([skillId])

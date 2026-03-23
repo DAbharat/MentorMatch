@@ -18,7 +18,7 @@ export function getChatSocket(token: string, chatId: string): Socket {
   }
 
   const socket = io(url, {
-    transports: ["websocket"],
+    transports: ["websocket", "polling"],
     auth: { token, chatId },
     withCredentials: true,
 

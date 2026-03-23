@@ -125,43 +125,26 @@ export async function POST(req: NextRequest,
             }
         })
 
-        const mentorshipRequestExists = await prisma.mentorshipRequest.findUnique({
+        const mentorshipRequestExists = await prisma.mentorshipRequest.findFirst({
             where: {
-                mentorId_menteeId_skillId: {
-                    mentorId: mentorId,
-                    menteeId: dbUserId,
-                    skillId: skillId
-                }
+                mentorId: mentorId,
+                menteeId: dbUserId,
+                skillId: skillId,
+                status: "PENDING"
             }
         })
         console.log("Existing request: ", mentorshipRequestExists)
 
-        if (mentorshipRequestExists?.status === "PENDING") {
+        if (mentorshipRequestExists) {
             return NextResponse.json({
-                message: "You have already have a pending mentorship request for this skill"
-            }, {
-                status: 400
-            })
-        }
-
-        if (mentorshipRequestExists?.status === "ACCEPTED") {
-            return NextResponse.json({
-                message: "You are already mentored by this mentor"
-            }, {
-                status: 400
-            })
-        }
-
-        if (mentorshipRequestExists?.status === "REJECTED") {
-            return NextResponse.json({
-                message: "Your previous mentorship request was rejected"
+                message: "You already have a pending mentorship request for this skill with this mentor"
             }, {
                 status: 400
             })
         }
 
         console.log("Creating mentorship request from", dbUserId, "to", mentorId, "for skill", skillId)
-        
+
         const createRequest = await prisma.mentorshipRequest.create({
             data: {
                 mentorId: mentorId,
@@ -174,7 +157,7 @@ export async function POST(req: NextRequest,
 
         console.log("Mentorship request created successfully:", createRequest.id)
         console.log("Now creating notification for mentor:", mentorId)
-        
+
         try {
             const sendNotificationToMentor = await createNotification({
                 userId: mentorId,

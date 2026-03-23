@@ -65,15 +65,33 @@ export async function GET(req: NextRequest,
             })
         }
 
-        if (findSession.status !== "IN_PROGRESS") {
-            return NextResponse.json({
-                message: "Session is not in progress"
-            }, {
-                status: 400
-            })
-        }
+        const updateSession = await prisma.session.update({
+            where: {
+                id: sessionId
+            },
+            include: {
+                mentor: {
+                    select: {
+                        id: true,
+                        name: true,
+                        clerkUserId: true
+                    }
+                },
+                mentee: {
+                    select: {
+                        id: true,
+                        name: true,
+                        clerkUserId: true
+                    }
+                }
+            },
+            data: {
+                callStartedAt: findSession.callStartedAt || new Date(),
+                status: "IN_PROGRESS"
+            }
+        })
 
-        if (!findSession.callStartedAt) {
+        if (!updateSession.callStartedAt) {
             return NextResponse.json({
                 message: "Call has not started yet"
             }, {
@@ -81,16 +99,16 @@ export async function GET(req: NextRequest,
             })
         }
 
-        if (findSession.callEndedAt) {
+        if (updateSession.callEndedAt) {
             return NextResponse.json({
                 message: "Call already ended"
-            }, { 
-                status: 400 
+            }, {
+                status: 400
             })
         }
 
         const now = new Date()
-        const startTime = findSession.callStartedAt
+        const startTime = updateSession.callStartedAt
         const diff = now.getTime() - startTime.getTime()
 
         if (diff >= 30 * 60 * 1000) {
@@ -100,7 +118,7 @@ export async function GET(req: NextRequest,
             )
         }
 
-        const role = userId === findSession.mentor?.clerkUserId ? "MENTOR" : "MENTEE"
+        const role = userId === updateSession.mentor?.clerkUserId ? "MENTOR" : "MENTEE"
         const roomId = `call_${sessionId}`
 
         const sessionExpiresAt = new Date(startTime.getTime() + 30 * 60 * 1000).toISOString()
@@ -110,9 +128,9 @@ export async function GET(req: NextRequest,
             roomId,
             sessionExpiresAt,
             iceServers: [
-                {
-                    urls: ["stun:stun.l.google.com:19302"]
-                }
+                { 
+                    urls: "stun:stun.l.google.com:19302" 
+                },
             ]
         })
     } catch (error) {
