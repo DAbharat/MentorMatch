@@ -95,13 +95,11 @@ export async function POST(
             })
         }
 
-        const mentorShipRequest = await prisma.mentorshipRequest.findUnique({
+        const mentorShipRequest = await prisma.mentorshipRequest.findFirst({
             where: {
-                mentorId_menteeId_skillId: {
-                    mentorId: chatExists.mentorId,
-                    menteeId: chatExists.menteeId,
-                    skillId: chatExists.skillId
-                }
+                mentorId: chatExists.mentorId,
+                menteeId: chatExists.menteeId,
+                skillId: chatExists.skillId
             },
             select: {
                 status: true
