@@ -1,5 +1,12 @@
 import prisma from "./prisma";
 
+function normalize(skillName: string) {
+    return skillName
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]/g, "")
+}
+
 export async function resolveSkills(skillNames: string[]) {
 
     const normalizeSkillNames = skillNames.map(
@@ -26,7 +33,8 @@ export async function resolveSkills(skillNames: string[]) {
         missingSkillNames.map(
             name => prisma.skill.create({
                 data: {
-                    name
+                    name,
+                    normalizedSkillName: normalize(name)
                 }
             })
         )

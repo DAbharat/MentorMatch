@@ -45,7 +45,7 @@ export async function GET(req: NextRequest) {
             whereClause.OR.push({
                 skillsOffered: {
                     some: {
-                        name: {
+                        normalizedSkillName: {
                             contains: searchSkill,
                             mode: "insensitive"
                         }
