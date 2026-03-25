@@ -39,3 +39,14 @@ export async function fetchAllChatsForAUser() {
         throw new Error(axiosError.response?.data.message || "An error occurred while fetching chats for the user.")
     }
 }
+
+export async function markChatMessagesAsRead(chatId: string) {
+    try {
+        const response = await axios.patch(`/api/chats/${chatId}/messages/read`)
+        return response.data
+    } catch (error) {
+        const axiosError = error as AxiosError<ApiResponse>
+        console.error("Error marking messages as read:", axiosError.response?.data.message || axiosError.message)
+        throw new Error(axiosError.response?.data.message || "An error occurred while marking messages as read.")
+    }
+}

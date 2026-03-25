@@ -67,6 +67,18 @@ export default function Navbar() {
         fetchMessages()
     }, [user])
 
+    useEffect(() => {
+        if (!isNotificationsActive && unreadCount > 0) {
+            setUnreadCount(0)
+        }
+    }, [pathname])
+
+    useEffect(() => {
+        if(!isChatsActive && unreadMessagesCount > 0) {
+            setUnreadMessagesCount(0)
+        }
+    }, [pathname])
+
     return (
         <nav
             className={`${DM_Sans_Font.className} fixed top-0 left-0 right-0 z-50 bg-[#0b090a] border-b border-[#1f1f1f] shadow-sm`}

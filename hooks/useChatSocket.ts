@@ -14,11 +14,17 @@ export const useChatSocket = ({
     onNewMessage,
 }: UseChatSocketProps) => {
     const socketRef = useRef<Socket | null>(null)
+    const onNewMessageRef = useRef(onNewMessage)
 
     const [connected, setConnected] = useState(false)
     const [isConnecting, setIsConnecting] = useState(true)
     const [socketError, setSocketError] = useState<string | null>(null)
     const [typingUsers, setTypingUsers] = useState<string[]>([])
+
+    // Keep ref updated with latest callback
+    useEffect(() => {
+        onNewMessageRef.current = onNewMessage
+    }, [onNewMessage])
 
     useEffect(() => {
         if (!token || !chatId) {
@@ -47,7 +53,7 @@ export const useChatSocket = ({
         }
 
         const OnNewMessage = (message: any) => {
-            onNewMessage(message)
+            onNewMessageRef.current(message)
         }
 
         socket.on("connect", OnConnect)
@@ -75,7 +81,7 @@ export const useChatSocket = ({
             setTypingUsers([])
             setConnected(false)
         }
-    }, [token, chatId, onNewMessage])
+    }, [token, chatId])
 
     const emitTyping = useCallback(() => {
         const socket = socketRef.current

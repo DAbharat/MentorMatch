@@ -37,6 +37,9 @@ type Chat = {
             clerkUserId: string;
         }
     }[]
+    _count: {
+        messages: number;
+    }
 }
 
 export default function ChatPage() {
@@ -128,6 +131,9 @@ export default function ChatPage() {
                         // Check if the last message was sent by the current user
                         const isYourMessage = lastMessage.sender.clerkUserId === user?.id;
 
+                        // Only show unread count if the message is from the other user
+                        const displayUnreadCount = !isYourMessage ? chat._count.messages : 0;
+
                         return (
                             <ChatCard
                                 key={chat.id}
@@ -136,6 +142,7 @@ export default function ChatPage() {
                                 sender={otherUser}
                                 createdAt={lastMessage.createdAt}
                                 isYourMessage={isYourMessage}
+                                unreadCount={displayUnreadCount}
                                 onClick={() => router.push(`/chats/${chat.id}`)}
                             />
                         );

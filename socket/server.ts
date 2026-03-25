@@ -49,9 +49,6 @@ process.on("unhandledRejection", (err) => {
 
 // ✅ HTTP server
 const httpServer = createServer((req, res) => {
-    // Log all requests for debugging
-    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
-
     if (req.url === "/health" && req.method === "GET") {
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify({
@@ -84,8 +81,6 @@ const io = new Server(httpServer, {
     path: "/socket.io",
     cors: {
         origin: (origin, callback) => {
-            console.log("Incoming origin:", origin);
-
             // ✅ allow no-origin (mobile apps, curl, etc.)
             if (!origin || allowedOrigins.includes(origin)) {
                 return callback(null, true);
@@ -111,26 +106,23 @@ if (!process.env.CLERK_SECRET_KEY) {
 io.use(async (socket, next) => {
     try {
         if (!prisma) {
-            console.log("❌ Prisma not initialized");
+            console.error("Prisma not initialized");
             return next(new Error("Server is not ready"));
         }
-
-        console.log("Handshake auth:", socket.handshake.auth);
-        console.log("Handshake origin:", socket.handshake.headers.origin);
 
         const parsed = socketHandshakeSchemaForChat.safeParse(
             socket.handshake.auth
         );
 
         if (!parsed.success) {
-            console.log("❌ Invalid handshake schema:", parsed.error.message);
+            console.error("Invalid handshake schema:", parsed.error.message);
             return next(new Error("Invalid handshake data"));
         }
 
         const { token, chatId, sessionId } = parsed.data;
 
         if (!token) {
-            console.log("❌ NO TOKEN PROVIDED");
+            console.error("NO TOKEN PROVIDED");
             return next(new Error("Missing token"));
         }
 
@@ -141,20 +133,19 @@ io.use(async (socket, next) => {
 
             const userId = session.sub;
             socket.data.userId = userId;
-            console.log("✅ User authenticated:", userId);
 
             if (chatId) {
                 const chat = await prisma.chat.findUnique({
                     where: { id: chatId },
                     include: {
-                        mentorId: {
+                        mentor: {
                             select: {
                                 id: true,
                                 name: true,
                                 clerkUserId: true
                             }
                         },
-                        menteeId: {
+                        mentee: {
                             select: {
                                 id: true,
                                 name: true,
@@ -165,17 +156,16 @@ io.use(async (socket, next) => {
                 });
 
                 if (!chat) {
-                    console.log("❌ Chat not found:", chatId);
+                    console.error("Chat not found:", chatId);
                     return next(new Error("Chat not found"));
                 }
 
-                if (chat.mentorId.clerkUserId !== userId && chat.menteeId.clerkUserId !== userId) {
-                    console.log("❌ User not part of chat");
+                if (chat.mentor.clerkUserId !== userId && chat.mentee.clerkUserId !== userId) {
+                    console.error("User not part of chat");
                     return next(new Error("Unauthorized"));
                 }
 
                 socket.data.chatId = chatId;
-                console.log("✅ Chat verified:", chatId);
             }
 
             if (sessionId) {
@@ -184,11 +174,11 @@ io.use(async (socket, next) => {
 
             next();
         } catch (tokenErr: any) {
-            console.log("❌ Token verification failed:", tokenErr.message);
+            console.error("Token verification failed:", tokenErr.message);
             return next(new Error("Invalid token"));
         }
     } catch (err: any) {
-        console.log("❌ MIDDLEWARE ERROR:", err.message);
+        console.error("Authentication failed:", err.message);
         next(new Error("Authentication failed"));
     }
 });
@@ -201,14 +191,14 @@ async function validateChat(chatId: string, userId: string) {
         const chat = await prisma.chat.findUnique({
             where: { id: chatId },
             include: {
-                mentorId: {
+                mentor: {
                     select: {
                         id: true,
                         name: true,
                         clerkUserId: true
                     }
                 },
-                menteeId: {
+                mentee: {
                     select: {
                         id: true,
                         name: true,
@@ -220,7 +210,7 @@ async function validateChat(chatId: string, userId: string) {
 
         if (!chat) throw new Error("Chat not found");
 
-        if (chat.mentorId.clerkUserId !== userId && chat.menteeId.clerkUserId !== userId) {
+        if (chat.mentor.clerkUserId !== userId && chat.mentee.clerkUserId !== userId) {
             throw new Error("Unauthorized");
         }
 
@@ -234,7 +224,6 @@ async function validateSession(sessionId: string, userId: string) {
     if (!prisma) throw new Error("Server not ready");
 
     try {
-        console.log("  [validateSession] Looking up session:", sessionId);
         const session = await prisma.session.findUnique({
             where: { id: sessionId },
             include: {
@@ -256,32 +245,22 @@ async function validateSession(sessionId: string, userId: string) {
         });
 
         if (!session) {
-            console.log("  [validateSession] ❌ Session not found");
             throw new Error("Session not found");
         }
-
-        console.log("  [validateSession] Found session. Status:", session.status);
-        console.log("  [validateSession] Mentor ID (clerk):", session.mentor.clerkUserId);
-        console.log("  [validateSession] Mentee ID (clerk):", session.mentee.clerkUserId);
-        console.log("  [validateSession] Current user ID:", userId);
 
         if (
             session.mentor.clerkUserId !== userId &&
             session.mentee.clerkUserId !== userId
         ) {
-            console.log("  [validateSession] ❌ User is not mentor or mentee of this session");
             throw new Error("Unauthorized");
         }
 
         if (session.status !== "IN_PROGRESS") {
-            console.log("  [validateSession] ❌ Session status is not IN_PROGRESS, it is:", session.status);
             throw new Error("Session is not active");
         }
 
-        console.log("  [validateSession] ✅ Session is valid");
         return session;
     } catch (err: any) {
-        console.log("  [validateSession] ❌ Error:", err.message);
         throw new Error(err.message);
     }
 }
@@ -290,21 +269,12 @@ async function validateSession(sessionId: string, userId: string) {
 io.on("connection", async (socket) => {
     const { chatId, userId } = socket.data;
 
-    console.log(`User connected: ${userId}`);
-    console.log(`[DEBUG] Socket data on connection:`, socket.data);
-
-    // 🔍 Log ALL incoming events (including WebRTC)
-    socket.onAny((eventName: string, ...args: any[]) => {
-        console.log(`[ALL EVENTS] ${eventName}`, JSON.stringify(args, null, 2));
-    });
-
-    // Also add specific disconnect handling to see connection issues
     socket.on("disconnect", (reason) => {
-        console.log(`[DISCONNECT] User ${userId} disconnected. Reason: ${reason}`);
+        console.log(`User ${userId} disconnected`);
     });
 
     socket.on("error", (error) => {
-        console.log(`[SOCKET ERROR] For user ${userId}:`, error);
+        console.error(`Socket error for user ${userId}:`, error);
     });
 
     try {
@@ -338,16 +308,37 @@ io.on("connection", async (socket) => {
                 const { content } = parsed.data;
                 if (!content.trim()) return;
 
+                // Get the database User ID from Clerk user ID
+                const user = await prisma.user.findUnique({
+                    where: { clerkUserId: userId }
+                });
+
+                if (!user) {
+                    return socket.emit("chat:error", {
+                        message: "User not found in database",
+                    });
+                }
+
                 const message = await prisma.message.create({
                     data: {
                         chatId,
-                        senderId: userId,
+                        senderId: user.id,
                         content: content.trim(),
                     },
+                    include: {
+                        sender: {
+                            select: {
+                                id: true,
+                                name: true,
+                                clerkUserId: true
+                            }
+                        }
+                    }
                 });
 
                 io.to(`chat_${chatId}`).emit("new_message", message);
             } catch (err: any) {
+                console.error("Error sending message:", err.message);
                 socket.emit("chat:error", {
                     message: "Failed to send message",
                     details: err.message,
@@ -357,36 +348,20 @@ io.on("connection", async (socket) => {
 
         // 🎥 WEBRTC
         socket.on("webrtc:join", async ({ sessionId }) => {
-            console.log("\n🎥🎥🎥 ========== WEBRTC:JOIN HANDLER CALLED ========== 🎥🎥🎥");
-            console.log("⚡ User:", userId);
-            console.log("⚡ Socket ID:", socket.id);
-            console.log("⚡ Socket connected:", socket.connected);
-            console.log("⚡ SessionId from event:", sessionId);
-            console.log("⚡ socket.data.sessionId:", socket.data.sessionId);
-
             try {
                 if (!sessionId) {
-                    console.log("❌ VALIDATION FAILED: sessionId is missing");
                     return socket.emit("webrtc:error", { message: "sessionId required" });
                 }
 
-                console.log("⚡ Calling validateSession for sessionId:", sessionId, "userId:", userId);
                 await validateSession(sessionId, userId);
-                console.log("✅ Session validation passed");
 
                 const room = `call_${sessionId}`;
                 socket.join(room);
                 socket.data.sessionId = sessionId;
 
-                console.log("✅ User joined room:", room);
-                console.log("Broadcasting peer-joined to room");
                 socket.to(room).emit("webrtc:peer-joined", { userId });
-                console.log("✅ ========== WEBRTC:JOIN SUCCESS ==========\n");
             } catch (err: any) {
-                console.log("❌ WEBRTC:JOIN FAILED");
-                console.log("Error message:", err.message);
-                console.log("Error stack:", err.stack);
-                console.log("❌ ========== WEBRTC:JOIN ERROR ==========\n");
+                console.error("WebRTC join error:", err.message);
                 socket.emit("webrtc:error", { 
                     message: err.message || "Failed to join WebRTC session"
                 });
@@ -397,25 +372,17 @@ io.on("connection", async (socket) => {
         socket.on("webrtc:offer", async ({ sessionId, offer }) => {
             try {
                 await validateSession(sessionId, userId);
-                console.log("\n[WEBRTC:OFFER] ============");
-                console.log("[WEBRTC:OFFER] Received from user:", userId);
-                console.log("[WEBRTC:OFFER] sessionId:", sessionId);
-                console.log("[WEBRTC:OFFER] offer exists:", !!offer);
 
                 if (!sessionId) throw new Error("Session ID required");
                 if (!offer) throw new Error("Offer required");
 
                 const room = `call_${sessionId}`;
-                console.log("[WEBRTC:OFFER] Broadcasting to room:", room);
                 socket.to(room).emit("webrtc:offer", {
                     offer,
                     from: userId,
                 });
-                console.log("[WEBRTC:OFFER] ✅ Offer sent");
-                console.log("[WEBRTC:OFFER] ============\n");
             } catch (err: any) {
-                console.error("[WEBRTC:OFFER] ❌ Error:", err.message);
-                console.log("[WEBRTC:OFFER] ============\n");
+                console.error("WebRTC offer error:", err.message);
                 socket.emit("webrtc:error", { message: err.message });
             }
         });
@@ -423,25 +390,17 @@ io.on("connection", async (socket) => {
         socket.on("webrtc:answer", async ({ sessionId, answer }) => {
             try {
                 await validateSession(sessionId, userId);
-                console.log("\n[WEBRTC:ANSWER] ============");
-                console.log("[WEBRTC:ANSWER] Received from user:", userId);
-                console.log("[WEBRTC:ANSWER] sessionId:", sessionId);
-                console.log("[WEBRTC:ANSWER] answer exists:", !!answer);
 
                 if (!sessionId) throw new Error("Session ID required");
                 if (!answer) throw new Error("Answer required");
 
                 const room = `call_${sessionId}`;
-                console.log("[WEBRTC:ANSWER] Broadcasting to room:", room);
                 socket.to(room).emit("webrtc:answer", {
                     answer,
                     from: userId,
                 });
-                console.log("[WEBRTC:ANSWER] ✅ Answer sent");
-                console.log("[WEBRTC:ANSWER] ============\n");
             } catch (err: any) {
-                console.error("[WEBRTC:ANSWER] ❌ Error:", err.message);
-                console.log("[WEBRTC:ANSWER] ============\n");
+                console.error("WebRTC answer error:", err.message);
                 socket.emit("webrtc:error", { message: err.message });
             }
         });
@@ -449,7 +408,6 @@ io.on("connection", async (socket) => {
         socket.on("webrtc:ice-candidate", async ({ sessionId, candidate }) => {
             try {
                 await validateSession(sessionId, userId);
-                console.log("[WEBRTC:ICE] Received from user:", userId, "sessionId:", sessionId);
 
                 if (!sessionId) throw new Error("Session ID required");
                 if (!candidate) throw new Error("Candidate required");
@@ -460,15 +418,13 @@ io.on("connection", async (socket) => {
                     from: userId,
                 });
             } catch (err: any) {
-                console.error("[WEBRTC:ICE] ❌ Error:", err.message);
+                console.error("WebRTC ICE candidate error:", err.message);
                 socket.emit("webrtc:error", { message: err.message });
             }
         });
 
         socket.on("disconnect", () => {
             const { sessionId } = socket.data;
-
-            console.log(`User disconnected: ${userId}`);
 
             if (sessionId) {
                 socket.to(`call_${sessionId}`).emit("webrtc:peer-left", {

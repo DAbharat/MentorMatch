@@ -118,18 +118,20 @@ export default function NotificationPage() {
 
             {/* Centered Header */}
             <div className="max-w-3xl mx-auto px-4">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
 
                     {/* Title */}
                     <div className="flex justify-between items-center w-full sm:w-auto">
-                        <h1 className="text-2xl font-semibold">
-                            Notifications{" "}
+                        <div className="w-full">
+                            {/* <h1 className="text-2xl font-semibold">
+                                Notifications
+                            </h1> */}
                             {unreadCount > 0 && (
-                                <span className="text-sm text-gray-500">
-                                    ({unreadCount} unread)
-                                </span>
+                                <p className="text-sm text-gray-500 mt-1">
+                                    ({unreadCount} unread notifications)
+                                </p>
                             )}
-                        </h1>
+                        </div>
 
                         {/* Buttons (Mobile Only Right Aligned) */}
                         <div className="flex gap-2 sm:hidden">

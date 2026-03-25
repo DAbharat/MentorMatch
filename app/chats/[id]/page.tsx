@@ -2,11 +2,11 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { useUser } from '@clerk/nextjs'
+import { useUser, useAuth } from '@clerk/nextjs'
 import ChatRoom from '@/components/chat/ChatRoom'
 import { useChatMessages } from '@/hooks/useChatMessages'
 import { useChatSocket } from '@/hooks/useChatSocket'
-import { sendMessage } from '@/services/messages.service'
+import { markChatMessagesAsRead } from '@/services/messages.service'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Send, ArrowLeft } from 'lucide-react'
@@ -24,18 +24,33 @@ export default function ChatRoomPage() {
     const params = useParams()
     const router = useRouter()
     const { user } = useUser()
+    const { getToken } = useAuth()
     const chatId = params.id as string
 
     const [chatDetails, setChatDetails] = useState<any>(null)
     const [messageInput, setMessageInput] = useState('')
     const [isSending, setIsSending] = useState(false)
     const [otherUser, setOtherUser] = useState<any>(null)
+    const [token, setToken] = useState<string | null>(null)
     const messagesEndRef = useRef<HTMLDivElement>(null)
     const inputRef = useRef<HTMLInputElement>(null)
+    const hasMarkedAsReadRef = useRef(false)
 
     const scrollToBottom = useCallback(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
     }, [])
+
+    // Get Clerk session token on mount
+    useEffect(() => {
+        (async () => {
+            try {
+                const sessionToken = await getToken()
+                setToken(sessionToken)
+            } catch (error: any) {
+                console.error("Failed to get session token:", error.message)
+            }
+        })()
+    }, [getToken, user])
 
     const { messages, isLoading, appendMessage } = useChatMessages(chatId)
 
@@ -44,8 +59,8 @@ export default function ChatRoomPage() {
         scrollToBottom()
     }, [appendMessage, scrollToBottom])
 
-    const { connected, isConnecting, socketError, typingUsers, emitTyping, emitStopTyping } = useChatSocket({
-        token: user?.id || '',
+    const { socket, connected, isConnecting, socketError, typingUsers, emitTyping, emitStopTyping } = useChatSocket({
+        token: token || '',
         chatId,
         onNewMessage: handleNewMessage,
     })
@@ -83,11 +98,28 @@ export default function ChatRoomPage() {
         }
     }, [messages, scrollToBottom])
 
+    useEffect(() => {
+        if (chatId && user?.id && !hasMarkedAsReadRef.current) {
+            hasMarkedAsReadRef.current = true
+            markChatMessagesAsRead(chatId)
+                .then(() => {
+                    console.log("Messages marked as read")
+                })
+                .catch((error) => {
+                    console.error("Failed to mark messages as read:", error)
+                })
+        }
+    }, [chatId, user?.id])
+
     // Handle message sending
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault()
         
         if (!messageInput.trim() || isSending) return
+        if (!socket?.connected) {
+            toast.error("Connection error. Please wait...")
+            return
+        }
 
         const content = messageInput.trim()
         setMessageInput('')
@@ -95,7 +127,7 @@ export default function ChatRoomPage() {
         emitStopTyping()
 
         try {
-            const response = await sendMessage(chatId, content)
+            socket.emit("send_message", { content })
         } catch (error: any) {
             console.error("Failed to send message:", error)
             toast.error(error.message || "Failed to send message")

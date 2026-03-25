@@ -27,6 +27,14 @@ export function getChatSocket(token: string, chatId: string): Socket {
     reconnectionDelay: 1000,
   });
 
+  socket.on("connect_error", (error) => {
+    console.error("Socket connection error:", error)
+  })
+
+  socket.on("error", (error) => {
+    console.error("Socket error:", error)
+  })
+
   sockets.set(chatId, socket);
   return socket;
 }
