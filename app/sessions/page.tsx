@@ -5,6 +5,8 @@ import { toast } from "sonner"
 import SessionsList from "@/components/sessions/SessionsList"
 import { fetchAllSessions, confirmSession, cancelSession, startSession } from "@/services/session.service"
 import { fetchMyProfile } from "@/services/profile.service"
+import { io, Socket } from "socket.io-client"
+import { useAuth, useUser } from "@clerk/nextjs"
 
 type Session = {
     id: string
@@ -31,6 +33,37 @@ export default function SessionsPage() {
     const [sessions, setSessions] = useState<Session[]>([])
     const [currentUserClerkId, setCurrentUserClerkId] = useState<string | null>(null)
     const [loading, setLoading] = useState(true)
+    const [socket, setSocket] = useState<Socket | null>(null)
+    const [activeSessions, setActiveSessions] = useState<string[]>([])
+
+    const { user } = useUser()
+    const { getToken } = useAuth()
+
+    useEffect(() => {
+        const initSocket = async () => {
+            try {
+                const token = await getToken({ skipCache: true })
+
+                if(!token) {
+                    console.error("No token obtained from Clerk")
+                    return
+                }
+
+                const newSocket = io(process.env.NEXT_PUBLIC_SOCKET_URL!, {
+                    transports: ["websocket", "polling"],
+                    auth: { token },
+                    withCredentials: true
+                })
+
+                setSocket(newSocket)
+            } catch (error) {
+                console.error("Error initializing socket:", error)
+            }
+        }
+
+        initSocket()
+
+    }, [getToken])
 
     const loadSessions = async () => {
         try {
@@ -41,6 +74,14 @@ export default function SessionsPage() {
             ])
             setSessions(sessionsResponse.sessions)
             setCurrentUserClerkId(currentUser.clerkUserId)
+
+            const inProgressSessions = sessionsResponse.sessions
+                .filter((s: any) => s.status === "IN_PROGRESS")
+                .map((s: any) => s.id)
+            
+            if (inProgressSessions.length > 0) {
+                setActiveSessions(inProgressSessions)
+            }
         } catch (error: any) {
             toast.error(error.message || "Failed to load sessions")
         } finally {
@@ -51,6 +92,24 @@ export default function SessionsPage() {
     useEffect(() => {
         loadSessions()
     }, [])
+
+    useEffect(() => {
+        if (!socket) return
+
+        const handleSessionStarted = (data: any) => {
+            console.log("Mentor started session: ", data)
+
+            toast.success(`${data.mentor.name} started a session!`)
+            setActiveSessions(prev => [...prev, data.sessionId])
+        }
+
+        socket.on("session:started", handleSessionStarted)
+        
+        return () => {
+            socket.off("session:started", handleSessionStarted)
+        }
+
+    }, [socket])
 
     const handleConfirm = async (sessionId: string) => {
         try {
@@ -90,6 +149,7 @@ export default function SessionsPage() {
             onConfirm={handleConfirm}
             onCancel={handleCancel}
             onStartSession={handleStartSession}
+            activeSessions={activeSessions}
         />
     )
 }

@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/retroui/Button"
 import { DM_Sans } from "next/font/google"
-import { MessageCircleMore, SlidersHorizontal, X, Check } from "lucide-react"
+import { MessageCircleMore, SlidersHorizontal, X, Check, LogIn, CircleDot } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import {
   AlertDialog,
@@ -47,7 +47,8 @@ type Session = {
   skill: {
     id: string
     name: string
-  }
+  },
+  activeSession?: boolean
 }
 
 type SessionsListProps = {
@@ -57,6 +58,7 @@ type SessionsListProps = {
   onConfirm: (sessionId: string) => void
   onCancel: (sessionId: string) => void
   onStartSession: (sessionId: string) => void
+  activeSessions: string[]
 }
 
 export default function SessionsList({
@@ -66,6 +68,7 @@ export default function SessionsList({
   onConfirm,
   onCancel,
   onStartSession,
+  activeSessions,
 }: SessionsListProps) {
   const router = useRouter()
   const [filter, setFilter] = useState<
@@ -173,11 +176,33 @@ export default function SessionsList({
     setLoadingSessionId(session.id)
     try {
       await onStartSession(session.id)
+
       toast.success("Session starting. Redirecting to video call...")
       router.push(`/sessions/video-call/${session.id}`)
+
     } catch (error:any) {
       toast.error(error.message || "Failed to start session")
     } finally {
+      setLoadingSessionId(null)
+    }
+  }
+
+  const handleJoinSession = (session: Session) => {
+    setLoadingSessionId(session.id)
+    try {
+      // If session is IN_PROGRESS, user is rejoining - skip initial screen
+      // If session is CONFIRMED, user is joining for first time - show initial screen
+      const isRejoin = session.status === "IN_PROGRESS"
+      console.log("[SessionsList] handleJoinSession called - session status:", session.status, "isRejoin:", isRejoin)
+      
+      const url = isRejoin 
+        ? `/sessions/video-call/${session.id}?rejoin=true`
+        : `/sessions/video-call/${session.id}`
+      
+      console.log("[SessionsList] Navigating to:", url)
+      router.push(url)
+    } catch (error: any) {
+      toast.error(error.message || "Failed to join session")
       setLoadingSessionId(null)
     }
   }
@@ -325,6 +350,12 @@ export default function SessionsList({
                         <Badge className={`${getStatusColor(session.status)} text-xs shrink-0`}>
                           {session.status}
                         </Badge>
+                        {activeSessions.includes(session.id) && (
+                          <Badge className="bg-green-500 text-white text-xs shrink-0 flex items-center gap-1">
+                            <CircleDot className="w-2 h-2 fill-current" />
+                            LIVE
+                          </Badge>
+                        )}
                       </div>
                       <p className="text-xs sm:text-sm text-muted-foreground">
                         with{" "}
@@ -377,7 +408,7 @@ export default function SessionsList({
                   )}
 
                   {session.status === "CONFIRMED" && (
-                    <div className="pt-0.5">
+                    <div className="space-y-2 pt-0.5">
                       <Button
                         className="w-full bg-[#1c2023] text-[#d3d3d3] hover:bg-[#2a2f34] border border-white/10 rounded-2xl text-xs sm:text-sm py-2"
                         onClick={() => handleNavigateToChat(session)}
@@ -388,19 +419,31 @@ export default function SessionsList({
                           ? "Opening..."
                           : "Message"}
                       </Button>
-                    </div>
-                  )}
-                  {session.status === "CONFIRMED" && isMentor(session) && (
-                    <div className="pt-0.5">
-                      <Button
-                        className="w-full bg-[#1c2023] text-[#d3d3d3] hover:bg-[#2a2f34] border border-white/10 rounded-2xl text-xs sm:text-sm py-2"
-                        onClick={() => handleStartSession(session)}
-                        disabled={loadingSessionId === session.id}
-                      >
-                        {loadingSessionId === session.id
-                          ? "Starting..."
-                          : "Start Session"}
-                      </Button>
+
+                      {!activeSessions.includes(session.id) && isMentor(session) && (
+                        <Button
+                          className="w-full bg-[#1c2023] text-[#d3d3d3] hover:bg-[#2a2f34] border border-white/10 rounded-2xl text-xs sm:text-sm py-2"
+                          onClick={() => handleStartSession(session)}
+                          disabled={loadingSessionId === session.id}
+                        >
+                          {loadingSessionId === session.id
+                            ? "Starting..."
+                            : "Start Session"}
+                        </Button>
+                      )}
+
+                      {activeSessions.includes(session.id) && (
+                        <Button
+                          className="w-full bg-green-600 text-white hover:bg-green-700 rounded-2xl text-xs sm:text-sm py-2 flex items-center justify-center gap-2"
+                          onClick={() => handleJoinSession(session)}
+                          disabled={loadingSessionId === session.id}
+                        >
+                          <LogIn className="w-4 h-4" />
+                          {loadingSessionId === session.id
+                            ? "Joining..."
+                            : "Join Session"}
+                        </Button>
+                      )}
                     </div>
                   )}
 
@@ -427,6 +470,30 @@ export default function SessionsList({
                             }}
                           />
                         </div>
+                      </div>
+
+                      <div className="space-y-2 pt-2">
+                        <Button
+                          className="w-full bg-[#1c2023] text-[#d3d3d3] hover:bg-[#2a2f34] border border-white/10 rounded-2xl text-xs sm:text-sm py-2"
+                          onClick={() => handleNavigateToChat(session)}
+                          disabled={navigatingToChatId === session.id}
+                        >
+                          <MessageCircleMore className="mr-2 size-3.5 sm:size-4" />
+                          {navigatingToChatId === session.id
+                            ? "Opening..."
+                            : "Message"}
+                        </Button>
+
+                        <Button
+                          className="w-full bg-green-600 text-white hover:bg-green-700 rounded-2xl text-xs sm:text-sm py-2 flex items-center justify-center gap-2"
+                          onClick={() => handleJoinSession(session)}
+                          disabled={loadingSessionId === session.id}
+                        >
+                          <LogIn className="w-4 h-4" />
+                          {loadingSessionId === session.id
+                            ? "Joining..."
+                            : "Join Session"}
+                        </Button>
                       </div>
                     </div>
                   )}

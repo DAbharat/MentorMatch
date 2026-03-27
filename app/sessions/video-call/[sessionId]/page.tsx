@@ -21,13 +21,17 @@ export default function VideoCallPage() {
   const { user } = useUser()
   const { getToken } = useAuth()
 
-  console.log("Frontend Clerk user:", user?.id);
-
   const socketRef = useRef<Socket | null>(null)
   const [socket, setSocket] = useState<Socket | null>(null)
   const [webrtcConfig, setWebrtcConfig] = useState<any>(null)
   const [role, setRole] = useState<"MENTOR" | "MENTEE" | null>(null)
   const socketInitializedRef = useRef(false)
+
+  useEffect(() => {
+    if (user?.id) {
+      // User loaded
+    }
+  }, [user?.id])
 
   // Initialize socket with Clerk token - only once
   useEffect(() => {
@@ -40,15 +44,11 @@ export default function VideoCallPage() {
         const token = await getToken({ skipCache: true })
 
         if (!token) {
-          console.error("[Socket] ❌ No token obtained from Clerk")
           socketInitializedRef.current = false
           return
         }
 
-        console.log("[Socket] ✅ Token obtained from Clerk")
-
         if (socketRef.current?.connected) {
-          console.log("[Socket] Socket already connected, reusing")
           setSocket(socketRef.current)
           return
         }
@@ -56,8 +56,6 @@ export default function VideoCallPage() {
         if (socketRef.current) {
           socketRef.current.disconnect()
         }
-
-        console.log("[Socket] Initializing socket with token and sessionId:", sessionId)
 
         socketRef.current = io(process.env.NEXT_PUBLIC_SOCKET_URL!, {
           transports: ["websocket", "polling"],
@@ -68,28 +66,24 @@ export default function VideoCallPage() {
           reconnectionDelay: 1000,
         })
 
-        // Add connection event handlers
         socketRef.current.on("connect", () => {
-          console.log("[Socket] ✅ Connected to server, socket id:", socketRef.current?.id)
+          // Connected
         })
 
         socketRef.current.on("connect_error", (error: any) => {
-          console.error("[Socket] ❌ Connection error:", error.message)
-          console.error("[Socket] Error data:", error)
+          // Connection error
         })
 
         socketRef.current.on("disconnect", (reason: string) => {
-          console.log("[Socket] Disconnected. Reason:", reason)
           hasJoinedRef.current = false
         })
 
         socketRef.current.on("error", (error: any) => {
-          console.error("[Socket] ❌ Socket error:", error)
+          // Socket error
         })
 
         setSocket(socketRef.current)
       } catch (error) {
-        console.error("Failed to initialize socket:", error)
         socketInitializedRef.current = false
       }
     }
@@ -128,24 +122,38 @@ export default function VideoCallPage() {
   const [loading, setLoading] = useState(true)
   const [phase, setPhase] = useState<"INITIAL" | "IN CALL" | "CONNECTING" | "ENDED">("INITIAL")
   const [elapsed, setElapsed] = useState(0)
+  const [isRejoin, setIsRejoin] = useState(false)
   const hasJoinedRef = useRef(false)
+  const rejoinStartedRef = useRef(false)
+  const joinAttemptedRef = useRef(false)
 
-  // Timer for elapsed time
+  // Timer for elapsed time based on actual session start time
   useEffect(() => {
-    if (phase === "IN CALL") {
+    if (phase === "IN CALL" && session?.callStartedAt) {
+      // Calculate initial elapsed time from when session actually started
+      const startTime = new Date(session.callStartedAt).getTime()
+      const now = new Date().getTime()
+      const initialElapsed = Math.floor((now - startTime) / 1000)
+      setElapsed(initialElapsed)
+
       const interval = setInterval(() => {
         setElapsed(prev => prev + 1)
       }, 1000)
 
       return () => clearInterval(interval)
     }
-  }, [phase])
+  }, [phase, session?.callStartedAt])
 
-  // Initialize media on mount only
   useEffect(() => {
-    console.log("[Page] Initializing media on component mount")
-    console.log("[Page] initMedia function:", typeof initMedia)
     initMedia()
+  }, [])
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    
+    const searchParams = new URLSearchParams(window.location.search)
+    const rejoinParam = searchParams.get('rejoin') === 'true'
+    setIsRejoin(rejoinParam)
   }, [])
 
   // Load session data
@@ -166,43 +174,84 @@ export default function VideoCallPage() {
     loadSession()
   }, [sessionId])
 
-  // Setup when socket connects and session is loaded
+  // Setup when socket connects and session is loaded - always show initial screen first
   useEffect(() => {
     if (!socket || !session || !socket.connected) return
 
-    const runSetup = async () => {
-      if (session.status === "IN_PROGRESS") {
-        setPhase("CONNECTING")
-        try {
-          const data = await startVideoCall(sessionId)
-          setWebrtcConfig(data)
-          setRole(data.role)
-          console.log("[Page] WebRTC config received, role:", data.role)
-          // Don't call joinRoom() here yet - let the next effect handle it
-
-        } catch (error: any) {
-          console.error("Error starting video call:", error)
-          toast.error("Failed to start video call")
-        }
+    const handleSessionStarted = async (data: any) => {
+      if (data.callStartedAt) {
+        setSession((prev: any) => ({
+          ...prev,
+          callStartedAt: data.callStartedAt
+        }))
       } else {
-        setPhase("INITIAL")
+        try {
+          const updatedData = await fetchSessionById(sessionId)
+          setSession(updatedData.session)
+        } catch (error) {
+          // Failed to refetch session
+        }
       }
     }
 
-    runSetup()
-  }, [socket, session, sessionId])
+    socket.on("session:started", handleSessionStarted)
 
-  // Call joinRoom once config is ready
+    return () => {
+      socket.off("session:started", handleSessionStarted)
+    }
+  }, [socket, sessionId])
+
+  // Handle rejoin auto-join - separate effect to prevent infinite loop
+  useEffect(() => {
+    if (!socket || !session || !socket.connected || !isRejoin) return
+    if (rejoinStartedRef.current) return
+
+    rejoinStartedRef.current = true
+
+    const autoJoin = async () => {
+      try {
+        const data = await startVideoCall(sessionId)
+        setWebrtcConfig(data)
+        setRole(data.role)
+
+        try {
+          const sessionData = await fetchSessionById(sessionId)
+          setSession(sessionData.session)
+        } catch (error) {
+          // Failed to refetch session
+        }
+
+        if (socket?.connected) {
+          socket.emit("session:start", { sessionId })
+        }
+      } catch (error: any) {
+        toast.error("Failed to rejoin session")
+        setPhase("INITIAL")
+        rejoinStartedRef.current = false
+      }
+    }
+
+    autoJoin()
+  }, [socket, sessionId, isRejoin])
+
+  // Show initial screen if not rejoin and not attempting to join
+  useEffect(() => {
+    if (isRejoin || rejoinStartedRef.current || joinAttemptedRef.current) return
+    if (!socket || !session || !socket.connected) return
+    
+    setPhase("INITIAL")
+  }, [socket, session, isRejoin])
+
   useEffect(() => {
     if (!webrtcConfig || !socket?.connected || hasJoinedRef.current) return
 
-    console.log("[Page] ✅ Calling joinRoom() - config ready and socket connected")
     hasJoinedRef.current = true
     joinRoom()
   }, [webrtcConfig, socket, sessionId, joinRoom])
 
-  // Handle WebRTC connection state changes
   useEffect(() => {
+    if (!webrtcConfig) return
+
     if (connectionState === "connecting" || connectionState === "new") {
       setPhase("CONNECTING")
     } else if (connectionState === "connected") {
@@ -210,14 +259,12 @@ export default function VideoCallPage() {
     } else if (connectionState === "failed" || connectionState === "disconnected") {
       setPhase("CONNECTING")
       hasJoinedRef.current = false
-      // Try to rejoin after reconnection
       if (socket?.connected) {
-        console.log("[Reconnect] Attempting to rejoin after connection failure")
         socket.emit("webrtc:join", { sessionId })
         hasJoinedRef.current = true
       }
     }
-  }, [connectionState, socket, sessionId])
+  }, [connectionState, socket, sessionId, webrtcConfig])
 
   const formattedTime = `${Math.floor(elapsed / 60)
     .toString()
@@ -234,23 +281,28 @@ export default function VideoCallPage() {
   }
 
   const handleJoinCall = async () => {
+    joinAttemptedRef.current = true
     setPhase("CONNECTING")
     hasJoinedRef.current = false
     try {
       const data = await startVideoCall(sessionId)
       setWebrtcConfig(data)
       setRole(data.role)
-      
-      // Emit webrtc:join directly - socket connect handler will also do this
+
+      try {
+        const sessionData = await fetchSessionById(sessionId)
+        setSession(sessionData.session)
+      } catch (error) {
+        // Failed to refetch session
+      }
+
       if (socket?.connected) {
-        console.log("✅ Manual join: Emitting webrtc:join for sessionId:", sessionId)
-        socket.emit("webrtc:join", { sessionId })
-        hasJoinedRef.current = true
+        socket.emit("session:start", { sessionId })
       }
     } catch (error: any) {
       toast.error(error.message || "Failed to join video call")
-      console.error("Error joining video call:", error)
       setPhase("INITIAL")
+      joinAttemptedRef.current = false
     }
   }
 

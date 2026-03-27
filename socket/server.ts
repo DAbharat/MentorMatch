@@ -4,13 +4,13 @@ import { verifyToken } from "@clerk/backend";
 import { sendMessageSchema } from "@/schema/messageSchema";
 import { socketHandshakeSchemaForChat } from "@/schema/socketHandshakeSchema";
 
-// Load environment check first
 console.log("ENV PORT:", process.env.PORT);
 console.log("DATABASE_URL:", process.env.DATABASE_URL ? "✅ Set" : "❌ Missing");
 console.log("CLERK_SECRET_KEY:", process.env.CLERK_SECRET_KEY ? "✅ Set" : "❌ Missing");
 console.log("NEXT_PUBLIC_APP_URL:", process.env.NEXT_PUBLIC_APP_URL || "⚠️ Not set");
 
-// Initialize Prisma with error handling
+const userSocketMap = new Map<string, string>()
+
 let prisma: any = null;
 async function initPrisma() {
     try {
@@ -32,11 +32,7 @@ async function initPrisma() {
 
 const PORT = Number(process.env.PORT) || 4000;
 
-// ✅ Allowed origins
-const allowedOrigins = [
-    "http://localhost:3000",
-    "http://localhost:3001",
-    process.env.NEXT_PUBLIC_APP_URL,
+const allowedOrigins = [ "http://localhost:3000", "http://localhost:3001", process.env.NEXT_PUBLIC_APP_URL,
 ].filter(Boolean);
 
 process.on("uncaughtException", (err) => {
@@ -47,7 +43,6 @@ process.on("unhandledRejection", (err) => {
     console.error("UNHANDLED REJECTION:", err);
 });
 
-// ✅ HTTP server
 const httpServer = createServer((req, res) => {
     if (req.url === "/health" && req.method === "GET") {
         res.writeHead(200, { "Content-Type": "application/json" });
@@ -71,22 +66,18 @@ const httpServer = createServer((req, res) => {
         return;
     }
 
-    // Default fallback for unhandled paths
     res.writeHead(200);
     res.end("OK");
 });
 
-// ✅ Socket.IO setup
 const io = new Server(httpServer, {
     path: "/socket.io",
     cors: {
         origin: (origin, callback) => {
-            // ✅ allow no-origin (mobile apps, curl, etc.)
             if (!origin || allowedOrigins.includes(origin)) {
                 return callback(null, true);
             }
 
-            // ⚠️ TEMP: allow all (debug phase)
             return callback(null, true);
         },
         credentials: true,
@@ -97,12 +88,10 @@ const io = new Server(httpServer, {
     upgradeTimeout: 10000,
 });
 
-// ✅ ENV CHECK
 if (!process.env.CLERK_SECRET_KEY) {
     throw new Error("CLERK_SECRET_KEY is missing");
 }
 
-// ✅ AUTH MIDDLEWARE
 io.use(async (socket, next) => {
     try {
         if (!prisma) {
@@ -183,7 +172,6 @@ io.use(async (socket, next) => {
     }
 });
 
-// ✅ HELPERS
 async function validateChat(chatId: string, userId: string) {
     if (!prisma) throw new Error("Server not ready");
 
@@ -265,12 +253,13 @@ async function validateSession(sessionId: string, userId: string) {
     }
 }
 
-// ✅ CONNECTION
 io.on("connection", async (socket) => {
     const { chatId, userId } = socket.data;
+    userSocketMap.set(userId, socket.id);
 
     socket.on("disconnect", (reason) => {
         console.log(`User ${userId} disconnected`);
+        userSocketMap.delete(userId);
     });
 
     socket.on("error", (error) => {
@@ -283,7 +272,6 @@ io.on("connection", async (socket) => {
             socket.join(`chat_${chatId}`);
         }
 
-        // 💬 SEND MESSAGE
         socket.on("send_message", async (payload) => {
             try {
                 if (!prisma) {
@@ -308,7 +296,6 @@ io.on("connection", async (socket) => {
                 const { content } = parsed.data;
                 if (!content.trim()) return;
 
-                // Get the database User ID from Clerk user ID
                 const user = await prisma.user.findUnique({
                     where: { clerkUserId: userId }
                 });
@@ -346,7 +333,38 @@ io.on("connection", async (socket) => {
             }
         });
 
-        // 🎥 WEBRTC
+        socket.on("session:start", async ({ sessionId }) => {
+            try {
+                if (!sessionId) {
+                    return socket.emit("session:error", { 
+                        message: "Session ID required" 
+                    });
+                }
+
+                const session = await validateSession(sessionId, userId);
+
+                const menteeClerkId = session.mentee.clerkUserId;
+                const menteeSocketId = userSocketMap.get(menteeClerkId);
+
+                if(!menteeSocketId) {
+                    return socket.emit("session:error", {
+                        message: "Mentee is not online"
+                    })
+                }
+
+                io.to(menteeSocketId).emit("session:started", {
+                    sessionId,
+                    mentor: session.mentor,
+                    mentee: session.mentee,
+                })
+
+                socket.emit("session:started:ack", { sessionId })
+
+            } catch (error) {
+                socket.emit("session:error", { message: "Failed to start session" });
+            }
+        })
+
         socket.on("webrtc:join", async ({ sessionId }) => {
             try {
                 if (!sessionId) {
@@ -362,7 +380,7 @@ io.on("connection", async (socket) => {
                 socket.to(room).emit("webrtc:peer-joined", { userId });
             } catch (err: any) {
                 console.error("WebRTC join error:", err.message);
-                socket.emit("webrtc:error", { 
+                socket.emit("webrtc:error", {
                     message: err.message || "Failed to join WebRTC session"
                 });
             }
@@ -433,7 +451,6 @@ io.on("connection", async (socket) => {
             }
         });
 
-        // ✍️ typing
         socket.on("typing", async () => {
             if (!chatId) return;
             await validateChat(chatId, userId);
@@ -452,11 +469,9 @@ io.on("connection", async (socket) => {
     }
 });
 
-// 🚀 START SERVER
 async function startServer() {
     console.log("🚀 Starting Socket.IO server...");
 
-    // Initialize Prisma first
     const prismaReady = await initPrisma();
 
     if (!prismaReady) {
