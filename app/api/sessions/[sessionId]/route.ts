@@ -41,6 +41,7 @@ type ActionHandler = (
     session: any,
     userId: string,
     sessionId: string,
+    isAutoEnd?: boolean
 ) => Promise<Record<string, any>>
 
 const ACTION_HANDLERS: Record<string, ActionHandler> = {
@@ -61,7 +62,7 @@ const ACTION_HANDLERS: Record<string, ActionHandler> = {
         }
     },
 
-    COMPLETE: async(session, _userId, sessionId) => {
+    COMPLETE: async(session, _userId, sessionId, isAutoEnd) => {
         if(session.metricsComputedAt) {
             throw new Error("Session metrics already finalized")
         }
@@ -78,7 +79,7 @@ const ACTION_HANDLERS: Record<string, ActionHandler> = {
             mentorActiveMinutes: metrics.mentorActiveMinutes,
             menteeActiveMinutes: metrics.menteeActiveMinutes,
             metricsComputedAt: new Date(),
-            completedBy: "Mentor"
+            completedBy: isAutoEnd ? "Auto" : "Mentor"
         }
     },
 
@@ -126,7 +127,7 @@ export async function PATCH(req: NextRequest,
     }
 
     try {
-        const { action } = parsedUpdateStatus.data
+        const { action, isAutoEnd } = parsedUpdateStatus.data
         const rule = SESSION_TRANSITIONS[action as keyof typeof SESSION_TRANSITIONS]
 
         const getSession = await prisma.session.findUnique({
@@ -180,7 +181,7 @@ export async function PATCH(req: NextRequest,
             })
         }
 
-        if (rule.role === "MENTOR" && !isMentor) {
+        if (!isAutoEnd && rule.role === "MENTOR" && !isMentor) {
             return NextResponse.json({
                 message: "Only mentor can perform this action"
             }, {
@@ -209,7 +210,7 @@ export async function PATCH(req: NextRequest,
         let data;
 
         try {
-            data = await actionHandler(getSession, userId, sessionId);
+            data = await actionHandler(getSession, userId, sessionId, isAutoEnd);
         } catch (error: any) {
             return NextResponse.json({
                 message: error.message || "Action handler error"

@@ -7,7 +7,7 @@ import axios from 'axios'
 import { toast } from 'sonner'
 import InitialScreen from '@/components/video-call/InitialScreen'
 import { Spinner } from '@/components/ui/spinner'
-import { fetchSessionById } from '@/services/session.service'
+import { completeSession, fetchSessionById } from '@/services/session.service'
 import { io, Socket } from 'socket.io-client'
 import { useWebRTC } from '@/hooks/useWebRTC'
 import { startVideoCall } from '@/services/videocall.service'
@@ -292,8 +292,8 @@ export default function VideoCallPage() {
       try {
         const sessionData = await fetchSessionById(sessionId)
         setSession(sessionData.session)
-      } catch (error) {
-        // Failed to refetch session
+      } catch (error: any) {
+        console.error("Failed to refetch session after starting call:", error.message)
       }
 
       if (socket?.connected) {
@@ -306,12 +306,39 @@ export default function VideoCallPage() {
     }
   }
 
+  const handleAutoEndCall = async () => {
+    setPhase("ENDED")
+    endCall()
+    hasJoinedRef.current = false
+
+    try {
+      await completeSession(sessionId, true)
+      toast.success("Session auto-ended due to time limit")
+    } catch (error) {
+      console.error("Failed to auto-end session:", error)
+    }
+    
+    router.push("/sessions")
+  }
+
   const handleEndCall = async () => {
     setPhase("ENDED")
     endCall()
     hasJoinedRef.current = false
     router.push("/sessions")
   }
+
+  useEffect(() => {
+    if(phase === "IN CALL" && session?.totalCallDuration) {
+      const sessionDurationSeconds = session.totalCallDuration * 60
+
+      if(elapsed >= sessionDurationSeconds) {
+        toast.info("Session time limit reached. Ending call...")
+        handleAutoEndCall()
+        toast.success("Call ended")
+      }
+    }
+  }, [elapsed, phase, session?.totalCallDuration, handleAutoEndCall])
 
   if (loading) {
     return (

@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { useUser } from "@clerk/nextjs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { fetchAUserProfile } from "@/services/profile.service";
+import { fetchFeedbacks } from "@/services/feedback.service";
 
 export default function PublicProfilePage() {
   const router = useRouter();
@@ -20,6 +21,7 @@ export default function PublicProfilePage() {
 
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [feedbacks, setFeedbacks] = useState([]);
 
   useEffect(() => {
     if (!userId) return;
@@ -45,6 +47,23 @@ export default function PublicProfilePage() {
       router.replace("/profile");
     }
   }, [user, userId, router]);
+
+  useEffect(() => {
+    const loadFeedbacks = async () => {
+      if (!profile) return;
+
+      try {
+        console.log("Loading feedbacks for user:", profile.id);
+        const data = await fetchFeedbacks(profile.id);
+        console.log("Feedbacks fetched:", data);
+        setFeedbacks(data.fetchFeedback || []);
+      } catch (error) {
+        console.error("Error fetching feedbacks:", error);
+        setFeedbacks([]);
+      }
+    }
+    loadFeedbacks();
+  }, [profile]);
 
   if (loading) return (
     <div className="flex items-center gap-4 p-6">
@@ -77,7 +96,7 @@ export default function PublicProfilePage() {
         stats={profile.stats}
         skillsOffered={profile.skillsOffered}
         skillsWanted={profile.skillsWanted}
-        feedbacks={profile.feedbacks}
+        feedbacks={feedbacks}
       />
     </div>
   );

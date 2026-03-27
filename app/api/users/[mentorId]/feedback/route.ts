@@ -26,9 +26,7 @@ export async function POST(req: NextRequest) {
         const commentError = tree.properties?.comment?.errors || []
         const ratingError = tree.properties?.rating?.errors || []
         const sessionIdError = tree.properties?.sessionId?.errors || []
-        const confidenceAfterError = tree.properties?.confidenceAfter?.errors || []
-        const confidenceBeforeError = tree.properties?.confidenceBefore?.errors || []
-        const message = [...commentError, ...ratingError, ...sessionIdError, ...confidenceAfterError, ...confidenceBeforeError].join(", ") || "Invalid input"
+        const message = [...commentError, ...ratingError, ...sessionIdError,].join(", ") || "Invalid input"
 
         return NextResponse.json({
             message,
@@ -40,15 +38,15 @@ export async function POST(req: NextRequest) {
 
     try {
         const { mentorId } = body
-        const { rating, comment, confidenceBefore, confidenceAfter, sessionId } = parsed.data
+        const { rating, comment, sessionId } = parsed.data
 
-        const user = await prisma.user.findUnique({
+        const dbUser = await prisma.user.findUnique({
             where: {
-                id: userId
+                clerkUserId: userId
             }
         })
 
-        if (!user) {
+        if (!dbUser) {
             return NextResponse.json({
                 message: "User not found"
             }, {
@@ -56,7 +54,9 @@ export async function POST(req: NextRequest) {
             })
         }
 
-        if (mentorId.toString() === userId.toString()) {
+        const dbUserId = dbUser.id
+
+        if (mentorId.toString() === dbUserId.toString()) {
             return NextResponse.json({
                 message: "You cannot give feedback to yourself"
             }, {
@@ -85,7 +85,7 @@ export async function POST(req: NextRequest) {
             where: {
                 id: sessionId,
                 mentorId,
-                menteeId: userId,
+                menteeId: dbUserId,
                 status: "COMPLETED",
             },
         })
@@ -100,7 +100,7 @@ export async function POST(req: NextRequest) {
         const feedbackExists = await prisma.userFeedback.findUnique({
             where: {
                 mentorId: mentorId,
-                menteeId: userId,
+                menteeId: dbUserId,
                 session: {
                     status: "COMPLETED"
                 },
@@ -120,12 +120,11 @@ export async function POST(req: NextRequest) {
             const createFeedback = await tx.userFeedback.create({
                 data: {
                     mentorId,
-                    menteeId: userId,
+                    menteeId: dbUserId,
                     sessionId,
+                    skillId: sessionExists.skillId,
                     rating,
                     comment: comment.trim(),
-                    confidenceBefore,
-                    confidenceAfter,
                 },
             });
 
@@ -158,10 +157,10 @@ export async function POST(req: NextRequest) {
             await tx.notification.create({
                 data: {
                     userId: mentorId,
-                    senderId: userId,
+                    senderId: dbUserId,
                     type: NotificationType.FEEDBACK_RECEIVED,
                     title: "New feedback received",
-                    message: `${user.name} rated you ${rating} stars`
+                    message: `${dbUser.name} rated you ${rating} stars`
                 }
             });
 
@@ -237,8 +236,12 @@ export async function GET(req: NextRequest,
                 id: true,
                 rating: true,
                 comment: true,
-                confidenceBefore: true,
-                confidenceAfter: true,
+                skill: {
+                    select: {
+                        id: true,
+                        name: true
+                    }
+                },
                 createdAt: true,
                 mentee: {
                     select: {

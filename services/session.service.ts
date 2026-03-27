@@ -57,9 +57,9 @@ export async function cancelSession(sessionId: string) {
     }
 }
 
-export async function completeSession(sessionId: string) {
+export async function completeSession(sessionId: string, isAutoEnd = false) {
     try {
-        const response = await axios.patch(`/api/sessions/${sessionId}`, { action: "COMPLETE" })
+        const response = await axios.patch(`/api/sessions/${sessionId}`, { action: "COMPLETE", isAutoEnd })
         return response.data
     } catch (error) {
         const axiosError = error as AxiosError<ApiResponse>

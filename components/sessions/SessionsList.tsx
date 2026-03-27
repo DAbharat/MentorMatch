@@ -22,6 +22,8 @@ import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 import { fetchAllChatsForAUser } from "@/services/messages.service"
 import { cleanupStuckSessions, completeSession } from "@/services/session.service"
+import { createFeedback } from "@/services/feedback.service"
+import FeedbackForm from "../feedback/FeedbackForm"
 
 const DM_Sans_Font = DM_Sans({
   weight: ["400", "500", "700"],
@@ -49,6 +51,9 @@ type Session = {
     name: string
   },
   activeSession?: boolean
+  feedback?: {
+    id: string
+  } | null
 }
 
 type SessionsListProps = {
@@ -82,11 +87,24 @@ export default function SessionsList({
   const [showCancelDialog, setShowCancelDialog] = useState(false)
   const [sessionTimers, setSessionTimers] = useState<Record<string, number>>({})
   const [mounted, setMounted] = useState(false)
+  const [feedbackSessionId, setFeedbackSessionId] = useState<string | null>(null)
+  const [showFeedbackForm, setShowFeedbackForm] = useState(false)
+  const [feedbackLoading, setFeedbackLoading] = useState(false)
+  const [submittedFeedbackIds, setSubmittedFeedbackIds] = useState<Set<string>>(new Set())
 
   // Ensure component is mounted before rendering Popover to avoid hydration mismatch
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  useEffect(() => {
+    const existing = sessions
+      .filter(s => s.feedback)
+      .map(s => s.id)
+
+    setSubmittedFeedbackIds(new Set(existing))
+  }, [sessions])
+
   const completedSessionsRef = React.useRef<Set<string>>(new Set())
 
   // Update elapsed time for IN_PROGRESS sessions
@@ -94,20 +112,20 @@ export default function SessionsList({
     const timer = setInterval(() => {
       setSessionTimers(prevTimers => {
         const newTimers = { ...prevTimers }
-        
+
         sessions.forEach((session) => {
           if (session.status === "IN_PROGRESS" && session.callStartedAt) {
-            const elapsedSeconds = 
+            const elapsedSeconds =
               (new Date().getTime() - new Date(session.callStartedAt).getTime()) / 1000
-            
+
             // Cap elapsed time at session duration
             const durationSeconds = session.totalCallDuration * 60
             const cappedSeconds = Math.min(Math.floor(elapsedSeconds), durationSeconds)
-            
+
             newTimers[session.id] = cappedSeconds
           }
         })
-        
+
         return newTimers
       })
     }, 1000)
@@ -119,14 +137,14 @@ export default function SessionsList({
   useEffect(() => {
     sessions.forEach((session) => {
       if (session.status === "IN_PROGRESS" && session.callStartedAt) {
-        const elapsedSeconds = 
+        const elapsedSeconds =
           (new Date().getTime() - new Date(session.callStartedAt).getTime()) / 1000
         const durationSeconds = session.totalCallDuration * 60
-        
+
         // Auto-complete only once per session
         if (elapsedSeconds >= durationSeconds && !completedSessionsRef.current.has(session.id)) {
           completedSessionsRef.current.add(session.id)
-          
+
           // Call API to mark session as COMPLETED
           completeSession(session.id)
             .then(() => {
@@ -180,7 +198,7 @@ export default function SessionsList({
       toast.success("Session starting. Redirecting to video call...")
       router.push(`/sessions/video-call/${session.id}`)
 
-    } catch (error:any) {
+    } catch (error: any) {
       toast.error(error.message || "Failed to start session")
     } finally {
       setLoadingSessionId(null)
@@ -190,15 +208,13 @@ export default function SessionsList({
   const handleJoinSession = (session: Session) => {
     setLoadingSessionId(session.id)
     try {
-      // If session is IN_PROGRESS, user is rejoining - skip initial screen
-      // If session is CONFIRMED, user is joining for first time - show initial screen
       const isRejoin = session.status === "IN_PROGRESS"
       console.log("[SessionsList] handleJoinSession called - session status:", session.status, "isRejoin:", isRejoin)
-      
-      const url = isRejoin 
+
+      const url = isRejoin
         ? `/sessions/video-call/${session.id}?rejoin=true`
         : `/sessions/video-call/${session.id}`
-      
+
       console.log("[SessionsList] Navigating to:", url)
       router.push(url)
     } catch (error: any) {
@@ -233,6 +249,36 @@ export default function SessionsList({
       toast.error(error.message || "Failed to cancel session")
     } finally {
       setLoadingSessionId(null)
+    }
+  }
+
+  const handleSubmitFeedback = async (formData: { rating: number; comment: string }) => {
+    if (!feedbackSessionId) return
+
+    if (submittedFeedbackIds.has(feedbackSessionId)) return
+
+    const session = sessions.find(s => s.id === feedbackSessionId)
+    if (!session) return
+
+    setFeedbackLoading(true)
+    try {
+      await createFeedback({
+        mentorId: session.mentor.id,
+        sessionId: feedbackSessionId,
+        rating: formData.rating,
+        comment: formData.comment
+      })
+
+      toast.success("Feedback submitted successfully!")
+
+      setShowFeedbackForm(false)
+      setSubmittedFeedbackIds(prev => new Set(prev).add(feedbackSessionId))
+      setFeedbackSessionId(null)
+
+    } catch (error: any) {
+      toast.error(error.message || "Failed to submit feedback")
+    } finally {
+      setFeedbackLoading(false)
     }
   }
 
@@ -302,11 +348,10 @@ export default function SessionsList({
                       <button
                         key={f}
                         onClick={() => setFilter(f as any)}
-                        className={`w-full text-left px-3 py-2 text-sm rounded-md transition ${
-                          isActive
-                            ? "bg-black text-white"
-                            : "hover:bg-gray-800 text-[#d3d3d3]"
-                        }`}
+                        className={`w-full text-left px-3 py-2 text-sm rounded-md transition ${isActive
+                          ? "bg-black text-white"
+                          : "hover:bg-gray-800 text-[#d3d3d3]"
+                          }`}
                       >
                         {f.charAt(0).toUpperCase() + f.slice(1)}
                       </button>
@@ -330,149 +375,91 @@ export default function SessionsList({
           )}
 
           {!loading && filteredSessions.length === 0 && (
-              <p className="text-center text-muted-foreground text-sm bg-none">No sessions found</p>
+            <p className="text-center text-muted-foreground text-sm bg-none">No sessions found</p>
           )}
 
           {!loading &&
-            filteredSessions.map((session) => (
-              <Card
-                key={session.id}
-                className="p-4 sm:p-5 bg-[#111315] border border-[#1f1f1f] shadow-md shadow-black/30"
-              >
-                <div className="space-y-2.5 sm:space-y-3">
 
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-1 min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="font-semibold text-sm sm:text-base text-[#d3d3d3] leading-tight">
-                          {session.skill.name}
-                        </h3>
-                        <Badge className={`${getStatusColor(session.status)} text-xs shrink-0`}>
-                          {session.status}
-                        </Badge>
-                        {activeSessions.includes(session.id) && (
-                          <Badge className="bg-green-500 text-white text-xs shrink-0 flex items-center gap-1">
-                            <CircleDot className="w-2 h-2 fill-current" />
-                            LIVE
+            filteredSessions.map((session) => {
+              const hasFeedback =
+                submittedFeedbackIds.has(session.id) || !!session.feedback
+              return (
+
+
+                <Card
+                  key={session.id}
+                  className="p-4 sm:p-5 bg-[#111315] border border-[#1f1f1f] shadow-md shadow-black/30"
+                >
+                  <div className="space-y-2.5 sm:space-y-3">
+
+                    <div className="flex items-start justify-between">
+                      <div className="space-y-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="font-semibold text-sm sm:text-base text-[#d3d3d3] leading-tight">
+                            {session.skill.name}
+                          </h3>
+                          <Badge className={`${getStatusColor(session.status)} text-xs shrink-0`}>
+                            {session.status}
                           </Badge>
-                        )}
+                          {activeSessions.includes(session.id) && (
+                            <Badge className="bg-green-500 text-white text-xs shrink-0 flex items-center gap-1">
+                              <CircleDot className="w-2 h-2 fill-current" />
+                              LIVE
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-xs sm:text-sm text-muted-foreground">
+                          with{" "}
+                          {isMentor(session)
+                            ? session.mentee.name
+                            : session.mentor.name}
+                        </p>
                       </div>
-                      <p className="text-xs sm:text-sm text-muted-foreground">
-                        with{" "}
-                        {isMentor(session)
-                          ? session.mentee.name
-                          : session.mentor.name}
-                      </p>
                     </div>
-                  </div>
 
-                  <div className="grid grid-cols-2 gap-2 sm:gap-3 text-xs sm:text-sm">
-                    <div>
-                      <p className="text-muted-foreground">Scheduled</p>
-                      <p className="font-medium text-[#d3d3d3] leading-snug">
-                        {new Date(session.scheduledAt).toLocaleString()}
-                      </p>
+                    <div className="grid grid-cols-2 gap-2 sm:gap-3 text-xs sm:text-sm">
+                      <div>
+                        <p className="text-muted-foreground">Scheduled</p>
+                        <p className="font-medium text-[#d3d3d3] leading-snug">
+                          {new Date(session.scheduledAt).toLocaleString()}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Duration</p>
+                        <p className="font-medium text-[#d3d3d3]">
+                          {session.totalCallDuration} min
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-muted-foreground">Duration</p>
-                      <p className="font-medium text-[#d3d3d3]">
-                        {session.totalCallDuration} min
-                      </p>
-                    </div>
-                  </div>
 
-                  {session.status === "PENDING" && isMentor(session) && (
-                    <div className="flex gap-2 pt-0.5">
-                      <Button
-                        className="flex-1 bg-[#0f2f85] text-white hover:bg-[#0a2368] rounded-2xl text-xs sm:text-sm py-2 flex items-center justify-center gap-2"
-                        onClick={() => handleConfirmSession(session)}
-                        disabled={loadingSessionId === session.id}
-                      >
-                        <Check className="w-4 h-4" />
-                        {loadingSessionId === session.id
-                          ? "Confirming..."
-                          : "Confirm"}
-                      </Button>
-                      <Button
-                        className="flex-1 bg-red-600/20 text-red-400 hover:bg-red-600/30 rounded-2xl text-xs sm:text-sm py-2 flex items-center justify-center gap-2 border border-red-600/30"
-                        onClick={() => {
-                          setCancelingSessionId(session.id)
-                          setShowCancelDialog(true)
-                        }}
-                        disabled={loadingSessionId === session.id}
-                      >
-                        <X className="w-4 h-4" />
-                        Cancel
-                      </Button>
-                    </div>
-                  )}
-
-                  {session.status === "CONFIRMED" && (
-                    <div className="space-y-2 pt-0.5">
-                      <Button
-                        className="w-full bg-[#1c2023] text-[#d3d3d3] hover:bg-[#2a2f34] border border-white/10 rounded-2xl text-xs sm:text-sm py-2"
-                        onClick={() => handleNavigateToChat(session)}
-                        disabled={navigatingToChatId === session.id}
-                      >
-                        <MessageCircleMore className="mr-2 size-3.5 sm:size-4" />
-                        {navigatingToChatId === session.id
-                          ? "Opening..."
-                          : "Message"}
-                      </Button>
-
-                      {!activeSessions.includes(session.id) && isMentor(session) && (
+                    {session.status === "PENDING" && isMentor(session) && (
+                      <div className="flex gap-2 pt-0.5">
                         <Button
-                          className="w-full bg-[#1c2023] text-[#d3d3d3] hover:bg-[#2a2f34] border border-white/10 rounded-2xl text-xs sm:text-sm py-2"
-                          onClick={() => handleStartSession(session)}
+                          className="flex-1 bg-[#0f2f85] text-white hover:bg-[#0a2368] rounded-2xl text-xs sm:text-sm py-2 flex items-center justify-center gap-2"
+                          onClick={() => handleConfirmSession(session)}
                           disabled={loadingSessionId === session.id}
                         >
+                          <Check className="w-4 h-4" />
                           {loadingSessionId === session.id
-                            ? "Starting..."
-                            : "Start Session"}
+                            ? "Confirming..."
+                            : "Confirm"}
                         </Button>
-                      )}
-
-                      {activeSessions.includes(session.id) && (
                         <Button
-                          className="w-full bg-green-600 text-white hover:bg-green-700 rounded-2xl text-xs sm:text-sm py-2 flex items-center justify-center gap-2"
-                          onClick={() => handleJoinSession(session)}
+                          className="flex-1 bg-red-600/20 text-red-400 hover:bg-red-600/30 rounded-2xl text-xs sm:text-sm py-2 flex items-center justify-center gap-2 border border-red-600/30"
+                          onClick={() => {
+                            setCancelingSessionId(session.id)
+                            setShowCancelDialog(true)
+                          }}
                           disabled={loadingSessionId === session.id}
                         >
-                          <LogIn className="w-4 h-4" />
-                          {loadingSessionId === session.id
-                            ? "Joining..."
-                            : "Join Session"}
+                          <X className="w-4 h-4" />
+                          Cancel
                         </Button>
-                      )}
-                    </div>
-                  )}
-
-                  {session.status === "IN_PROGRESS" && session.callStartedAt && (
-                    <div className="space-y-2 pt-2">
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="text-center flex-1">
-                          <p className="text-xs text-muted-foreground mb-1">Session Duration</p>
-                          <p className="font-mono text-lg font-bold text-[#d3d3d3]">
-                            {formatTimer(sessionTimers[session.id] || 0)}
-                          </p>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            / {session.totalCallDuration}:00
-                          </p>
-                        </div>
-                        <div className="w-1 h-16 bg-[#1f1f1f] rounded-full overflow-hidden shrink-0">
-                          <div
-                            className="w-full bg-green-500 transition-all duration-300"
-                            style={{
-                              height: `${Math.min(
-                                ((sessionTimers[session.id] || 0) / (session.totalCallDuration * 60)) * 100,
-                                100
-                              )}%`,
-                            }}
-                          />
-                        </div>
                       </div>
+                    )}
 
-                      <div className="space-y-2 pt-2">
+                    {session.status === "CONFIRMED" && (
+                      <div className="space-y-2 pt-0.5">
                         <Button
                           className="w-full bg-[#1c2023] text-[#d3d3d3] hover:bg-[#2a2f34] border border-white/10 rounded-2xl text-xs sm:text-sm py-2"
                           onClick={() => handleNavigateToChat(session)}
@@ -484,24 +471,145 @@ export default function SessionsList({
                             : "Message"}
                         </Button>
 
-                        <Button
-                          className="w-full bg-green-600 text-white hover:bg-green-700 rounded-2xl text-xs sm:text-sm py-2 flex items-center justify-center gap-2"
-                          onClick={() => handleJoinSession(session)}
-                          disabled={loadingSessionId === session.id}
-                        >
-                          <LogIn className="w-4 h-4" />
-                          {loadingSessionId === session.id
-                            ? "Joining..."
-                            : "Join Session"}
-                        </Button>
+                        {!activeSessions.includes(session.id) && isMentor(session) && (
+                          <Button
+                            className="w-full bg-[#1c2023] text-[#d3d3d3] hover:bg-[#2a2f34] border border-white/10 rounded-2xl text-xs sm:text-sm py-2"
+                            onClick={() => handleStartSession(session)}
+                            disabled={loadingSessionId === session.id}
+                          >
+                            {loadingSessionId === session.id
+                              ? "Starting..."
+                              : "Start Session"}
+                          </Button>
+                        )}
+
+                        {activeSessions.includes(session.id) && (
+                          <Button
+                            className="w-full bg-green-600 text-white hover:bg-green-700 rounded-2xl text-xs sm:text-sm py-2 flex items-center justify-center gap-2"
+                            onClick={() => handleJoinSession(session)}
+                            disabled={loadingSessionId === session.id}
+                          >
+                            <LogIn className="w-4 h-4" />
+                            {loadingSessionId === session.id
+                              ? "Joining..."
+                              : "Join Session"}
+                          </Button>
+                        )}
                       </div>
-                    </div>
-                  )}
-                </div>
-              </Card>
-            ))}
+                    )}
+
+                    {session.status === "IN_PROGRESS" && session.callStartedAt && (
+                      <div className="space-y-2 pt-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="text-center flex-1">
+                            <p className="text-xs text-muted-foreground mb-1">Session Duration</p>
+                            <p className="font-mono text-lg font-bold text-[#d3d3d3]">
+                              {formatTimer(sessionTimers[session.id] || 0)}
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              / {session.totalCallDuration}:00
+                            </p>
+                          </div>
+                          <div className="w-1 h-16 bg-[#1f1f1f] rounded-full overflow-hidden shrink-0">
+                            <div
+                              className="w-full bg-green-500 transition-all duration-300"
+                              style={{
+                                height: `${Math.min(
+                                  ((sessionTimers[session.id] || 0) / (session.totalCallDuration * 60)) * 100,
+                                  100
+                                )}%`,
+                              }}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="space-y-2 pt-2">
+                          <Button
+                            className="w-full bg-[#1c2023] text-[#d3d3d3] hover:bg-[#2a2f34] border border-white/10 rounded-2xl text-xs sm:text-sm py-2"
+                            onClick={() => handleNavigateToChat(session)}
+                            disabled={navigatingToChatId === session.id}
+                          >
+                            <MessageCircleMore className="mr-2 size-3.5 sm:size-4" />
+                            {navigatingToChatId === session.id
+                              ? "Opening..."
+                              : "Message"}
+                          </Button>
+
+                          <Button
+                            className="w-full bg-green-600 text-white hover:bg-green-700 rounded-2xl text-xs sm:text-sm py-2 flex items-center justify-center gap-2"
+                            onClick={() => handleJoinSession(session)}
+                            disabled={loadingSessionId === session.id}
+                          >
+                            <LogIn className="w-4 h-4" />
+                            {loadingSessionId === session.id
+                              ? "Joining..."
+                              : "Join Session"}
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    {session.status === "COMPLETED" && !isMentor(session) && (
+                      <div className="pt-2">
+                        {hasFeedback ? (
+                          <Badge className="w-full justify-center bg-green-600 text-white rounded-2xl py-2 text-xs sm:text-sm">
+                            ✓ Feedback Sent
+                          </Badge>
+                        ) : (
+                          <Button
+                            className="w-full bg-[#1c2023] text-[#d3d3d3] hover:bg-[#2a2f34] border border-white/10 rounded-2xl text-xs sm:text-sm py-2 flex items-center justify-center gap-2"
+                            onClick={() => {
+                              setFeedbackSessionId(session.id)
+                              setShowFeedbackForm(true)
+                            }}
+                          >
+                            Give Feedback
+                          </Button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </Card>
+              )
+            })
+          }
         </div>
       </div>
+
+      {/* Feedback Form Modal */}
+      {showFeedbackForm && feedbackSessionId && mounted && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
+          <div className="relative w-full max-w-2xl">
+            <div className="absolute top-2 right-2 sm:top-4 sm:right-4 z-10">
+              <button
+                onClick={() => {
+                  setShowFeedbackForm(false)
+                  setFeedbackSessionId(null)
+                }}
+                className="p-2 hover:bg-gray-800 rounded-lg transition"
+              >
+                <X className="w-5 h-5 text-[#d3d3d3]" />
+              </button>
+            </div>
+            {(() => {
+              const session = sessions.find(s => s.id === feedbackSessionId)
+              if (!session) return null
+              return (
+                <FeedbackForm
+                  id={session.id}
+                  sessionId={session.id}
+                  mentor={session.mentor}
+                  mentee={session.mentee}
+                  skill={session.skill}
+                  isModal={true}
+                  loading={feedbackLoading}
+                  onSubmit={handleSubmitFeedback}
+                />
+              )
+            })()}
+          </div>
+        </div>
+      )}
 
       <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
         <AlertDialogContent className="bg-[#111315] border-[#1f1f1f]">
@@ -512,7 +620,7 @@ export default function SessionsList({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="bg-white text-black hover:bg-gray-200 border-[#1f1f1f] rounded-full">
+            <AlertDialogCancel className="bg-[#1c2023] text-[#d3d3d3] hover:bg-[#2a2f34] border border-white/10 rounded-full">
               Keep Session
             </AlertDialogCancel>
             <AlertDialogAction

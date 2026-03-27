@@ -14,6 +14,7 @@ import { redirect, useRouter } from 'next/navigation';
 import { Profile } from '@/types/profile';
 import { fetchMyProfile } from '@/services/profile.service';
 import { Skeleton } from '@/components/ui/skeleton';
+import { fetchFeedbacks } from '@/services/feedback.service';
 
 
 export default function ProfilePage() {
@@ -22,6 +23,7 @@ export default function ProfilePage() {
 
     const [profile, setProfile] = useState<Profile | null>(null);
     const [loading, setLoading] = useState(true);
+    const [feedbacks, setFeedbacks] = useState([]);
 
     useEffect(() => {
         if (!isLoaded) {
@@ -60,6 +62,21 @@ export default function ProfilePage() {
         };
         loadProfile();
     }, [isLoaded, isSignedIn, router]);
+
+    useEffect(() => {
+        const loadFeedbacks = async () => {
+            if (!profile) return;
+
+            try {
+                const data = await fetchFeedbacks(profile.id);
+                setFeedbacks(data.fetchFeedback || []);
+            } catch (error) {
+                console.error("Error fetching feedbacks:", error);
+                setFeedbacks([]);
+            }
+        }
+        loadFeedbacks();
+    }, [profile])
 
     if (!isLoaded || loading) {
         console.log("ProfilePage: Loading spinner displayed.");
@@ -100,7 +117,7 @@ export default function ProfilePage() {
                     stats={profile.stats}
                     skillsOffered={profile.skillsOffered}
                     skillsWanted={profile.skillsWanted}
-                    feedbacks={profile.feedbacks}
+                    feedbacks={feedbacks}
                 />
             </div>
         </div>

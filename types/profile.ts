@@ -14,10 +14,15 @@ export type Feedback = {
   id: string;
   rating: number;
   comment: string;
-  fromUser: {
+  mentee: {
     id: string;
     name: string;
   };
+  skill: {
+    id: string;
+    name: string;
+  };
+  createdAt: Date | string;
 };
 
 export type Profile = {

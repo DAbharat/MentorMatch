@@ -19,6 +19,7 @@ export const sessionStatusSchema = z.enum([
 
 export const updateSessionSchema = z.object({
     action: z.enum(["CONFIRM", "START", "COMPLETE", "CANCEL"]),
+    isAutoEnd: z.boolean().optional()
 })
 
 export const sessionSchema = z.object({

@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/retroui/Button"
 import { Label } from "@/components/ui/label"
@@ -45,7 +45,7 @@ export default function ScheduleSession({
     })
 
     // Update skillId when mentorshipRequestSkillId is loaded
-    React.useEffect(() => {
+    useEffect(() => {
         if (mentorshipRequestSkillId) {
             setFormData(prev => ({
                 ...prev,

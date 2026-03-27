@@ -28,10 +28,15 @@ type ProfileTabsProps = {
     }[];
     feedbacks: {
         id: string;
-        fromUser: {
+        mentee: {
             id: string;
             name: string;
         };
+        skill: {
+            id: string;
+            name: string;
+        };
+        createdAt: Date | string;
         comment: string;
         rating: number;
     }[];
@@ -78,7 +83,9 @@ export default function ProfileTabs({
                 {activeTab === "Stats" && <ProfileStats stats={stats} />}
 
                 {activeTab === "Feedback" && (
-                    <ProfileFeedback feedbacks={feedbacks} />
+                    <ProfileFeedback 
+                     feedbacks={feedbacks}
+                     />
                 )}
             </div>
         </section>
