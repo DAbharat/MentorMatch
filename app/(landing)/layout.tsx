@@ -22,7 +22,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ProductFeed - Learn from Experts, Share Your Skills",
+  title: "MentorMatch - Learn from Experts, Share Your Skills",
   description: "Connect with mentors and learners in your community. Schedule live sessions, share knowledge, and grow together through real-time collaboration.",
 };
 
