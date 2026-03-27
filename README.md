@@ -293,3 +293,7 @@ Contributions are welcome. Please feel free to submit a pull request or open an 
 ## License
 
 This project is private and proprietary. All rights reserved.
+
+## Author
+
+- [@DAbharat](https://github.com/DAbharat)
