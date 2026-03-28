@@ -1,6 +1,5 @@
 "use client";
 
-import { Button } from "@/components/retroui/Button";
 import Link from "next/link";
 import {
   CheckCircle,
@@ -10,6 +9,7 @@ import {
   MessageSquare,
   Star,
   ArrowRight,
+  Sparkles,
 } from "lucide-react";
 import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
@@ -57,72 +57,57 @@ const features = [
 const steps = [
   {
     title: "Create Your Profile",
-    description:
-      "Sign up and showcase your skills, interests, and learning goals.",
+    description: "Sign up and showcase your skills, interests, and learning goals.",
     icon: CheckCircle,
   },
   {
     title: "Find or Offer Skills",
-    description:
-      "Browse mentors or become one and share your expertise.",
+    description: "Browse mentors or become one and share your expertise.",
     icon: Users,
   },
   {
     title: "Schedule Sessions",
-    description:
-      "Book time slots that work for both mentor and learner.",
+    description: "Book time slots that work for both mentor and learner.",
     icon: Zap,
   },
   {
     title: "Learn & Grow",
-    description:
-      "Join live video calls and track your progress over time.",
+    description: "Join live video calls and track your progress over time.",
     icon: Video,
-  },
-];
-
-const whyJoin = [
-  {
-    title: "Learn from Experts",
-    description:
-      "Get guidance from experienced professionals.",
-  },
-  {
-    title: "Build Connections",
-    description:
-      "Connect with a supportive learning community.",
-  },
-  {
-    title: "Flexible Learning",
-    description:
-      "Schedule sessions at your own pace.",
-  },
-  {
-    title: "Track Progress",
-    description:
-      "Monitor your learning journey with session history.",
   },
 ];
 
 const testimonials = [
   {
     quote:
-      "ProductFeed connected me with an amazing mentor who helped me transition into tech.",
+      "MentorMatch connected me with an amazing mentor who helped me transition into tech. Within 3 months I landed my first dev role.",
     author: "Sarah Chen",
     role: "Junior Developer",
+    initial: "S",
+    color: "#60a5fa",
   },
   {
     quote:
-      "As a mentor, I love how easy it is to schedule sessions and help learners.",
+      "As a mentor, I love how easy it is to schedule sessions and help learners grow. The platform just gets out of the way.",
     author: "Alex Rodriguez",
     role: "Senior Engineer",
+    initial: "A",
+    color: "#a78bfa",
   },
   {
     quote:
-      "The community here is incredibly supportive and inspiring.",
+      "The community here is incredibly supportive and inspiring. Found my co-founder through a mentorship session.",
     author: "Jordan Smith",
     role: "Product Designer",
+    initial: "J",
+    color: "#34d399",
   },
+];
+
+const stats = [
+  { value: "5K+", label: "Active Learners" },
+  { value: "2K+", label: "Expert Mentors" },
+  { value: "10K+", label: "Sessions Done" },
 ];
 
 export default function LandingPage() {
@@ -136,70 +121,343 @@ export default function LandingPage() {
   }, [user, isLoaded, router]);
 
   return (
-    <div className="w-full min-h-screen bg-[#0b090a] text-[#d3d3d3]">
+    <div
+      className="w-full min-h-screen text-[#d3d3d3] overflow-x-hidden"
+      style={{ background: "#0b090a", fontFamily: "'DM Sans', sans-serif" }}
+    >
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;0,9..40,900;1,9..40,300&family=Instrument+Serif:ital@0;1&display=swap');
 
-      {/* HERO SECTION */}
-      <section className="py-20 md:py-32">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            {/* Left Side - Copy */}
-            <div className="space-y-8">
-              <div className="space-y-6">
-                <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold leading-tight text-white">
-                  Master Skills.
-                  <span className="block text-blue-400">Teach What You Know.</span>
-                </h1>
+        *, *::before, *::after { box-sizing: border-box; }
 
-                <p className="text-lg text-[#d3d3d3]/70 max-w-xl leading-relaxed">
-                  Connect with mentors and learners worldwide. Schedule live sessions, share knowledge, and grow together through real-time video collaboration.
-                </p>
+        :root {
+          --accent: #60a5fa;
+          --accent-dim: rgba(96,165,250,0.12);
+          --border: rgba(255,255,255,0.07);
+          --card: rgba(255,255,255,0.03);
+          --card-hover: rgba(255,255,255,0.055);
+        }
+
+        .orb {
+          position: absolute; border-radius: 50%;
+          filter: blur(120px); pointer-events: none; z-index: 0;
+        }
+        .orb-blue {
+          width: min(600px, 100vw); height: min(600px, 100vw);
+          background: radial-gradient(circle, rgba(59,130,246,0.18) 0%, transparent 70%);
+          top: -100px; left: -200px;
+        }
+        .orb-purple {
+          width: min(500px, 90vw); height: min(500px, 90vw);
+          background: radial-gradient(circle, rgba(139,92,246,0.12) 0%, transparent 70%);
+          top: 100px; right: -150px;
+        }
+
+        .badge {
+          display: inline-flex; align-items: center; gap: 6px;
+          background: rgba(96,165,250,0.1); border: 1px solid rgba(96,165,250,0.2);
+          border-radius: 100px; padding: 6px 14px; font-size: 13px;
+          color: #93c5fd; font-weight: 500; letter-spacing: 0.02em; margin-bottom: 24px;
+        }
+
+        .section-label {
+          font-size: 11px; font-weight: 600; letter-spacing: 0.12em;
+          text-transform: uppercase; color: rgba(96,165,250,0.7); margin-bottom: 12px;
+        }
+
+        .container { max-width: 1280px; margin: 0 auto; padding: 0 24px; }
+
+        .section-pad { padding: 100px 0; }
+
+        .feature-card {
+          background: var(--card); border: 1px solid var(--border);
+          border-radius: 16px; padding: 28px;
+          transition: all 0.3s ease; position: relative; overflow: hidden;
+        }
+        .feature-card::before {
+          content: ''; position: absolute; inset: 0; border-radius: 16px;
+          background: radial-gradient(circle at 30% 20%, var(--accent-dim), transparent 60%);
+          opacity: 0; transition: opacity 0.4s ease;
+        }
+        .feature-card:hover { border-color: rgba(96,165,250,0.25); background: var(--card-hover); transform: translateY(-2px); }
+        .feature-card:hover::before { opacity: 1; }
+        .feature-card:hover .icon-wrap { background: rgba(96,165,250,0.2); }
+
+        .icon-wrap {
+          width: 46px; height: 46px; border-radius: 12px;
+          background: var(--accent-dim); display: flex; align-items: center;
+          justify-content: center; transition: background 0.3s ease; flex-shrink: 0;
+        }
+
+        .step-number {
+          width: 40px; height: 40px; border-radius: 50%;
+          background: rgba(96,165,250,0.1); border: 1px solid rgba(96,165,250,0.25);
+          display: flex; align-items: center; justify-content: center;
+          font-size: 14px; font-weight: 700; color: #93c5fd; flex-shrink: 0;
+        }
+
+        .stat-item {
+          text-align: center; padding: 20px 12px; border-radius: 14px;
+          background: var(--card); border: 1px solid var(--border);
+        }
+
+        .testimonial-card {
+          background: var(--card); border: 1px solid var(--border);
+          border-radius: 16px; padding: 28px;
+          display: flex; flex-direction: column; gap: 18px;
+          transition: all 0.3s ease;
+        }
+        .testimonial-card:hover { border-color: rgba(96,165,250,0.2); background: var(--card-hover); transform: translateY(-2px); }
+
+        .hero-mockup {
+          background: rgba(255,255,255,0.025); border: 1px solid var(--border);
+          border-radius: 20px; overflow: hidden;
+        }
+        .mockup-bar {
+          background: rgba(255,255,255,0.04); border-bottom: 1px solid var(--border);
+          padding: 12px 16px; display: flex; align-items: center; gap: 8px;
+        }
+        .dot { width: 10px; height: 10px; border-radius: 50%; }
+
+        .cta-glow {
+          position: absolute; inset: 0;
+          background: radial-gradient(ellipse at 50% 100%, rgba(59,130,246,0.12) 0%, transparent 70%);
+          pointer-events: none;
+        }
+
+        @keyframes fadeUp {
+          from { opacity: 0; transform: translateY(20px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes pulse-dot { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+        .animate-hero        { animation: fadeUp 0.7s 0.00s ease both; }
+        .animate-hero-delay  { animation: fadeUp 0.7s 0.15s ease both; }
+        .animate-hero-delay2 { animation: fadeUp 0.7s 0.30s ease both; }
+        .animate-hero-delay3 { animation: fadeUp 0.7s 0.45s ease both; }
+
+        .btn-primary {
+          display: inline-flex; align-items: center; gap: 8px;
+          padding: 14px 28px; border-radius: 100px; border: none;
+          background: linear-gradient(135deg,#3b82f6,#6366f1);
+          color: #fff; font-size: 15px; font-weight: 600; cursor: pointer;
+          transition: opacity 0.2s, transform 0.2s; text-decoration: none; white-space: nowrap;
+        }
+        .btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
+
+        .btn-ghost {
+          display: inline-flex; align-items: center; gap: 8px;
+          padding: 14px 28px; border-radius: 100px;
+          border: 1px solid rgba(255,255,255,0.12);
+          background: transparent; color: rgba(211,211,211,0.85);
+          font-size: 15px; cursor: pointer; transition: all 0.2s;
+          text-decoration: none; white-space: nowrap;
+        }
+        .btn-ghost:hover { border-color: rgba(96,165,250,0.4); color: #fff; }
+
+        /* ─── RESPONSIVE ─── */
+
+        /* Hero */
+        .hero-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center; }
+        @media (max-width: 900px) {
+          .hero-grid { grid-template-columns: 1fr; gap: 48px; }
+          .hero-mockup-col { display: none; }
+        }
+
+        /* Features */
+        .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+        @media (max-width: 900px) { .features-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 540px)  { .features-grid { grid-template-columns: 1fr; } }
+
+        /* Steps */
+        .steps-grid { display: grid; grid-template-columns: repeat(4, 1fr); }
+        .step-col { padding: 0 24px; }
+        @media (max-width: 900px) {
+          .steps-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1px; background: rgba(255,255,255,0.06);
+            border-radius: 16px; overflow: hidden;
+          }
+          .step-col { background: #0b090a; border-right: none !important; padding: 28px 24px !important; }
+        }
+        @media (max-width: 480px) {
+          .steps-grid { grid-template-columns: 1fr; }
+        }
+
+        /* Testimonials */
+        .testimonials-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+        @media (max-width: 900px) { .testimonials-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 540px)  { .testimonials-grid { grid-template-columns: 1fr; } }
+
+        /* Stats */
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+
+        /* CTA buttons */
+        .cta-buttons { display: flex; gap: 12px; flex-wrap: wrap; }
+        @media (max-width: 480px) {
+          .cta-buttons { flex-direction: column; }
+          .btn-primary, .btn-ghost { width: 100%; justify-content: center; }
+        }
+
+        /* Footer */
+        .footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 40px; margin-bottom: 48px; }
+        @media (max-width: 768px) {
+          .footer-grid { grid-template-columns: 1fr 1fr; gap: 32px; }
+          .footer-brand { grid-column: 1 / -1; }
+        }
+        @media (max-width: 400px) {
+          .footer-grid { grid-template-columns: 1fr; }
+          .footer-brand { grid-column: auto; }
+        }
+
+        .footer-bottom { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+
+        /* Section padding mobile */
+        @media (max-width: 640px) {
+          .section-pad { padding: 64px 0; }
+          .container { padding: 0 16px; }
+          .hero-section { padding: 72px 0 80px !important; }
+        }
+      `}</style>
+
+      {/* ── HERO ── */}
+      <section
+        className="hero-section"
+        style={{ position: "relative", padding: "100px 0 120px", overflow: "hidden" }}
+      >
+        <div className="orb orb-blue" />
+        <div className="orb orb-purple" />
+        <div style={{
+          position: "absolute", inset: 0,
+          backgroundImage: "linear-gradient(rgba(255,255,255,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.02) 1px,transparent 1px)",
+          backgroundSize: "60px 60px", pointerEvents: "none", zIndex: 0,
+        }} />
+
+        <div className="container" style={{ position: "relative", zIndex: 1 }}>
+          <div className="hero-grid">
+            {/* Left */}
+            <div>
+              <div className="badge animate-hero">
+                <Sparkles style={{ width: 13, height: 13 }} />
+                Skill-sharing, reimagined
               </div>
 
-              {/* Primary CTAs */}
-              <div className="flex flex-col sm:flex-row gap-3 pt-4">
-                <Link href="/sign-up">
-                  <Button size="lg" className="rounded-full w-full sm:w-auto">
-                    Start Learning
-                    <ArrowRight className="ml-2 w-5 h-5" />
-                  </Button>
+              <h1
+                className="animate-hero-delay"
+                style={{
+                  fontSize: "clamp(38px, 6vw, 72px)",
+                  fontFamily: "'Instrument Serif', serif",
+                  fontWeight: 400, lineHeight: 1.1, color: "#fff",
+                  margin: "0 0 24px", letterSpacing: "-0.02em",
+                }}
+              >
+                Master Skills.
+                <br />
+                <span style={{
+                  background: "linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%)",
+                  WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
+                }}>
+                  Teach What You Know.
+                </span>
+              </h1>
+
+              <p
+                className="animate-hero-delay2"
+                style={{
+                  fontSize: "clamp(15px, 2vw, 17px)", lineHeight: 1.7,
+                  color: "rgba(211,211,211,0.65)", maxWidth: 480, margin: "0 0 36px",
+                }}
+              >
+                Connect with mentors and learners worldwide. Schedule live sessions,
+                share knowledge, and grow together through real-time video collaboration.
+              </p>
+
+              <div className="cta-buttons animate-hero-delay3" style={{ marginBottom: 52 }}>
+                <Link href="/sign-up" className="btn-primary">
+                  Start Learning Free
+                  <ArrowRight style={{ width: 16, height: 16 }} />
                 </Link>
-                <Link href="/sign-up">
-                  <Button variant="outline" size="lg" className="rounded-full w-full sm:w-auto">
-                    Become a Mentor
-                  </Button>
+                <Link href="/sign-up" className="btn-ghost">
+                  Become a Mentor
                 </Link>
               </div>
 
-              {/* Trust Indicators */}
-              <div className="grid grid-cols-3 gap-8 pt-8">
-                <div>
-                  <div className="text-3xl font-bold text-white">5K+</div>
-                  <p className="text-xs text-[#d3d3d3]/60 mt-2">Active Learners</p>
-                </div>
-                <div>
-                  <div className="text-3xl font-bold text-white">2K+</div>
-                  <p className="text-xs text-[#d3d3d3]/60 mt-2">Expert Mentors</p>
-                </div>
-                <div>
-                  <div className="text-3xl font-bold text-white">10K+</div>
-                  <p className="text-xs text-[#d3d3d3]/60 mt-2">Sessions Done</p>
-                </div>
+              <div className="stats-grid">
+                {stats.map((s, i) => (
+                  <div key={i} className="stat-item">
+                    <div style={{
+                      fontSize: "clamp(22px, 3vw, 28px)", fontWeight: 700, color: "#fff",
+                      fontFamily: "'Instrument Serif', serif", letterSpacing: "-0.02em",
+                    }}>
+                      {s.value}
+                    </div>
+                    <div style={{ fontSize: 12, color: "rgba(211,211,211,0.5)", marginTop: 4 }}>
+                      {s.label}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
 
-            {/* Right Side - Visual */}
-            <div className="hidden lg:block">
-              <div className="relative">
-                <div className="border border-[#1f1f1f] rounded-2xl bg-[#111315] p-12 flex flex-col items-center justify-center gap-6 h-96 hover:border-[#2a2a2a] transition-all duration-300">
-                  <div className="grid grid-cols-3 gap-4 absolute top-6 left-6 right-6">
-                    <div className="h-2 bg-[#1f1f1f] rounded" />
-                    <div className="h-2 bg-[#1f1f1f] rounded" />
-                    <div className="h-2 bg-[#1f1f1f] rounded" />
+            {/* Right mockup — hidden on mobile via CSS */}
+            <div className="hero-mockup-col" style={{ position: "relative" }}>
+              <div style={{
+                position: "absolute", inset: -40,
+                background: "radial-gradient(circle at 50% 50%, rgba(99,102,241,0.15), transparent 70%)",
+                borderRadius: "50%", pointerEvents: "none",
+              }} />
+              <div className="hero-mockup">
+                <div className="mockup-bar">
+                  <div className="dot" style={{ background: "#ff5f57" }} />
+                  <div className="dot" style={{ background: "#febc2e" }} />
+                  <div className="dot" style={{ background: "#28c840" }} />
+                  <div style={{ flex: 1, height: 24, background: "rgba(255,255,255,0.04)", borderRadius: 6, marginLeft: 8 }} />
+                </div>
+                <div style={{ padding: 28 }}>
+                  <div style={{
+                    display: "inline-flex", alignItems: "center", gap: 6,
+                    padding: "4px 12px", borderRadius: 100,
+                    background: "rgba(52,211,153,0.12)", border: "1px solid rgba(52,211,153,0.25)",
+                    marginBottom: 20,
+                  }}>
+                    <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#34d399", animation: "pulse-dot 1.5s infinite" }} />
+                    <span style={{ fontSize: 12, color: "#34d399", fontWeight: 600 }}>LIVE NOW</span>
                   </div>
-                  <Video className="w-20 h-20 text-blue-400" />
-                  <div className="text-center space-y-2">
-                    <p className="text-white font-semibold">Live Video Sessions</p>
-                    <p className="text-[#d3d3d3]/60 text-sm">Connect face-to-face with mentors</p>
+
+                  <div style={{
+                    background: "rgba(59,130,246,0.08)", border: "1px solid rgba(59,130,246,0.15)",
+                    borderRadius: 12, padding: "40px 0",
+                    display: "flex", flexDirection: "column", alignItems: "center", gap: 12, marginBottom: 20,
+                  }}>
+                    <div style={{
+                      width: 64, height: 64, borderRadius: "50%",
+                      background: "linear-gradient(135deg,#3b82f6,#6366f1)",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                    }}>
+                      <Video style={{ width: 28, height: 28, color: "#fff" }} />
+                    </div>
+                    <span style={{ fontSize: 14, color: "rgba(255,255,255,0.7)" }}>
+                      React Fundamentals — Session 4
+                    </span>
+                  </div>
+
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <div style={{ display: "flex", alignItems: "center" }}>
+                      {["#3b82f6", "#a78bfa", "#34d399"].map((c, i) => (
+                        <div key={i} style={{
+                          width: 32, height: 32, borderRadius: "50%",
+                          background: c, border: "2px solid #0b090a", marginLeft: i === 0 ? 0 : -10,
+                        }} />
+                      ))}
+                      <span style={{ marginLeft: 8, fontSize: 13, color: "rgba(211,211,211,0.6)" }}>3 participants</span>
+                    </div>
+                    <div style={{
+                      display: "flex", gap: 6, alignItems: "center",
+                      background: "rgba(255,255,255,0.04)", borderRadius: 8, padding: "6px 12px",
+                    }}>
+                      <MessageSquare style={{ width: 14, height: 14, color: "#60a5fa" }} />
+                      <span style={{ fontSize: 12, color: "rgba(211,211,211,0.6)" }}>Chat</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -208,31 +466,32 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* FEATURES SECTION */}
-      <section id="features" className="py-20 md:py-32 border-t border-[#1f1f1f]">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-16 space-y-4">
-            <h2 className="text-4xl md:text-5xl font-bold text-white">
-              Powerful Features
+      {/* ── FEATURES ── */}
+      <section className="section-pad" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+        <div className="container">
+          <div style={{ marginBottom: 56 }}>
+            <p className="section-label">Features</p>
+            <h2 style={{
+              fontFamily: "'Instrument Serif', serif",
+              fontSize: "clamp(28px, 4vw, 52px)", fontWeight: 400, color: "#fff",
+              margin: "0 0 16px", letterSpacing: "-0.02em", maxWidth: 520,
+            }}>
+              Everything you need to learn and teach
             </h2>
-            <p className="text-[#d3d3d3]/70 text-lg max-w-2xl mx-auto">
-              Everything you need to learn, teach, and grow in your professional journey
+            <p style={{ color: "rgba(211,211,211,0.55)", fontSize: 16, maxWidth: 480 }}>
+              A complete platform for mentors and learners to connect, collaborate, and grow.
             </p>
           </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="features-grid">
             {features.map((feature, idx) => (
-              <div
-                key={idx}
-                className="group p-8 rounded-xl border border-[#1f1f1f] bg-[#111315] hover:border-[#2a2a2a] hover:bg-[#151719] transition-all duration-300 cursor-pointer"
-              >
-                <div className="w-12 h-12 rounded-lg bg-blue-400/10 flex items-center justify-center mb-6 group-hover:bg-blue-400/20 transition-colors duration-300">
-                  <feature.icon className="w-6 h-6 text-blue-400" />
+              <div key={idx} className="feature-card">
+                <div className="icon-wrap" style={{ marginBottom: 18 }}>
+                  <feature.icon style={{ width: 20, height: 20, color: "#60a5fa" }} />
                 </div>
-                <h3 className="text-lg font-semibold text-white mb-3 group-hover:text-blue-400 transition-colors duration-300">
+                <h3 style={{ fontSize: 15, fontWeight: 600, color: "#fff", margin: "0 0 8px", letterSpacing: "-0.01em" }}>
                   {feature.title}
                 </h3>
-                <p className="text-[#d3d3d3]/70 leading-relaxed">
+                <p style={{ color: "rgba(211,211,211,0.55)", fontSize: 14, lineHeight: 1.65, margin: 0 }}>
                   {feature.description}
                 </p>
               </div>
@@ -241,54 +500,44 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* HOW IT WORKS SECTION */}
-      <section id="how-it-works" className="py-20 md:py-32 border-t border-[#1f1f1f]">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-16 space-y-4">
-            <h2 className="text-4xl md:text-5xl font-bold text-white">
-              Get Started in 4 Steps
+      {/* ── HOW IT WORKS ── */}
+      <section className="section-pad" style={{ borderTop: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.01)" }}>
+        <div className="container">
+          <div style={{ textAlign: "center", marginBottom: 64 }}>
+            <p className="section-label">Process</p>
+            <h2 style={{
+              fontFamily: "'Instrument Serif', serif",
+              fontSize: "clamp(28px, 4vw, 52px)", fontWeight: 400, color: "#fff",
+              margin: "0 0 16px", letterSpacing: "-0.02em",
+            }}>
+              Up and running in 4 steps
             </h2>
-            <p className="text-[#d3d3d3]/70 text-lg max-w-2xl mx-auto">
-              Simple onboarding to start your mentorship journey
+            <p style={{ color: "rgba(211,211,211,0.55)", fontSize: 16, maxWidth: 420, margin: "0 auto" }}>
+              Simple onboarding to kickstart your mentorship journey today.
             </p>
           </div>
-
-          <div className="grid md:grid-cols-4 gap-6">
+          <div className="steps-grid">
             {steps.map((step, idx) => {
               const StepIcon = step.icon;
+              const isLast = idx === steps.length - 1;
               return (
-                <div key={idx} className="relative">
-                  <div className="space-y-4">
-                    {/* Step Number */}
-                    <div className="flex items-center justify-between">
-                      <div className="w-12 h-12 rounded-full bg-blue-400/10 flex items-center justify-center">
-                        <span className="text-blue-400 font-bold">{idx + 1}</span>
-                      </div>
-                      {idx < steps.length - 1 && (
-                        <div className="hidden md:block flex-1 h-0.5 mx-3 bg-linear-to-r from-[#1f1f1f] via-[#1f1f1f] to-transparent" />
-                      )}
-                    </div>
-
-                    {/* Icon */}
-                    <div className="w-16 h-16 rounded-lg bg-[#111315] border border-[#1f1f1f] flex items-center justify-center hover:border-[#2a2a2a] transition-colors duration-300">
-                      <StepIcon className="w-8 h-8 text-blue-400" />
-                    </div>
-
-                    {/* Text */}
-                    <div>
-                      <h3 className="text-lg font-semibold text-white mb-2">
-                        {step.title}
-                      </h3>
-                      <p className="text-[#d3d3d3]/70 text-sm leading-relaxed">
-                        {step.description}
-                      </p>
-                    </div>
+                <div
+                  key={idx}
+                  className="step-col"
+                  style={{ borderRight: isLast ? "none" : "1px solid rgba(255,255,255,0.06)" }}
+                >
+                  <div style={{ marginBottom: 20 }}>
+                    <div className="step-number">{idx + 1}</div>
                   </div>
-
-                  {/* Mobile Connector */}
-                  {idx < steps.length - 1 && (
-                    <div className="md:hidden h-16 absolute top-12 left-6 w-0.5 bg-linear-to-b from-[#1f1f1f] to-transparent -ml-0.5" />
-                  )}
+                  <div className="icon-wrap" style={{ marginBottom: 16 }}>
+                    <StepIcon style={{ width: 20, height: 20, color: "#60a5fa" }} />
+                  </div>
+                  <h3 style={{ fontSize: 15, fontWeight: 600, color: "#fff", margin: "0 0 8px", letterSpacing: "-0.01em" }}>
+                    {step.title}
+                  </h3>
+                  <p style={{ fontSize: 14, color: "rgba(211,211,211,0.55)", lineHeight: 1.65, margin: 0 }}>
+                    {step.description}
+                  </p>
                 </div>
               );
             })}
@@ -296,75 +545,51 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* WHY MENTORMATCH SECTION */}
-      <section className="py-20 md:py-32 border-t border-[#1f1f1f]">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-16 space-y-4">
-            <h2 className="text-4xl md:text-5xl font-bold text-white">
-              Why Choose MentorMatch?
+      {/* ── TESTIMONIALS ── */}
+      <section className="section-pad" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+        <div className="container">
+          <div style={{ marginBottom: 56 }}>
+            <p className="section-label">Testimonials</p>
+            <h2 style={{
+              fontFamily: "'Instrument Serif', serif",
+              fontSize: "clamp(28px, 4vw, 52px)", fontWeight: 400, color: "#fff",
+              margin: "0 0 16px", letterSpacing: "-0.02em",
+            }}>
+              Loved by our community
             </h2>
-            <p className="text-[#d3d3d3]/70 text-lg max-w-2xl mx-auto">
-              Built for modern learners and mentors
+            <p style={{ color: "rgba(211,211,211,0.55)", fontSize: 16 }}>
+              Thousands of successful mentorships and learning journeys.
             </p>
           </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {whyJoin.map((item, idx) => (
-              <div
-                key={idx}
-                className="p-6 rounded-xl border border-[#1f1f1f] bg-[#111315] hover:border-[#2a2a2a] hover:bg-[#151719] transition-all duration-300 space-y-4"
-              >
-                <div className="w-10 h-10 rounded-lg bg-blue-400/10 flex items-center justify-center">
-                  <CheckCircle className="w-5 h-5 text-blue-400" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-white mb-2">
-                    {item.title}
-                  </h3>
-                  <p className="text-[#d3d3d3]/70 text-sm leading-relaxed">
-                    {item.description}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* TESTIMONIALS SECTION */}
-      <section id="testimonials" className="py-20 md:py-32 border-t border-[#1f1f1f]">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-16 space-y-4">
-            <h2 className="text-4xl md:text-5xl font-bold text-white">
-              Loved by Our Community
-            </h2>
-            <p className="text-[#d3d3d3]/70 text-lg max-w-2xl mx-auto">
-              Thousands of successful mentorships and learning journeys
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="testimonials-grid">
             {testimonials.map((t, idx) => (
-              <div
-                key={idx}
-                className="p-8 rounded-xl border border-[#1f1f1f] bg-[#111315] hover:border-[#2a2a2a] hover:bg-[#151719] transition-all duration-300 flex flex-col space-y-4"
-              >
-                {/* Star Rating */}
-                <div className="flex gap-1">
+              <div key={idx} className="testimonial-card">
+                <div style={{ display: "flex", gap: 3 }}>
                   {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                    <Star key={i} style={{ width: 13, height: 13, color: "#fbbf24", fill: "#fbbf24" }} />
                   ))}
                 </div>
-
-                {/* Quote */}
-                <p className="text-[#d3d3d3]/80 leading-relaxed grow">
+                <p style={{
+                  fontSize: 15, lineHeight: 1.7, color: "rgba(211,211,211,0.8)",
+                  margin: 0, flex: 1, fontStyle: "italic",
+                  fontFamily: "'Instrument Serif', serif",
+                }}>
                   "{t.quote}"
                 </p>
-
-                {/* Author */}
-                <div className="border-t border-[#1f1f1f] pt-6">
-                  <p className="text-white font-semibold">{t.author}</p>
-                  <p className="text-sm text-[#d3d3d3]/60 mt-1">{t.role}</p>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, paddingTop: 18, borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+                  <div style={{
+                    width: 36, height: 36, borderRadius: "50%",
+                    background: `${t.color}22`, border: `1px solid ${t.color}44`,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: 14, fontWeight: 700, color: t.color,
+                    fontFamily: "'Instrument Serif', serif", flexShrink: 0,
+                  }}>
+                    {t.initial}
+                  </div>
+                  <div>
+                    <p style={{ margin: 0, color: "#fff", fontWeight: 600, fontSize: 14 }}>{t.author}</p>
+                    <p style={{ margin: 0, color: "rgba(211,211,211,0.5)", fontSize: 12, marginTop: 2 }}>{t.role}</p>
+                  </div>
                 </div>
               </div>
             ))}
@@ -372,164 +597,104 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* FINAL CTA SECTION */}
-      <section className="py-20 md:py-32 border-t border-[#1f1f1f]">
-        <div className="max-w-3xl mx-auto px-6 text-center space-y-8">
-          <div className="space-y-4">
-            <h2 className="text-4xl md:text-5xl font-bold text-white">
-              Ready to Transform Your Learning?
+      {/* ── FINAL CTA ── */}
+      <section className="section-pad" style={{ borderTop: "1px solid rgba(255,255,255,0.06)", position: "relative", overflow: "hidden" }}>
+        <div className="cta-glow" />
+        <div className="container" style={{ position: "relative", zIndex: 1 }}>
+          <div style={{ maxWidth: 600, margin: "0 auto", textAlign: "center" }}>
+            <p className="section-label">Get started</p>
+            <h2 style={{
+              fontFamily: "'Instrument Serif', serif",
+              fontSize: "clamp(32px, 5vw, 60px)", fontWeight: 400, color: "#fff",
+              margin: "0 0 20px", letterSpacing: "-0.02em", lineHeight: 1.15,
+            }}>
+              Ready to transform your learning?
             </h2>
-            <p className="text-[#d3d3d3]/70 text-lg">
-              Join thousands of learners and mentors building meaningful connections through skill exchange.
+            <p style={{ color: "rgba(211,211,211,0.6)", fontSize: 16, lineHeight: 1.7, margin: "0 0 40px" }}>
+              Join thousands of learners and mentors building meaningful connections
+              through skill exchange. It's free to get started.
             </p>
-          </div>
-
-          <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-            <Link href="/sign-up">
-              <Button size="lg" className="rounded-full w-full sm:w-auto">
+            <div className="cta-buttons" style={{ justifyContent: "center" }}>
+              <Link href="/sign-up" className="btn-primary" style={{ padding: "15px 32px" }}>
                 Create Free Account
-                <ArrowRight className="ml-2 w-5 h-5" />
-              </Button>
-            </Link>
-            <Link href="/sign-in">
-              <Button variant="outline" size="lg" className="rounded-full w-full sm:w-auto">
+                <ArrowRight style={{ width: 16, height: 16 }} />
+              </Link>
+              <Link href="/sign-in" className="btn-ghost" style={{ padding: "15px 32px" }}>
                 Sign In
-              </Button>
-            </Link>
+              </Link>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* FOOTER */}
-      <footer className="border-t border-[#1f1f1f] py-16 bg-[#0b090a]/50">
-        <div className="max-w-7xl mx-auto px-6">
-          {/* Footer Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
-            {/* Product */}
-            <div className="space-y-4">
-              <h4 className="text-white font-semibold text-sm uppercase tracking-wide">
-                Product
-              </h4>
-              <ul className="space-y-3 text-sm">
-                <li>
-                  <a
-                    href="#features"
-                    className="text-[#d3d3d3]/60 hover:text-[#d3d3d3] transition-colors"
-                  >
-                    Features
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#"
-                    className="text-[#d3d3d3]/60 hover:text-[#d3d3d3] transition-colors"
-                  >
-                    Pricing
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#"
-                    className="text-[#d3d3d3]/60 hover:text-[#d3d3d3] transition-colors"
-                  >
-                    Security
-                  </a>
-                </li>
-              </ul>
-            </div>
-
-            {/* Company */}
-            <div className="space-y-4">
-              <h4 className="text-white font-semibold text-sm uppercase tracking-wide">
-                Company
-              </h4>
-              <ul className="space-y-3 text-sm">
-                <li>
-                  <a
-                    href="#"
-                    className="text-[#d3d3d3]/60 hover:text-[#d3d3d3] transition-colors"
-                  >
-                    About
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#"
-                    className="text-[#d3d3d3]/60 hover:text-[#d3d3d3] transition-colors"
-                  >
-                    Blog
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#"
-                    className="text-[#d3d3d3]/60 hover:text-[#d3d3d3] transition-colors"
-                  >
-                    Careers
-                  </a>
-                </li>
-              </ul>
-            </div>
-
-            {/* Legal */}
-            <div className="space-y-4">
-              <h4 className="text-white font-semibold text-sm uppercase tracking-wide">
-                Legal
-              </h4>
-              <ul className="space-y-3 text-sm">
-                <li>
-                  <a
-                    href="#"
-                    className="text-[#d3d3d3]/60 hover:text-[#d3d3d3] transition-colors"
-                  >
-                    Privacy
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#"
-                    className="text-[#d3d3d3]/60 hover:text-[#d3d3d3] transition-colors"
-                  >
-                    Terms
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#"
-                    className="text-[#d3d3d3]/60 hover:text-[#d3d3d3] transition-colors"
-                  >
-                    Contact
-                  </a>
-                </li>
-              </ul>
-            </div>
-
-            {/* About ProductFeed */}
-            <div className="space-y-4">
-              <h4 className="text-white font-semibold text-sm uppercase tracking-wide">
-                ProductFeed
-              </h4>
-              <p className="text-[#d3d3d3]/60 text-sm leading-relaxed">
+      {/* ── FOOTER ── */}
+      <footer style={{ borderTop: "1px solid rgba(255,255,255,0.06)", padding: "64px 0 40px", background: "rgba(0,0,0,0.2)" }}>
+        <div className="container">
+          <div className="footer-grid">
+            <div className="footer-brand">
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
+                <div style={{
+                  width: 28, height: 28, borderRadius: 7,
+                  background: "linear-gradient(135deg,#3b82f6,#818cf8)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}>
+                  <Video style={{ width: 13, height: 13, color: "#fff" }} />
+                </div>
+                <span style={{ fontFamily: "'Instrument Serif', serif", fontSize: 18, color: "#fff" }}>
+                  MentorMatch
+                </span>
+              </div>
+              <p style={{ fontSize: 13, color: "rgba(211,211,211,0.45)", lineHeight: 1.7, maxWidth: 260, margin: 0 }}>
                 Connect with mentors and learners worldwide. Share knowledge, grow together.
               </p>
             </div>
+
+            {[
+              { label: "Product", links: ["Features", "Pricing", "Security"] },
+              { label: "Company", links: ["About", "Blog", "Careers"] },
+              { label: "Legal", links: ["Privacy", "Terms", "Contact"] },
+            ].map((col) => (
+              <div key={col.label}>
+                <h4 style={{
+                  fontSize: 11, fontWeight: 700, letterSpacing: "0.1em",
+                  textTransform: "uppercase", color: "rgba(255,255,255,0.5)", margin: "0 0 16px",
+                }}>
+                  {col.label}
+                </h4>
+                <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 10 }}>
+                  {col.links.map((link) => (
+                    <li key={link}>
+                      <a
+                        href="#"
+                        style={{ fontSize: 13, color: "rgba(211,211,211,0.5)", textDecoration: "none", transition: "color 0.2s" }}
+                        onMouseEnter={(e) => (e.currentTarget.style.color = "rgba(211,211,211,0.9)")}
+                        onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(211,211,211,0.5)")}
+                      >
+                        {link}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
           </div>
 
-          {/* Bottom Bar */}
-          <div className="border-t border-[#1f1f1f] pt-8 flex flex-col md:flex-row items-center justify-between gap-6 text-sm">
-            <p className="text-[#d3d3d3]/60">
-              © 2026 ProductFeed. All rights reserved.
+          <div className="footer-bottom" style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: 24 }}>
+            <p style={{ fontSize: 12, color: "rgba(211,211,211,0.35)", margin: 0 }}>
+              © 2026 MentorMatch. All rights reserved.
             </p>
-            <div className="flex gap-6 text-[#d3d3d3]/60">
-              <a href="#" className="hover:text-[#d3d3d3] transition-colors">
-                Twitter
-              </a>
-              <a href="#" className="hover:text-[#d3d3d3] transition-colors">
-                LinkedIn
-              </a>
-              <a href="#" className="hover:text-[#d3d3d3] transition-colors">
-                GitHub
-              </a>
+            <div style={{ display: "flex", gap: 20 }}>
+              {["Twitter", "LinkedIn", "GitHub"].map((s) => (
+                <a
+                  key={s}
+                  href="#"
+                  style={{ fontSize: 12, color: "rgba(211,211,211,0.35)", textDecoration: "none", transition: "color 0.2s" }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = "rgba(211,211,211,0.8)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(211,211,211,0.35)")}
+                >
+                  {s}
+                </a>
+              ))}
             </div>
           </div>
         </div>

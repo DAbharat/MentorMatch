@@ -262,6 +262,8 @@ export async function GET(req: NextRequest,
             }
         })
 
+        console.log("fetch feedback: ", fetchFeedback)
+
         if (fetchFeedback.length > limit) {
             const nextItem = fetchFeedback.pop()
             nextCursor = nextItem!.id

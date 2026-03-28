@@ -96,7 +96,10 @@ export async function GET(req: NextRequest) {
                 }
             }),
             orderBy: {
-                averageRating: "desc"
+                averageRating: {
+                    sort: "desc",
+                    nulls: "last"
+                }
             }
         })
 

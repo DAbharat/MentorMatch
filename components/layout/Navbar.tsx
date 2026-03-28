@@ -83,7 +83,7 @@ export default function Navbar() {
         <nav
             className={`${DM_Sans_Font.className} fixed top-0 left-0 right-0 z-50 bg-[#0b090a] border-b border-[#1f1f1f] shadow-sm`}
         >
-            <div className="w-full pl-2 pr-3 sm:pl-3 sm:pr-4 md:pl-4 md:pr-6 lg:pl-6 lg:pr-8">
+            <div className="w-full pl-2 pr-3 sm:pl-3 sm:pr-4 md:pl-4 md:pr-6 lg:pl-6 lg:pr-8 relative">
 
                 <div className="flex md:hidden items-center gap-2 sm:gap-3 h-15 sm:h-30">
 
@@ -168,7 +168,7 @@ export default function Navbar() {
                 <div className="hidden md:grid grid-cols-[minmax(300px,1fr)_minmax(600px,900px)_minmax(200px,1fr)] items-center gap-4 lg:gap-6 h-16 max-w-6xl mx-auto">
 
                     <div className="flex items-center gap-3">
-                        <SidebarTrigger className="text-white hover:bg-transparent hover:text-white cursor-pointer" />
+                        <SidebarTrigger className="text-white hover:bg-transparent hover:text-white cursor-pointer absolute left-6 lg:left-2" />
                         <Link
                             href="/"
                             className="flex items-center gap-2 group"
