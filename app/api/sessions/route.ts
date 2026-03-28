@@ -59,7 +59,8 @@ export async function GET(req: NextRequest) {
                         id: true,
                         name: true
                     }
-                }
+                },
+                feedback: true
             },
             orderBy: {
                 scheduledAt: 'desc'

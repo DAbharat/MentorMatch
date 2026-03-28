@@ -30,12 +30,13 @@ type RequestSidebarProps = {
         name: string;
     };
     isSentView?: boolean;
+    hasScheduledSession?: boolean;
     onStatusUpdate?: (requestId: string) => void;
     onClick?: () => void;
 }
 
 export default function RequestSidebarCard(
-    { id, title, message, createdAt, status, mentee, mentor, skill, isSentView = false, onStatusUpdate, onClick }: RequestSidebarProps
+    { id, title, message, createdAt, status, mentee, mentor, skill, isSentView = false, hasScheduledSession = false, onStatusUpdate, onClick }: RequestSidebarProps
 ) {
     const [isProcessing, setIsProcessing] = useState(false)
     const router = useRouter()
@@ -142,12 +143,20 @@ export default function RequestSidebarCard(
                         <button
                             onClick={(e) => {
                                 e.stopPropagation()
-                                handleScheduleSession()
+                                if (!hasScheduledSession) {
+                                    handleScheduleSession()
+                                }
                             }}
-                            className="w-full sm:w-auto px-4 py-1.5 text-sm font-medium bg-[#0f2f85] text-white hover:bg-[#0a2368] transition flex items-center justify-center gap-2 rounded-full"
+                            disabled={hasScheduledSession}
+                            title={hasScheduledSession ? "A session has already been scheduled for this mentorship" : ""}
+                            className={`w-full sm:w-auto px-4 py-1.5 text-sm font-medium flex items-center justify-center gap-2 rounded-full transition ${
+                                hasScheduledSession
+                                    ? "bg-gray-400 text-gray-600 cursor-not-allowed opacity-60"
+                                    : "bg-[#0f2f85] text-white hover:bg-[#0a2368]"
+                            }`}
                         >
                             <Calendar className="w-4 h-4 shrink-0" />
-                            Schedule a Session
+                            {hasScheduledSession ? "Session Already Scheduled" : "Schedule a Session"}
                         </button>
                     </div>
                 )}

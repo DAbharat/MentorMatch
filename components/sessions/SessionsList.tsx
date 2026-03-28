@@ -24,37 +24,12 @@ import { fetchAllChatsForAUser } from "@/services/messages.service"
 import { cleanupStuckSessions, completeSession } from "@/services/session.service"
 import { createFeedback } from "@/services/feedback.service"
 import FeedbackForm from "../feedback/FeedbackForm"
+import { Session } from "@/types/session"
 
 const DM_Sans_Font = DM_Sans({
   weight: ["400", "500", "700"],
   subsets: ["latin"],
 })
-
-type Session = {
-  id: string
-  status: string
-  scheduledAt: string
-  callStartedAt?: string
-  totalCallDuration: number
-  mentor: {
-    id: string
-    name: string
-    clerkUserId: string
-  }
-  mentee: {
-    id: string
-    name: string
-    clerkUserId: string
-  }
-  skill: {
-    id: string
-    name: string
-  },
-  activeSession?: boolean
-  feedback?: {
-    id: string
-  } | null
-}
 
 type SessionsListProps = {
   sessions: Session[]
@@ -64,6 +39,15 @@ type SessionsListProps = {
   onCancel: (sessionId: string) => void
   onStartSession: (sessionId: string) => void
   activeSessions: string[]
+}
+
+function truncateWords(text: string, limit: number = 8) {
+  if (!text) return ""
+
+  const words = text.split(" ")
+  if (words.length <= limit) return text
+
+  return words.slice(0, limit).join(" ") + "..."
 }
 
 export default function SessionsList({
@@ -90,22 +74,12 @@ export default function SessionsList({
   const [feedbackSessionId, setFeedbackSessionId] = useState<string | null>(null)
   const [showFeedbackForm, setShowFeedbackForm] = useState(false)
   const [feedbackLoading, setFeedbackLoading] = useState(false)
-  const [submittedFeedbackIds, setSubmittedFeedbackIds] = useState<Set<string>>(new Set())
 
-  // Ensure component is mounted before rendering Popover to avoid hydration mismatch
+  const completedSessionsRef = React.useRef<Set<string>>(new Set())
+
   useEffect(() => {
     setMounted(true)
   }, [])
-
-  useEffect(() => {
-    const existing = sessions
-      .filter(s => s.feedback)
-      .map(s => s.id)
-
-    setSubmittedFeedbackIds(new Set(existing))
-  }, [sessions])
-
-  const completedSessionsRef = React.useRef<Set<string>>(new Set())
 
   // Update elapsed time for IN_PROGRESS sessions
   useEffect(() => {
@@ -113,7 +87,7 @@ export default function SessionsList({
       setSessionTimers(prevTimers => {
         const newTimers = { ...prevTimers }
 
-        sessions.forEach((session) => {
+        sessions.forEach((session: Session) => {
           if (session.status === "IN_PROGRESS" && session.callStartedAt) {
             const elapsedSeconds =
               (new Date().getTime() - new Date(session.callStartedAt).getTime()) / 1000
@@ -135,7 +109,7 @@ export default function SessionsList({
 
   // Handle auto-completion when time limit is reached
   useEffect(() => {
-    sessions.forEach((session) => {
+    sessions.forEach((session: Session) => {
       if (session.status === "IN_PROGRESS" && session.callStartedAt) {
         const elapsedSeconds =
           (new Date().getTime() - new Date(session.callStartedAt).getTime()) / 1000
@@ -160,7 +134,7 @@ export default function SessionsList({
     })
   }, [sessions, router])
 
-  const filteredSessions = sessions.filter((session) => {
+  const filteredSessions = sessions.filter((session: Session) => {
     if (filter === "all") return true
     return session.status.toLowerCase() === filter
   })
@@ -255,8 +229,6 @@ export default function SessionsList({
   const handleSubmitFeedback = async (formData: { rating: number; comment: string }) => {
     if (!feedbackSessionId) return
 
-    if (submittedFeedbackIds.has(feedbackSessionId)) return
-
     const session = sessions.find(s => s.id === feedbackSessionId)
     if (!session) return
 
@@ -272,8 +244,9 @@ export default function SessionsList({
       toast.success("Feedback submitted successfully!")
 
       setShowFeedbackForm(false)
-      setSubmittedFeedbackIds(prev => new Set(prev).add(feedbackSessionId))
       setFeedbackSessionId(null)
+
+      router.refresh()
 
     } catch (error: any) {
       toast.error(error.message || "Failed to submit feedback")
@@ -381,8 +354,8 @@ export default function SessionsList({
           {!loading &&
 
             filteredSessions.map((session) => {
-              const hasFeedback =
-                submittedFeedbackIds.has(session.id) || !!session.feedback
+              const hasFeedback = !!session.feedback
+
               return (
 
 
@@ -552,9 +525,10 @@ export default function SessionsList({
                     {session.status === "COMPLETED" && !isMentor(session) && (
                       <div className="pt-2">
                         {hasFeedback ? (
-                          <Badge className="w-full justify-center bg-green-600 text-white rounded-2xl py-2 text-xs sm:text-sm">
-                            ✓ Feedback Sent
-                          </Badge>
+                          <div className="w-full flex items-center justify-center gap-2 bg-[#1c2023] text-[#9ca3af] border border-white/10 rounded-2xl py-2 text-xs sm:text-sm">
+                            <Check className="w-4 h-4" />
+                            <span>Feedback Sent</span>
+                          </div>
                         ) : (
                           <Button
                             className="w-full bg-[#1c2023] text-[#d3d3d3] hover:bg-[#2a2f34] border border-white/10 rounded-2xl text-xs sm:text-sm py-2 flex items-center justify-center gap-2"
@@ -565,6 +539,57 @@ export default function SessionsList({
                           >
                             Give Feedback
                           </Button>
+                        )}
+                      </div>
+                    )}
+
+                    {session.status === "COMPLETED" && isMentor(session) && (
+                      <div className="pt-2">
+                        {hasFeedback ? (
+                          <div className="bg-[#1c2023] border border-white/10 rounded-2xl p-3">
+
+                            {/* Header */}
+                            <div className="flex items-center gap-2 mb-3 text-[#9ca3af]">
+                              <Check className="w-4 h-4" />
+                              <span className="text-xs sm:text-sm font-medium">Feedback Received</span>
+                            </div>
+
+                            {/* Content */}
+                            <div className="space-y-2 text-xs sm:text-sm">
+
+                              <div>
+                                <p className="text-muted-foreground">Rating</p>
+                                <div className="flex items-center gap-1">
+                                  {(() => {
+                                    const rating = session.feedback?.rating ?? 0
+                                    return Array.from({ length: rating }).map((_, i) => (
+                                      <span key={i} className="text-yellow-400/90">★</span>
+                                    ))
+                                  })()}
+                                  <span className="text-muted-foreground ml-1">
+                                    ({session.feedback?.rating ?? 0}/5)
+                                  </span>
+                                </div>
+                              </div>
+
+                              {session.feedback?.comment && (
+                                <div>
+                                  <p className="text-muted-foreground">Comment</p>
+                                  <p
+                                    className="text-[#d3d3d3] italic"
+                                    title={session.feedback.comment || ""}
+                                  >
+                                    "{truncateWords(session.feedback.comment)}"
+                                  </p>
+                                </div>
+                              )}
+
+                            </div>
+                          </div>
+                        ) : (
+                          <Badge className="w-full justify-center bg-gray-600/20 text-gray-400 rounded-2xl py-2 text-xs sm:text-sm">
+                            Awaiting Feedback from Mentee
+                          </Badge>
                         )}
                       </div>
                     )}

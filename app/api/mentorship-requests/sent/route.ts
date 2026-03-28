@@ -56,6 +56,14 @@ export async function GET(req: NextRequest) {
                         clerkUserId: true,
                     }
                 },
+                mentee: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        clerkUserId: true,
+                    }
+                },
                 skill: {
                     select: {
                         id: true,
@@ -87,6 +95,7 @@ export async function GET(req: NextRequest) {
             createdAt: req.createdAt,
             status: req.status,
             mentor: req.mentor,
+            mentee: req.mentee,
             skill: req.skill
         }))
 

@@ -3,6 +3,7 @@
 import RequestSidebarCard from '@/components/Request-Sidebar/RequestSidebarCard'
 import { Separator } from '@/components/ui/separator';
 import { receivedMentorshipRequests, sentMentorshipRequests } from '@/services/mentorship-request.service';
+import { fetchAllSessions } from '@/services/session.service';
 import React, { useEffect, useState } from 'react'
 import { toast } from 'sonner';
 import { DM_Sans } from "next/font/google"
@@ -46,11 +47,23 @@ export default function RequestPage() {
     const [nextCursor, setNextCursor] = useState<string | null>(null)
     const [mainFilter, setMainFilter] = useState<"received" | "sent">("received")
     const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "accepted" | "rejected">("all")
+    const [sessions, setSessions] = useState<any[]>([])
 
     const router = useRouter()
 
     const handleStatusUpdate = (requestId: string) => {
         setRequests(prev => prev.filter(req => req.id !== requestId))
+    }
+
+    // Check if a session exists for a mentorship request
+    const hasScheduledSession = (request: Request): boolean => {
+        if (!request.mentor || !request.mentee || !request.skill) return false
+        
+        return sessions.some(session => 
+            session.mentor?.id === request.mentor?.id &&
+            session.mentee?.id === request.mentee?.id &&
+            session.skill?.id === request.skill?.id
+        )
     }
 
     useEffect(() => {
@@ -68,6 +81,15 @@ export default function RequestPage() {
 
                 setRequests(data.data)
                 setNextCursor(data.nextCursor)
+
+                // Fetch all sessions to check if sessions are scheduled for accepted requests
+                try {
+                    const sessionsData = await fetchAllSessions()
+                    setSessions(sessionsData.sessions || [])
+                } catch (sessionsError) {
+                    console.error("Failed to fetch sessions:", sessionsError)
+                    // Don't throw error, just log it - sessions data is optional
+                }
             } catch (error: any) {
                 const errorMessage =
                     error?.message || "Failed to load mentorship requests."
@@ -204,6 +226,7 @@ export default function RequestPage() {
                             mentor={request.mentor}
                             skill={request.skill}
                             isSentView={mainFilter === "sent"}
+                            hasScheduledSession={hasScheduledSession(request)}
                             onStatusUpdate={handleStatusUpdate}
                             onClick={() => {
                                 router.push(`/requests/${request.id}`)

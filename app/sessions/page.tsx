@@ -7,27 +7,7 @@ import { fetchAllSessions, confirmSession, cancelSession, startSession } from "@
 import { fetchMyProfile } from "@/services/profile.service"
 import { io, Socket } from "socket.io-client"
 import { useAuth, useUser } from "@clerk/nextjs"
-
-type Session = {
-    id: string
-    scheduledAt: string
-    totalCallDuration: number
-    status: string
-    mentor: {
-        id: string
-        name: string
-        clerkUserId: string
-    }
-    mentee: {
-        id: string
-        name: string
-        clerkUserId: string
-    }
-    skill: {
-        id: string
-        name: string
-    }
-}
+import { Session } from "@/types/session"
 
 export default function SessionsPage() {
     const [sessions, setSessions] = useState<Session[]>([])
@@ -76,8 +56,8 @@ export default function SessionsPage() {
             setCurrentUserClerkId(currentUser.clerkUserId)
 
             const inProgressSessions = sessionsResponse.sessions
-                .filter((s: any) => s.status === "IN_PROGRESS")
-                .map((s: any) => s.id)
+                .filter((s: Session) => s.status === "IN_PROGRESS")
+                .map((s: Session) => s.id)
             
             if (inProgressSessions.length > 0) {
                 setActiveSessions(inProgressSessions)

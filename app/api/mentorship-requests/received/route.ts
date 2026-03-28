@@ -34,6 +34,14 @@ export async function GET(req: NextRequest) {
                 status: "PENDING"
             },
             include: {
+                mentor: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        clerkUserId: true,
+                    }
+                },
                 mentee: {
                     select: {
                         id: true,
@@ -71,6 +79,7 @@ export async function GET(req: NextRequest) {
             title: `Mentorship Request for ${req.skill.name}`,
             message: req.initialMessage || "No message provided",
             createdAt: req.createdAt,
+            mentor: req.mentor,
             mentee: req.mentee,
             skill: req.skill
         }))
