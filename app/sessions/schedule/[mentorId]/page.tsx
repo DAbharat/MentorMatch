@@ -30,6 +30,7 @@ export default function ScheduleSessionPage({ params }: PageProps) {
     const router = useRouter()
 
     const [mentor, setMentor] = useState<MentorInfo | null>(null)
+    const [mentorshipRequestId, setMentorshipRequestId] = useState<string | null>(null)
     const [mentorshipRequestSkillId, setMentorshipRequestSkillId] = useState<string | null>(null)
     const [loading, setLoading] = useState(true)
 
@@ -64,6 +65,7 @@ export default function ScheduleSessionPage({ params }: PageProps) {
                 )
                 
                 if (mentorshipData?.requests && mentorshipData.requests.length > 0) {
+                    setMentorshipRequestId(mentorshipData.requests[0].id)
                     setMentorshipRequestSkillId(mentorshipData.requests[0].skillId)
                 }
             } catch (error: any) {
@@ -102,6 +104,7 @@ export default function ScheduleSessionPage({ params }: PageProps) {
                 mentorId: mentor.id,
                 menteeId: currentUserResponse.id,
                 skillId: formData.skillId,
+                mentorshipRequestId: mentorshipRequestId || "",
                 scheduledAt: new Date(formData.scheduledAt).toISOString(),
                 totalCallDuration: formData.totalCallDuration
             }

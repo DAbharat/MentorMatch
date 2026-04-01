@@ -4,6 +4,7 @@ export const createSessionSchema = z.object({
     mentorId: z.string().uuid(),
     menteeId: z.string().uuid(),
     skillId: z.string().uuid(),
+    mentorshipRequestId: z.string().uuid(),
 
     scheduledAt: z.coerce.date(),
     totalCallDuration: z.number().max(30),
