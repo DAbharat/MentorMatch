@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useEffect, useRef, useState } from 'react'
-import { Phone, Mic, MicOff, Video, VideoOff } from 'lucide-react'
+import { Phone, Mic, MicOff, Video, VideoOff, MonitorOff, Monitor } from 'lucide-react'
 import { toast } from 'sonner';
 
 type VideoCallScreenProps = {
@@ -28,6 +28,10 @@ type VideoCallScreenProps = {
     connectionState: RTCPeerConnectionState;
     isPeerConnected: boolean;
     isReconnected: boolean;
+    isScreenSharing: boolean;
+    isPeerScreenSharing: boolean;
+    onStartScreenShare: () => Promise<void>;
+    onStopScreenShare: () => Promise<void>;
 }
 
 export default function VideoCallScreen({
@@ -46,6 +50,10 @@ export default function VideoCallScreen({
     connectionState,
     isPeerConnected,
     isReconnected,
+    isScreenSharing,
+    isPeerScreenSharing,
+    onStartScreenShare,
+    onStopScreenShare
 }: VideoCallScreenProps) {
 
     const localVideoRef = useRef<HTMLVideoElement>(null)
@@ -54,6 +62,30 @@ export default function VideoCallScreen({
 
     const hasShownReconnectToast = useRef(false)
     const hasShownDisconnectToast = useRef(false)
+
+    const handleScreenShare = async () => {
+        console.log("DEBUG: handleScreenShare called")
+        console.log("DEBUG: onStartScreenShare type:", typeof onStartScreenShare)
+        console.log("DEBUG: onStopScreenShare type:", typeof onStopScreenShare)
+        console.log("DEBUG: isScreenSharing:", isScreenSharing)
+        
+        if (!onStartScreenShare || !onStopScreenShare) {
+            console.error("ERROR: Screen share functions not provided to VideoCallScreen!")
+            toast.error("Screen share functions not initialized")
+            return
+        }
+
+        try {
+            if (isScreenSharing) {
+                await onStopScreenShare()
+            } else {
+                await onStartScreenShare()
+            }
+        } catch (error) {
+            console.error("Screen share error:", error)
+            toast.error("Screen share failed")
+        }
+    }
 
     useEffect(() => {
         if (isReconnected) {
@@ -319,6 +351,30 @@ export default function VideoCallScreen({
                         </div>
                         <span className="text-[10px] sm:text-xs font-medium text-center" style={{ color: cameraEnabled ? '#888' : '#f87171' }}>
                             {cameraEnabled ? 'Stop' : 'Start'}
+                        </span>
+                    </button>
+
+                    <button
+                        onClick={handleScreenShare}
+                        disabled={isPeerScreenSharing}
+                        className="group flex flex-col items-center gap-1.5 focus:outline-none"
+                        title={isScreenSharing ? "Stop Sharing" : "Start Sharing"}
+                    >
+                        <div
+                            className="w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-105"
+                            style={{
+                                backgroundColor: isScreenSharing ? '#1a1a1a' : '#3b1f1f',
+                                border: isScreenSharing ? '1px solid #2e2e2e' : '1px solid #5a2020',
+                            }}
+                        >
+                            {isScreenSharing ? (
+                                <Monitor className="w-5 h-5 sm:w-6 sm:h-6 text-[#e0e0e0]" />
+                            ) : (
+                                <MonitorOff className="w-5 h-5 sm:w-6 sm:h-6 text-[#f87171]" />
+                            )}
+                        </div>
+                        <span className="text-[10px] sm:text-xs font-medium text-center" style={{ color: isScreenSharing ? '#888' : '#f87171' }}>
+                            {isScreenSharing ? 'Stop Sharing' : 'Start Sharing'}
                         </span>
                     </button>
 
