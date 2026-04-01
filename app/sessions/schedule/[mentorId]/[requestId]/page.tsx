@@ -6,7 +6,7 @@ import { use, useEffect, useState } from "react"
 import { toast } from "sonner"
 import { createSession } from "@/services/session.service"
 import { fetchUserById, fetchMyProfile } from "@/services/profile.service"
-import { getMentorshipRequestsByUsers } from "@/services/mentorship-request.service"
+import { getMentorshipRequestById } from "@/services/mentorship-request.service"
 import { DM_Sans } from "next/font/google"
 
 const DM_Sans_Font = DM_Sans({
@@ -22,15 +22,17 @@ type MentorInfo = {
 }
 
 type PageProps = {
-    params: Promise<{ mentorId: string }>
+    params: Promise<{ 
+        mentorId: string;
+        requestId: string;
+    }>
 }
 
 export default function ScheduleSessionPage({ params }: PageProps) {
-    const { mentorId } = use(params)
+    const { mentorId, requestId } = use(params)
     const router = useRouter()
 
     const [mentor, setMentor] = useState<MentorInfo | null>(null)
-    const [mentorshipRequestId, setMentorshipRequestId] = useState<string | null>(null)
     const [mentorshipRequestSkillId, setMentorshipRequestSkillId] = useState<string | null>(null)
     const [loading, setLoading] = useState(true)
 
@@ -58,15 +60,10 @@ export default function ScheduleSessionPage({ params }: PageProps) {
                     throw new Error("Failed to load user profile")
                 }
                 
-                const mentorshipData = await getMentorshipRequestsByUsers(
-                    response.data.id,
-                    currentUser.id,
-                    "ACCEPTED"
-                )
+                const mentorshipData = await getMentorshipRequestById(requestId)
                 
-                if (mentorshipData?.requests && mentorshipData.requests.length > 0) {
-                    setMentorshipRequestId(mentorshipData.requests[0].id)
-                    setMentorshipRequestSkillId(mentorshipData.requests[0].skillId)
+                if (mentorshipData?.request) {
+                    setMentorshipRequestSkillId(mentorshipData.request.skillId)
                 }
             } catch (error: any) {
                 toast.error(error.message || "Failed to load mentor info")
@@ -104,7 +101,7 @@ export default function ScheduleSessionPage({ params }: PageProps) {
                 mentorId: mentor.id,
                 menteeId: currentUserResponse.id,
                 skillId: formData.skillId,
-                mentorshipRequestId: mentorshipRequestId || "",
+                mentorshipRequestId: requestId,
                 scheduledAt: new Date(formData.scheduledAt).toISOString(),
                 totalCallDuration: formData.totalCallDuration
             }

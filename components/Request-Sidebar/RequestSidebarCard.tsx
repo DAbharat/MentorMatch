@@ -57,7 +57,7 @@ export default function RequestSidebarCard(
     }
 
     const handleScheduleSession = () => {
-        router.push(`/sessions/schedule/${mentor?.clerkUserId}`)
+        router.push(`/sessions/schedule/${mentor?.clerkUserId}/${id}`)
     }
 
     const getStatusBadge = (status: string) => {
