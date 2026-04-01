@@ -108,7 +108,11 @@ export default function VideoCallPage() {
     toggleMute,
     toggleCamera,
     joinRoom,
-    endCall
+    endCall,
+    startScreenShare,
+    stopScreenShare,
+    isScreenSharing,
+    isPeerScreenSharing,
   } = useWebRTC({
     sessionId,
     role: (role || "MENTOR") as "MENTOR" | "MENTEE",
@@ -123,6 +127,7 @@ export default function VideoCallPage() {
   const [phase, setPhase] = useState<"INITIAL" | "IN CALL" | "CONNECTING" | "ENDED">("INITIAL")
   const [elapsed, setElapsed] = useState(0)
   const [isRejoin, setIsRejoin] = useState(false)
+
   const hasJoinedRef = useRef(false)
   const rejoinStartedRef = useRef(false)
   const joinAttemptedRef = useRef(false)
@@ -150,7 +155,7 @@ export default function VideoCallPage() {
 
   useEffect(() => {
     if (typeof window === "undefined") return
-    
+
     const searchParams = new URLSearchParams(window.location.search)
     const rejoinParam = searchParams.get('rejoin') === 'true'
     setIsRejoin(rejoinParam)
@@ -238,7 +243,7 @@ export default function VideoCallPage() {
   useEffect(() => {
     if (isRejoin || rejoinStartedRef.current || joinAttemptedRef.current) return
     if (!socket || !session || !socket.connected) return
-    
+
     setPhase("INITIAL")
   }, [socket, session, isRejoin])
 
@@ -317,7 +322,7 @@ export default function VideoCallPage() {
     } catch (error) {
       console.error("Failed to auto-end session:", error)
     }
-    
+
     router.push("/sessions")
   }
 
@@ -329,10 +334,10 @@ export default function VideoCallPage() {
   }
 
   useEffect(() => {
-    if(phase === "IN CALL" && session?.totalCallDuration) {
+    if (phase === "IN CALL" && session?.totalCallDuration) {
       const sessionDurationSeconds = session.totalCallDuration * 60
 
-      if(elapsed >= sessionDurationSeconds) {
+      if (elapsed >= sessionDurationSeconds) {
         toast.info("Session time limit reached. Ending call...")
         handleAutoEndCall()
         toast.success("Call ended")
@@ -402,6 +407,10 @@ export default function VideoCallPage() {
         connectionState={connectionState}
         isPeerConnected={isPeerConnected}
         isReconnected={false}
+        isScreenSharing={isScreenSharing}
+        isPeerScreenSharing={isPeerScreenSharing}
+        onStartScreenShare={startScreenShare}
+        onStopScreenShare={stopScreenShare}
       />
     </div>
   )
