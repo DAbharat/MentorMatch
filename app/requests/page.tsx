@@ -57,13 +57,8 @@ export default function RequestPage() {
 
     // Check if a session exists for a mentorship request
     const hasScheduledSession = (request: Request): boolean => {
-        if (!request.mentor || !request.mentee || !request.skill) return false
-        
-        return sessions.some(session => 
-            session.mentor?.id === request.mentor?.id &&
-            session.mentee?.id === request.mentee?.id &&
-            session.skill?.id === request.skill?.id
-        )
+        if (!request.id) return false
+        return sessions.some(session => session.mentorshipRequestId === request.id)
     }
 
     useEffect(() => {

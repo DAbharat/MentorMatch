@@ -39,7 +39,16 @@ export async function GET(req: NextRequest) {
                     { menteeId: dbUser.id }
                 ]
             },
-            include: {
+            select: {
+                id: true,
+                mentorshipRequestId: true,
+                mentorId: true,
+                menteeId: true,
+                skillId: true,
+                scheduledAt: true,
+                status: true,
+                callStartedAt: true,
+                totalCallDuration: true,
                 mentor: {
                     select: {
                         id: true,
@@ -102,6 +111,7 @@ export async function POST(req: NextRequest) {
         const mentorIdErrors = tree.properties?.mentorId?.errors || []
         const menteeIdErrors = tree.properties?.menteeId?.errors || []
         const skillIdErrors = tree.properties?.skillId?.errors || []
+        const mentorshipRequestIdErrors = tree.properties?.mentorshipRequestId?.errors || []
         const scheduleErrors = tree.properties?.scheduledAt?.errors || []
         const totalCallDurationErrors = tree.properties?.totalCallDuration?.errors || []
         const message = [
@@ -121,7 +131,7 @@ export async function POST(req: NextRequest) {
     }
 
     try {
-        const { mentorId, menteeId, skillId, scheduledAt, totalCallDuration } = parsed.data
+        const { mentorId, menteeId, skillId, mentorshipRequestId, scheduledAt, totalCallDuration } = parsed.data
 
         if (mentorId === menteeId) {
             return NextResponse.json({
@@ -188,6 +198,7 @@ export async function POST(req: NextRequest) {
                 mentorId,
                 menteeId,
                 skillId,
+                mentorshipRequestId,
                 scheduledAt,
                 totalCallDuration,
                 status: "PENDING",
