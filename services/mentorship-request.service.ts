@@ -70,6 +70,7 @@ export async function getMentorshipRequestById(requestId: string) {
     try {
         console.log("Fetching request by id...")
         const response = await axios.get(`/api/mentorship-requests/${requestId}`)
+        //console.log("request response: ", response)
         return response.data
     } catch (error) {
         const axiosError = error as AxiosError<ApiResponse>;

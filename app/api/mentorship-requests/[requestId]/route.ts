@@ -154,6 +154,7 @@ export async function PATCH(req: NextRequest,
         const sendNotificationToMentee = await createNotification({
             userId: mentorshipRequestExists.menteeId,
             senderId: dbUserId,
+            mentorshipRequestId: requestId,
             type: action === "ACCEPT" ? NotificationType.MENTORSHIP_REQUEST_ACCEPTED : NotificationType.MENTORSHIP_REQUEST_REJECTED,
             title: action === "ACCEPT" ? "Your mentorship request was accepted" : "Your mentorship request was rejected",
             message: `Your mentorship request for the skill ${mentorshipRequestExists.skill.name} was ${action === "ACCEPT" ? "accepted" : "rejected"} by ${dbUser.name}`
@@ -210,10 +211,17 @@ export async function GET(req: NextRequest,
 
         const dbUserId = dbUser?.id
 
-        const mentorshipRequest = await prisma.mentorshipRequest.findUnique({
+        const mentorshipRequest = await prisma.mentorshipRequest.findFirst({
             where: {
                 id: requestId,
-                mentorId: dbUserId
+                OR: [
+                    {
+                        mentorId: dbUserId
+                    },
+                    {
+                        menteeId: dbUserId
+                    }
+                ]
             },
             include: {
                 mentee: {
@@ -244,6 +252,7 @@ export async function GET(req: NextRequest,
                 },
             }
         })
+        console.log("request: ", mentorshipRequest)
 
         if (!mentorshipRequest) {
             return NextResponse.json({
