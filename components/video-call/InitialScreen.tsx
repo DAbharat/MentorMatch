@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useEffect, useRef } from 'react'
+import { Mic, MicOff, Video, VideoOff, Phone } from 'lucide-react'
 
 type InitialScreenProps = {
     id: string;
@@ -126,36 +127,28 @@ export default function InitialScreen({
             </div>
 
             {/* Controls */}
-            <div className="mt-6 flex items-center gap-3">
+            <div className="mt-8 flex items-center gap-3 sm:gap-4 flex-wrap justify-center">
                 {/* Mic */}
                 <button
                     type="button"
                     onClick={onToggleMic}
                     className="group flex flex-col items-center gap-1.5 focus:outline-none"
+                    title={micEnabled ? "Mute" : "Unmute"}
                 >
                     <div
-                        className="w-12 h-12 lg:w-14 lg:h-14 rounded-full flex items-center justify-center transition-all duration-200"
+                        className="w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-105"
                         style={{
                             backgroundColor: micEnabled ? '#1a1a1a' : '#3b1f1f',
                             border: micEnabled ? '1px solid #2e2e2e' : '1px solid #5a2020',
                         }}
                     >
                         {micEnabled ? (
-                            <svg className="lg:w-5 lg:h-5" width="18" height="18" viewBox="0 0 24 24" fill="none">
-                                <rect x="9" y="2" width="6" height="11" rx="3" fill="#e0e0e0" />
-                                <path d="M5 11a7 7 0 0 0 14 0" stroke="#e0e0e0" strokeWidth="1.8" strokeLinecap="round" />
-                                <line x1="12" y1="18" x2="12" y2="22" stroke="#e0e0e0" strokeWidth="1.8" strokeLinecap="round" />
-                                <line x1="9" y1="22" x2="15" y2="22" stroke="#e0e0e0" strokeWidth="1.8" strokeLinecap="round" />
-                            </svg>
+                            <Mic className="w-5 h-5 sm:w-6 sm:h-6 text-[#e0e0e0]" />
                         ) : (
-                            <svg className="lg:w-5 lg:h-5" width="18" height="18" viewBox="0 0 24 24" fill="none">
-                                <rect x="9" y="2" width="6" height="11" rx="3" fill="#f87171" opacity="0.6" />
-                                <path d="M5 11a7 7 0 0 0 14 0" stroke="#f87171" strokeWidth="1.8" opacity="0.6" />
-                                <line x1="3" y1="3" x2="21" y2="21" stroke="#f87171" strokeWidth="1.8" />
-                            </svg>
+                            <MicOff className="w-5 h-5 sm:w-6 sm:h-6 text-[#f87171]" />
                         )}
                     </div>
-                    <span className="text-[11px] font-medium" style={{ color: micEnabled ? '#888' : '#f87171' }}>
+                    <span className="text-[10px] sm:text-xs font-medium" style={{ color: micEnabled ? '#888' : '#f87171' }}>
                         {micEnabled ? 'Mute' : 'Unmute'}
                     </span>
                 </button>
@@ -165,44 +158,47 @@ export default function InitialScreen({
                     type="button"
                     onClick={onToggleCamera}
                     className="group flex flex-col items-center gap-1.5 focus:outline-none"
+                    title={cameraEnabled ? "Stop Video" : "Start Video"}
                 >
                     <div
-                        className="w-12 h-12 lg:w-14 lg:h-14 rounded-full flex items-center justify-center transition-all duration-200"
+                        className="w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-105"
                         style={{
                             backgroundColor: cameraEnabled ? '#1a1a1a' : '#3b1f1f',
                             border: cameraEnabled ? '1px solid #2e2e2e' : '1px solid #5a2020',
                         }}
                     >
-                        <svg className="lg:w-5 lg:h-5" width="18" height="18" viewBox="0 0 24 24" fill="none">
-                            <rect x="2" y="7" width="15" height="11" rx="2"
-                                stroke={cameraEnabled ? "#e0e0e0" : "#f87171"} strokeWidth="1.8" />
-                        </svg>
+                        {cameraEnabled ? (
+                            <Video className="w-5 h-5 sm:w-6 sm:h-6 text-[#e0e0e0]" />
+                        ) : (
+                            <VideoOff className="w-5 h-5 sm:w-6 sm:h-6 text-[#f87171]" />
+                        )}
                     </div>
-                    <span className="text-[11px] font-medium" style={{ color: cameraEnabled ? '#888' : '#f87171' }}>
-                        {cameraEnabled ? 'Stop video' : 'Start video'}
+                    <span className="text-[10px] sm:text-xs font-medium" style={{ color: cameraEnabled ? '#888' : '#f87171' }}>
+                        {cameraEnabled ? 'Stop' : 'Start'}
                     </span>
                 </button>
 
-                <div className="w-px h-10 mx-1" style={{ backgroundColor: '#1f1f1f' }} />
+                <div className="w-px h-10 sm:h-12 mx-1" style={{ backgroundColor: '#1f1f1f' }} />
 
-                {/* Join */}
+                {/* Join Call */}
                 <button
                     type="button"
                     onClick={onJoinCall}
-                    className="flex flex-col items-center gap-1.5"
+                    className="group flex flex-col items-center gap-1.5 focus:outline-none"
+                    title="Join Call"
                 >
                     <div
-                        className="w-12 h-12 lg:w-14 lg:h-14 rounded-full flex items-center justify-center"
+                        className="w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-105"
                         style={{
                             background: 'linear-gradient(135deg, #1a5c38 0%, #166534 100%)',
                             border: '1px solid #22c55e55',
                         }}
                     >
-                        <svg className="lg:w-5 lg:h-5" width="18" height="18" viewBox="0 0 24 24" fill="none">
-                            <path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6" fill="#4ade80" />
-                        </svg>
+                        <Phone className="w-5 h-5 sm:w-6 sm:h-6 text-[#4ade80]" />
                     </div>
-                    <span className="text-[11px]" style={{ color: '#4ade80' }}>Join</span>
+                    <span className="text-[10px] sm:text-xs font-medium" style={{ color: '#4ade80' }}>
+                        Join
+                    </span>
                 </button>
             </div>
 

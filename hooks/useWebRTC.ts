@@ -327,8 +327,21 @@ export const useWebRTC = ({
       }
 
       setIsScreenSharing(true)
-
       socket?.emit("webrtc:screen-share-started", { sessionId })
+
+      if (pcRef.current) {
+        try {
+          const offer = await pcRef.current.createOffer()
+          await pcRef.current.setLocalDescription(offer)
+
+          socket?.emit("webrtc:offer", { sessionId, offer })
+
+          console.log("[Screen Share] Offer sent to peer")
+        } catch (err) {
+          console.error("[Screen Share] Renegotiation error:", err)
+          setError("Failed to share screen with peer")
+        }
+      }
 
     } catch (error: any) {
       if (error.name === "NotAllowedError") {
@@ -395,6 +408,19 @@ export const useWebRTC = ({
         setIsScreenSharing(false)
         socket?.emit("webrtc:screen-share-stopped", { sessionId })
 
+        if (pcRef.current) {
+          try {
+            const offer = await pcRef.current.createOffer()
+            await pcRef.current.setLocalDescription(offer)
+
+            socket?.emit("webrtc:offer", { sessionId, offer })
+            
+            console.log("[Screen Share] Offer sent to peer (camera restored)")
+          } catch (err) {
+            console.error("[Screen Share] Renegotiation error:", err)
+          }
+        }
+
       } catch (error: any) {
       if(error.name === "NotAllowedError") {
         setError("Camera access denied. Please allow permissions in browser settings.")
@@ -431,8 +457,19 @@ export const useWebRTC = ({
     screenStreamRef.current = null
 
     setIsScreenSharing(false)
-
     socket?.emit("webrtc:screen-share-stopped", { sessionId })
+
+    // Renegotiate connection to send camera stream back to peer
+    if (pcRef.current) {
+      try {
+        const offer = await pcRef.current.createOffer()
+        await pcRef.current.setLocalDescription(offer)
+        socket?.emit("webrtc:offer", { sessionId, offer })
+        console.log("[Screen Share] Offer sent to peer (camera restored)")
+      } catch (err) {
+        console.error("[Screen Share] Renegotiation error:", err)
+      }
+    }
 
     isStoppingRef.current = false
   }
