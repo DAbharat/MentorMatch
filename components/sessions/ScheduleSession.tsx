@@ -22,6 +22,7 @@ type MentorInfo = {
 type ScheduleSessionProps = {
     mentor: MentorInfo
     mentorshipRequestSkillId?: string | null
+    mentorshipRequestSkillName?: string | null
     loading: boolean
     onSubmit: (formData: {
         skillId: string
@@ -34,12 +35,14 @@ type ScheduleSessionProps = {
 export default function ScheduleSession({
     mentor,
     mentorshipRequestSkillId,
+    mentorshipRequestSkillName,
     loading,
     onSubmit,
     onCancel
 }: ScheduleSessionProps) {
     const [formData, setFormData] = useState({
         skillId: mentorshipRequestSkillId || "",
+        skillName: mentorshipRequestSkillName || "",
         scheduledAt: "",
         totalCallDuration: 30
     })
@@ -49,10 +52,11 @@ export default function ScheduleSession({
         if (mentorshipRequestSkillId) {
             setFormData(prev => ({
                 ...prev,
-                skillId: mentorshipRequestSkillId
+                skillId: mentorshipRequestSkillId,
+                skillName: mentorshipRequestSkillName || ""
             }))
         }
-    }, [mentorshipRequestSkillId])
+    }, [mentorshipRequestSkillId, mentorshipRequestSkillName])
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()

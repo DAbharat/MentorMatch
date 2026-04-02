@@ -22,7 +22,7 @@ type MentorInfo = {
 }
 
 type PageProps = {
-    params: Promise<{ 
+    params: Promise<{
         mentorId: string;
         requestId: string;
     }>
@@ -34,6 +34,7 @@ export default function ScheduleSessionPage({ params }: PageProps) {
 
     const [mentor, setMentor] = useState<MentorInfo | null>(null)
     const [mentorshipRequestSkillId, setMentorshipRequestSkillId] = useState<string | null>(null)
+    const [mentorshipRequestSkillName, setMentorshipRequestSkillName] = useState<string | null>(null)
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
@@ -47,24 +48,26 @@ export default function ScheduleSessionPage({ params }: PageProps) {
             try {
                 setLoading(true)
                 const response = await fetchUserById({ clerkUserId: mentorId })
-                
+
                 if (!response?.data) {
                     throw new Error("Failed to load mentor information")
                 }
-                
+
                 setMentor(response.data)
 
                 const currentUser = await fetchMyProfile()
-                
+
                 if (!currentUser?.id) {
                     throw new Error("Failed to load user profile")
                 }
-                
+
                 const mentorshipData = await getMentorshipRequestById(requestId)
-                
-                if (mentorshipData?.request) {
-                    setMentorshipRequestSkillId(mentorshipData.request.skillId)
+
+                if (mentorshipData?.data?.skill) {
+                    setMentorshipRequestSkillId(mentorshipData.data.skill.id)
+                    setMentorshipRequestSkillName(mentorshipData.data.skill.name)
                 }
+
             } catch (error: any) {
                 toast.error(error.message || "Failed to load mentor info")
                 router.push("/notifications")
@@ -108,7 +111,7 @@ export default function ScheduleSessionPage({ params }: PageProps) {
 
             await createSession(sessionData)
             toast.success("Session request sent successfully!")
-            
+
             setTimeout(() => {
                 router.push("/sessions")
             }, 800)
@@ -137,6 +140,7 @@ export default function ScheduleSessionPage({ params }: PageProps) {
         <ScheduleSession
             mentor={mentor}
             mentorshipRequestSkillId={mentorshipRequestSkillId}
+            mentorshipRequestSkillName={mentorshipRequestSkillName}
             loading={loading}
             onSubmit={handleSubmit}
             onCancel={handleCancel}

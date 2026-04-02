@@ -70,6 +70,9 @@ model Session {
   mentee User  @relation("Mentee", fields: [menteeId], references: [id])
   skill  Skill @relation(fields: [skillId], references: [id])
 
+  mentorshipRequestId String?
+  mentorshipRequest   MentorshipRequest? @relation(fields: [mentorshipRequestId], references: [id])
+
   scheduledAt DateTime
 
   status SessionStatus @default(PENDING)
@@ -96,6 +99,7 @@ model Session {
   @@index([mentorId])
   @@index([menteeId])
   @@index([skillId])
+  @@index([mentorshipRequestId])
   @@index([scheduledAt])
   @@index([status, callStartedAt, metricsComputedAt])
 }
@@ -151,10 +155,14 @@ model MentorshipRequest {
   menteeId String
   mentee   User   @relation("MenteeRequests", fields: [menteeId], references: [id])
 
+  sessions Session[]
+
   initialMessage String?
 
   skillId String
   skill   Skill @relation(fields: [skillId], references: [id])
+
+  notifications Notification[]
 
   status MentorshipRequestStatus @default(PENDING)
 
@@ -241,6 +249,9 @@ model Notification {
 
   senderId String?           
   sender   User? @relation("SenderNotifications", fields: [senderId], references: [id])
+
+  mentorshipRequestId String?
+  mentorshipRequest   MentorshipRequest? @relation(fields: [mentorshipRequestId], references: [id])
 
   type NotificationType
 

@@ -4,6 +4,7 @@ export type Session = {
   callStartedAt?: string
   totalCallDuration: number
   status: string
+  mentorshipRequestId?: string | null
   mentor: {
     id: string
     name: string
