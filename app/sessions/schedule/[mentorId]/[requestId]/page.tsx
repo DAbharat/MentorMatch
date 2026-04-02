@@ -34,6 +34,7 @@ export default function ScheduleSessionPage({ params }: PageProps) {
 
     const [mentor, setMentor] = useState<MentorInfo | null>(null)
     const [mentorshipRequestSkillId, setMentorshipRequestSkillId] = useState<string | null>(null)
+    const [mentorshipRequestSkillName, setMentorshipRequestSkillName] = useState<string | null>(null)
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
@@ -62,8 +63,9 @@ export default function ScheduleSessionPage({ params }: PageProps) {
                 
                 const mentorshipData = await getMentorshipRequestById(requestId)
                 
-                if (mentorshipData?.request) {
-                    setMentorshipRequestSkillId(mentorshipData.request.skillId)
+                if (mentorshipData?.data?.skill) {
+                    setMentorshipRequestSkillId(mentorshipData.data.skill.id)
+                    setMentorshipRequestSkillName(mentorshipData.data.skill.name)
                 }
             } catch (error: any) {
                 toast.error(error.message || "Failed to load mentor info")
@@ -137,6 +139,7 @@ export default function ScheduleSessionPage({ params }: PageProps) {
         <ScheduleSession
             mentor={mentor}
             mentorshipRequestSkillId={mentorshipRequestSkillId}
+            mentorshipRequestSkillName={mentorshipRequestSkillName}
             loading={loading}
             onSubmit={handleSubmit}
             onCancel={handleCancel}

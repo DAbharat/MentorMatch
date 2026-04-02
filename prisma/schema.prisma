@@ -162,6 +162,8 @@ model MentorshipRequest {
   skillId String
   skill   Skill @relation(fields: [skillId], references: [id])
 
+  notifications Notification[]
+
   status MentorshipRequestStatus @default(PENDING)
 
   createdAt DateTime @default(now())
@@ -247,6 +249,9 @@ model Notification {
 
   senderId String?           
   sender   User? @relation("SenderNotifications", fields: [senderId], references: [id])
+
+  mentorshipRequestId String?
+  mentorshipRequest   MentorshipRequest? @relation(fields: [mentorshipRequestId], references: [id])
 
   type NotificationType
 
