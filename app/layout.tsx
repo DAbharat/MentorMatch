@@ -3,11 +3,9 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Toaster } from "@/components/ui/sonner";
-import Navbar from "@/components/layout/Navbar";
-import { SidebarProvider } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/app-sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { DM_Sans } from "next/font/google";
+import { RootLayoutClient } from "./layout-client";
 
 const DM_Sans_Font = DM_Sans({
   variable: "--font-dm-sans",
@@ -41,15 +39,7 @@ export default function RootLayout({
           className={`${DM_Sans_Font.className} antialiased`}
         >
           <TooltipProvider>
-            <SidebarProvider>
-              <AppSidebar />
-              <div className="flex flex-col flex-1 w-full min-h-screen">
-                <Navbar />
-                <main className="flex-1 pt-14 md:pt-16 bg-[#0b090a]">
-                  {children}
-                </main>
-              </div>
-            </SidebarProvider>
+            <RootLayoutClient>{children}</RootLayoutClient>
           </TooltipProvider>
           <Toaster />
         </body>
