@@ -285,7 +285,7 @@ export default function ProfileHeader(
             </Sheet>
             )}
 
-            {user && <UserButton />}
+            {/* {user && <UserButton />} */}
 
           </div>
         </header>

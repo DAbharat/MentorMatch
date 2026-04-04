@@ -38,12 +38,12 @@ type RequestSidebarProps = {
 export default function RequestSidebarCard(
     { id, title, message, createdAt, status, mentee, mentor, skill, isSentView = false, hasScheduledSession = false, onStatusUpdate, onClick }: RequestSidebarProps
 ) {
-    const [isProcessing, setIsProcessing] = useState(false)
+    const [processingAction, setProcessingAction] = useState<"ACCEPT" | "REJECT" | null>(null)
     const router = useRouter()
 
     const handleAction = async (action: "ACCEPT" | "REJECT") => {
         try {
-            setIsProcessing(true)
+            setProcessingAction(action)
             await updateMentorshipRequestStatus(id, action)
             toast.success(`Request ${action === "ACCEPT" ? "accepted" : "rejected"} successfully`)
             if (onStatusUpdate) {
@@ -52,7 +52,7 @@ export default function RequestSidebarCard(
         } catch (error: any) {
             toast.error(error.message || `Failed to ${action.toLowerCase()} request`)
         } finally {
-            setIsProcessing(false)
+            setProcessingAction(null)
         }
     }
 
@@ -122,20 +122,20 @@ export default function RequestSidebarCard(
                                 e.stopPropagation()
                                 handleAction("ACCEPT")
                             }}
-                            disabled={isProcessing}
+                            disabled={processingAction !== null}
                             className="flex-1 sm:flex-none px-4 py-1.5 text-sm font-medium rounded-md bg-green-600 text-white hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            {isProcessing ? "Processing..." : "Accept"}
+                            {processingAction === "ACCEPT" ? "Processing..." : "Accept"}
                         </button>
                         <button
                             onClick={(e) => {
                                 e.stopPropagation()
                                 handleAction("REJECT")
                             }}
-                            disabled={isProcessing}
+                            disabled={processingAction !== null}
                             className="flex-1 sm:flex-none px-4 py-1.5 text-sm font-medium rounded-md bg-red-600 text-white hover:bg-red-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            {isProcessing ? "Processing..." : "Reject"}
+                            {processingAction === "REJECT" ? "Processing..." : "Reject"}
                         </button>
                     </div>
                 ) : status === "ACCEPTED" && (

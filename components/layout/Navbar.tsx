@@ -13,6 +13,22 @@ import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import { useUser } from "@clerk/nextjs";
 import { Button } from "../retroui/Button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "../ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../ui/alert-dialog";
+import useSignOut from "@/hooks/useSignOut";
 
 const DM_Sans_Font = DM_Sans({
     weight: ["400", "500", "700"],
@@ -23,9 +39,11 @@ export default function Navbar() {
     const router = useRouter();
     const pathname = usePathname();
     const { user, isLoaded } = useUser();
+    const handleSignOut = useSignOut();
 
     const [unreadCount, setUnreadCount] = useState(0)
     const [unreadMessagesCount, setUnreadMessagesCount] = useState(0)
+    const [showSignOutDialog, setShowSignOutDialog] = useState(false)
 
     const isChatsActive = pathname.startsWith('/chats');
     const isNotificationsActive = pathname.startsWith('/notifications');
@@ -144,14 +162,27 @@ export default function Navbar() {
                                     )}
                                 </button>
 
-                                <User2
-                                    className={`w-7 h-7 sm:w-8 sm:h-8 p-1.5 cursor-pointer rounded-full transition-colors ${
-                                        isProfileActive 
-                                            ? 'bg-[#111315] text-white font-semibold' 
-                                            : 'text-white hover:bg-white/10'
-                                    }`}
-                                    onClick={() => router.push("/profile")}
-                                />
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <button className="p-0">
+                                            <User2
+                                                className={`w-7 h-7 sm:w-8 sm:h-8 p-1.5 cursor-pointer rounded-full transition-colors ${
+                                                    isProfileActive 
+                                                        ? 'bg-[#111315] text-white font-semibold' 
+                                                        : 'text-white hover:bg-white/10'
+                                                }`}
+                                            />
+                                        </button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end" className="bg-[#111315] border border-[#2a2a2a]">
+                                        <DropdownMenuItem onClick={() => router.push("/profile")} className="text-white hover:bg-[#1a1a1a] cursor-pointer">
+                                            Account
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => setShowSignOutDialog(true)} className="text-red-400 hover:bg-[#1a1a1a] cursor-pointer">
+                                            Sign Out
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
                             </>
                         ) : (
                             <Button
@@ -238,14 +269,27 @@ export default function Navbar() {
 
                                 <Tooltip>
                                     <TooltipTrigger asChild>
-                                        <User2
-                                            className={`w-8 h-8 p-1.5 cursor-pointer rounded-full transition-colors ${
-                                                isProfileActive 
-                                                    ? 'bg-[#111315] text-white font-semibold' 
-                                                    : 'text-white hover:bg-white/10'
-                                            }`}
-                                            onClick={() => router.push("/profile")}
-                                        />
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <button className="p-0">
+                                                    <User2
+                                                        className={`w-8 h-8 p-1.5 cursor-pointer rounded-full transition-colors ${
+                                                            isProfileActive 
+                                                                ? 'bg-[#111315] text-white font-semibold' 
+                                                                : 'text-white hover:bg-white/10'
+                                                        }`}
+                                                    />
+                                                </button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end" className="bg-[#111315] border border-[#2a2a2a]">
+                                                <DropdownMenuItem onClick={() => router.push("/profile")} className="text-white hover:bg-[#1a1a1a] cursor-pointer">
+                                                    Account
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => setShowSignOutDialog(true)} className="text-red-400 hover:bg-[#1a1a1a] cursor-pointer">
+                                                    Sign Out
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
                                     </TooltipTrigger>
                                     <TooltipContent>Profile</TooltipContent>
                                 </Tooltip>
@@ -262,6 +306,28 @@ export default function Navbar() {
                     </div>
                 </div>
             </div>
+
+            <AlertDialog open={showSignOutDialog} onOpenChange={setShowSignOutDialog}>
+                <AlertDialogContent className="bg-[#111315] border border-[#2a2a2a]">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="text-white">Sign Out</AlertDialogTitle>
+                        <AlertDialogDescription className="text-gray-400">
+                            Are you sure you want to sign out? You'll need to sign in again to access your account.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <div className="flex gap-3 justify-end">
+                        <AlertDialogCancel className="bg-transparent text-white border-[#2a2a2a] hover:bg-[#2a2a2a] cursor-pointer rounded-full">
+                            Cancel
+                        </AlertDialogCancel>
+                        <AlertDialogAction 
+                            onClick={handleSignOut}
+                            className="bg-red-600 text-white hover:bg-red-700 cursor-pointer rounded-full"
+                        >
+                            Sign Out
+                        </AlertDialogAction>
+                    </div>
+                </AlertDialogContent>
+            </AlertDialog>
         </nav>
     );
 }
