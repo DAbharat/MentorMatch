@@ -257,11 +257,6 @@ io.on("connection", async (socket) => {
     const { chatId, userId } = socket.data;
     userSocketMap.set(userId, socket.id);
 
-    socket.on("disconnect", (reason) => {
-        console.log(`User ${userId} disconnected`);
-        userSocketMap.delete(userId);
-    });
-
     socket.on("error", (error) => {
         console.error(`Socket error for user ${userId}:`, error);
     });
@@ -443,6 +438,9 @@ io.on("connection", async (socket) => {
 
         socket.on("disconnect", () => {
             const { sessionId } = socket.data;
+
+            userSocketMap.delete(userId);
+            console.log(`User ${userId} disconnected. Map size: ${userSocketMap.size}`);
 
             if (sessionId) {
                 socket.to(`call_${sessionId}`).emit("webrtc:peer-left", {

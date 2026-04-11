@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { Socket } from "socket.io-client"
-import { getChatSocket } from "@/lib/chatSocket"
+import { getChatSocket, resetChatSocket } from "@/lib/chatSocket"
 
 interface UseChatSocketProps {
     token: string
@@ -78,8 +78,12 @@ export const useChatSocket = ({
             socket.off("typing")
             socket.off("stop_typing")
 
+            socket.disconnect()
+
             setTypingUsers([])
             setConnected(false)
+
+            resetChatSocket(chatId)
         }
     }, [token, chatId])
 

@@ -226,17 +226,34 @@ export const useWebRTC = ({
     })
 
     return () => {
+
+      if(localStreamRef.current) {
+        localStreamRef.current.getTracks().forEach(track => track.stop())
+        localStreamRef.current = null
+      }
+
+      if(screenStreamRef.current) {
+        screenStreamRef.current.getTracks().forEach(track => track.stop())
+        screenStreamRef.current = null
+      }
+
+      if(pcRef.current) {
+        pcRef.current.close()
+        pcRef.current = null
+      }
+
+      if(socket) {
       socket.off("webrtc:offer", handleOffer)
       socket.off("webrtc:answer", handleAnswer)
       socket.off("webrtc:ice-candidate", handleIce)
+      }
+
       socket.off("webrtc:peer-left", handlePeerLeft)
       socket.off("webrtc:peer-joined", handlePeerJoined)
       socket.off("webrtc:screen-share-started", handleScreenShareStart)
       socket.off("webrtc:screen-share-stopped", handleScreenShareStop)
       socket.off("webrtc:error")
 
-      pc.close()
-      pcRef.current = null
       pendingCandidates.current = []
     }
 
