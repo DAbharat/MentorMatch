@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react'
 import { useUser } from '@clerk/nextjs'
 import { toast } from 'sonner';
 import { Spinner } from '@/components/ui/spinner';
+import { Button } from '@/components/retroui/Button';
 import ProfileHeader from '@/components/profile/ProfileHeader';
 import ProfileFeedback from '@/components/profile/ProfileFeedback';
 import ProfileStats from '@/components/profile/ProfileStats';
@@ -17,12 +18,16 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { fetchFeedbacks } from '@/services/feedback.service';
 
 
+const MAX_RETRIES = 5
+const RETRY_DELAYS = [500, 1000, 2000, 4000, 8000] // ms
+
 export default function ProfilePage() {
     const router = useRouter();
     const { isLoaded, isSignedIn, user } = useUser();
 
     const [profile, setProfile] = useState<Profile | null>(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [feedbacks, setFeedbacks] = useState([]);
 
     useEffect(() => {
@@ -44,23 +49,57 @@ export default function ProfilePage() {
         console.log("ProfilePage: Attempting to load profile.");
         if (!isLoaded || !isSignedIn) return;
 
-        const loadProfile = async () => {
+        const fetchUserWithRetry = async (retryCount = 0) => {
             try {
-                const data = await fetchMyProfile();
-                // console.log("ProfilePage: Profile fetched successfully.", data);
-                // toast.success("Profile loaded successfully!");
-                setProfile(data);
-            } catch (error) {
-                const axiosError = error as AxiosError<ApiResponse>;
-                console.error("ProfilePage: Error fetching profile.", axiosError.response?.data.message || error);
-                toast.error(axiosError.response?.data.message || "An error occurred while fetching profile.");
-                router.replace("/sign-in");
-            } finally {
-                console.log("ProfilePage: Profile fetch attempt finished.");
-                setLoading(false);
+                const fullProfile = await fetchMyProfile();
+
+                if (fullProfile) {
+                    console.log("ProfilePage: Profile loaded successfully.", fullProfile);
+                    setProfile(fullProfile);
+                    setLoading(false);
+                    setError(null);
+                    return;
+                }
+
+                if (retryCount < MAX_RETRIES) {
+                    console.log(`ProfilePage: Profile not found. Retry ${retryCount + 1}/${MAX_RETRIES} after ${RETRY_DELAYS[retryCount]}ms`);
+                    setTimeout(() => {
+                        fetchUserWithRetry(retryCount + 1);
+                    }, RETRY_DELAYS[retryCount]);
+
+                } else {
+                    console.error("ProfilePage: Max retries exceeded. Profile not found in database.");
+
+                    setError("Failed to load your profile. The webhook may not have processed your account yet. Please try again or sign up again.");
+                    setLoading(false);
+
+                    toast.error("Profile setup timeout. Redirecting to sign-up...");
+                    setTimeout(() => {
+                        router.replace("/sign-up");
+                    }, 3000);
+                }
+            } catch (err: any) {
+                console.error("ProfilePage: Error fetching profile (attempt " + (retryCount + 1) + "):", err.message);
+                
+                if (retryCount < MAX_RETRIES) {
+                    console.log(`ProfilePage: Retrying after ${RETRY_DELAYS[retryCount]}ms...`);
+                    setTimeout(() => {
+                        fetchUserWithRetry(retryCount + 1);
+                    }, RETRY_DELAYS[retryCount]);
+                    
+                } else {
+                    setError(err.message || "An error occurred while loading your profile.");
+                    setLoading(false);
+
+                    toast.error(err.message || "An error occurred. Redirecting to sign-in...");
+                    setTimeout(() => {
+                        router.replace("/sign-in");
+                    }, 3000);
+                }
             }
         };
-        loadProfile();
+
+        fetchUserWithRetry();
     }, [isLoaded, isSignedIn, router]);
 
     useEffect(() => {
@@ -79,22 +118,46 @@ export default function ProfilePage() {
     }, [profile])
 
     if (!isLoaded || loading) {
-        console.log("ProfilePage: Loading spinner displayed.");
+        console.log("ProfilePage: Loading skeleton displayed.");
         return (
-            <div className="flex items-center gap-4 p-6">
-                <Skeleton className="h-12 w-12 rounded-full" />
-                <div className="space-y-2">
-                    <Skeleton className="h-4 w-64" />
-                    <Skeleton className="h-4 w-48" />
+            <div className="flex items-center justify-center min-h-screen bg-[#0b090a]">
+                <div className="flex flex-col items-center gap-4 p-6">
+                    <Skeleton className="h-12 w-12 rounded-full" />
+                    <div className="space-y-2 text-center">
+                        <Skeleton className="h-4 w-64" />
+                        <Skeleton className="h-4 w-48" />
+                    </div>
+                    <p className="text-sm text-gray-400 mt-4">Setting up your account...</p>
                 </div>
             </div>
         )
     }
 
+    if (error) {
+        console.error("ProfilePage: Error occurred:", error);
+        return (
+            <div className="flex items-center justify-center min-h-screen bg-[#0b090a]">
+                <div className="max-w-md w-full p-6 text-center">
+                    <p className="text-red-500 mb-4">{error}</p>
+                    <Button
+                        onClick={() => router.push("/sign-up")}
+                        className="w-full bg-[#d3d3d3] hover:bg-[#bcbcbc] text-black font-semibold rounded-full"
+                    >
+                        Back to Sign Up
+                    </Button>
+                </div>
+            </div>
+        );
+    }
+
     if (!profile) {
-        console.error("ProfilePage: Profile not found.");
+        console.error("ProfilePage: Profile is null.");
         toast.error("Profile not found.");
-        return <p className="text-center text-red-500">Profile not found.</p>;
+        return (
+            <div className="flex items-center justify-center min-h-screen bg-[#0b090a]">
+                <p className="text-center text-red-500">Profile not found.</p>
+            </div>
+        );
     }
 
     // console.log("ProfilePage: Rendering profile page.", profile);
