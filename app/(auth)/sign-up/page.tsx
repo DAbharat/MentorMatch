@@ -11,8 +11,6 @@ import { Eye, EyeOff, Shield, CheckCircle2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { DM_Sans } from "next/font/google";
 import { toast } from "sonner";
-import axios from "axios";
-import { createAccount } from "@/services/createAccount.service";
 
 const DM_Sans_Font = DM_Sans({
   weight: ["400", "500", "700"],
@@ -81,11 +79,12 @@ export default function SignUp() {
       const result = await signUp.attemptEmailAddressVerification({ code });
 
       if (result.status === "complete" && result.createdUserId) {
+
         const clerkUserId = result.createdUserId;
-        console.log("Frontend: Sending request to /api/user/create");
-        const createUser = await createAccount({ name, email, clerkUserId });
-        console.log("Frontend: User created successfully", createUser.data);
+        console.log("Frontend: Sending request to backend...");
+
         toast.success("Email verified successfully! Redirecting...");
+
         await setActive({ session: result.createdSessionId });
         router.push("/profile");
       } else {

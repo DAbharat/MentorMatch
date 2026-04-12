@@ -278,3 +278,18 @@ enum NotificationType {
   FEEDBACK_RECEIVED
   FEEDBACK_SENT
 }
+
+model WebhookLog {
+  id String @id @default(uuid())
+  svixId String @unique
+  eventType String
+  eventData Json
+  receivedAt DateTime @default(now())
+  status WebhookStatus
+}
+
+enum WebhookStatus {
+  SUCCESS
+  FAILED
+  SKIPPED
+}
