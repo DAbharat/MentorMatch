@@ -1,11 +1,11 @@
 import React, { useState } from 'react'
 import { Card } from '../ui/card';
 import { DM_Sans } from 'next/font/google';
-import { useUser } from '@clerk/nextjs';
 import { Button } from '../retroui/Button';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { BellPlus } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 
 const DM_Sans_Font = DM_Sans({
     weight: ["400", "500", "700"],
@@ -16,22 +16,22 @@ type ProfileCardProps = {
     skillsOffered: string[];
     name: string;
     rating: number;
+    id: string;
     completedSessions: number;
-    clerkUserId: string;
     onClick?: () => void;
 }
 
 export default function ProfileCard(
-    { skillsOffered, name, rating, completedSessions, clerkUserId, onClick }: ProfileCardProps
+    { skillsOffered, name, rating, id, completedSessions, onClick }: ProfileCardProps
 ) {
     const skillsList = skillsOffered.join(", ");
-    const { user, isLoaded } = useUser()
+    const { userId, isLoading } = useAuth()
     const router = useRouter()
     const[open, setOpen] = useState(false)
 
-    if (!isLoaded) { return null }
+    if (isLoading) { return null }
 
-    const isOwner = user && clerkUserId && user.id === clerkUserId
+    const isOwner = userId === id
 
     return (
         <Card className={`bg-[#111315] border-[#1f1f1f] px-4 py-4 max-w-4xl w-full mx-auto ${DM_Sans_Font.className} cursor-pointer`} onClick={onClick}>
@@ -66,7 +66,7 @@ export default function ProfileCard(
                         className='shrink-0 cursor-pointer text-[#d3d3d3] w-4 h-4 sm:w-5 sm:h-5 ml-1'
                         onClick={(e) => {
                             e.stopPropagation();
-                            if (user) {
+                            if (userId) {
                                 setOpen(true);
                             } else {
                                 router.push("/sign-in");

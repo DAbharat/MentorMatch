@@ -3,13 +3,14 @@ import { auth } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
 import { sendMessageSchema } from "@/schema/messageSchema";
 import { z } from "zod";
+import { getSessionFromRequest } from "@/lib/auth";
 
 export async function POST(
     req: NextRequest,
     context: { params: Promise<{ chatId: string }> }
 ) {
-    const { userId } = await auth()
 
+    const userId = getSessionFromRequest(req)
     if (!userId) {
         return NextResponse.json({
             message: "Unauthenticated"
@@ -19,7 +20,6 @@ export async function POST(
     }
 
     const { chatId } = await context.params
-
     if (!chatId) {
         return NextResponse.json({
             message: "Chat ID is required"
@@ -48,25 +48,19 @@ export async function POST(
         const { content } = parsed.data
         //console.log("content: ", content)
         
-        const dbUser = await prisma.user.findUnique({
+        const userExists = await prisma.user.findUnique({
             where: {
-                clerkUserId: userId
-            },
-            select: {
-                id: true
+                id: userId
             }
         })
-
-        if (!dbUser) {
+        if(!userExists) {
             return NextResponse.json({
-                message: "User not found"
+                message: "user not found."
             }, {
                 status: 404
             })
         }
-
-        const dbUserId = dbUser.id
-
+        
         const chatExists = await prisma.chat.findUnique({
             where: {
                 id: chatId,
@@ -87,7 +81,7 @@ export async function POST(
             })
         }
 
-        if (dbUser.id !== chatExists.mentorId && dbUser.id !== chatExists.menteeId) {
+        if (userId !== chatExists.mentorId && userId !== chatExists.menteeId) {
             return NextResponse.json({
                 message: "Unauthorized"
             }, {
@@ -117,7 +111,7 @@ export async function POST(
         const createMessage = await prisma.message.create({
             data: {
                 chatId: chatId,
-                senderId: dbUserId,
+                senderId: userId,
                 content: content
             }
         })
@@ -142,8 +136,8 @@ export async function POST(
 export async function GET(req: NextRequest,
     context: { params: Promise<{ chatId: string }> }
 ) {
-    const { userId } = await auth()
 
+    const userId = getSessionFromRequest(req)
     if (!userId) {
         return NextResponse.json({
             message: "Unauthenticated"
@@ -153,7 +147,6 @@ export async function GET(req: NextRequest,
     }
 
     const { chatId } = await context.params
-
     if (!chatId) {
         return NextResponse.json({
             message: "Chat ID is required"
@@ -163,25 +156,18 @@ export async function GET(req: NextRequest,
     }
 
     try {
-        const dbUser = await prisma.user.findUnique({
+        const userExists = await prisma.user.findUnique({
             where: {
-                clerkUserId: userId
-            },
-            select: {
-                id: true,
-                name: true,
+                id: userId
             }
         })
-
-        if (!dbUser) {
+        if(!userExists) {
             return NextResponse.json({
-                message: "User not found"
+                message: "user not found."
             }, {
                 status: 404
             })
         }
-
-        const dbUserId = dbUser.id
 
         const { searchParams } = req.nextUrl
         const limit = Number(searchParams.get("limit")) || 20
@@ -199,7 +185,6 @@ export async function GET(req: NextRequest,
                 skillId: true
             }
         })
-
         if (!chatExists) {
             return NextResponse.json({
                 message: "Chat not found"
@@ -208,7 +193,7 @@ export async function GET(req: NextRequest,
             })
         }
 
-        if(chatExists.mentorId !== dbUserId && chatExists.menteeId !== dbUserId) {
+        if(chatExists.mentorId !== userId && chatExists.menteeId !== userId) {
             return NextResponse.json({
                 message: "Unauthorized"
             }, {
@@ -233,7 +218,6 @@ export async function GET(req: NextRequest,
                     select: {
                         id: true,
                         name: true,
-                        clerkUserId: true
                     }
                 }
             },

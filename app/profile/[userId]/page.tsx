@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import axios from "axios";
 import { Spinner } from "@/components/ui/spinner";
 import ProfileHeader from "@/components/profile/ProfileHeader";
 import ProfileTabs from "@/components/profile/ProfileTabs";
@@ -84,7 +83,6 @@ export default function PublicProfilePage() {
         name={profile.name}
         bio={profile.bio || ""}
         createdAt={profile.joinedAt}
-        clerkUserId={profile.clerkUserId}
         skillsOffered={profile.skillsOffered}
         skillsWanted={profile.skillsWanted}
         hasAcceptedRequest={profile.hasAcceptedRequest}

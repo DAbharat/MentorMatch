@@ -30,8 +30,6 @@ export type Profile = {
   name: string;
   bio?: string;
   createdAt: string;
-  clerkUserId: string;
-
   stats: ProfileStats;
   skillsOffered: Skill[];
   skillsWanted: Skill[];

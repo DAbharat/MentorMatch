@@ -1,3 +1,4 @@
+import axiosClient from "@/lib/axiosClient";
 import { ApiResponse } from "@/types/ApiResponse";
 import axios, { AxiosError } from "axios";
 
@@ -8,7 +9,7 @@ export async function createFeedback(feedbackData: {
     comment: string;
 }) {
     try {
-        const response = await axios.post(`/api/users/${feedbackData.mentorId}/feedback`, feedbackData)
+        const response = await axiosClient.post(`/api/users/${feedbackData.mentorId}/feedback`, feedbackData)
         return response.data
     } catch (error) {
         const axiosError = error as AxiosError<ApiResponse>
@@ -19,7 +20,7 @@ export async function createFeedback(feedbackData: {
 
 export async function fetchFeedbacks(mentorId: string) {
     try {
-        const response = await axios.get(`/api/users/${mentorId}/feedback`)
+        const response = await axiosClient.get(`/api/users/${mentorId}/feedback`)
         return response.data
     } catch (error) {
         const axiosError = error as AxiosError<ApiResponse>

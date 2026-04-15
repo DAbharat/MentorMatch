@@ -19,12 +19,10 @@ type Chat = {
     mentor: {
         id: string;
         name: string;
-        clerkUserId: string;
     }
     mentee: {
         id: string;
         name: string;
-        clerkUserId: string;
     }
     messages: {
         id: string;
@@ -34,7 +32,6 @@ type Chat = {
         sender: {
             id: string;
             name: string;
-            clerkUserId: string;
         }
     }[]
     _count: {
@@ -124,12 +121,12 @@ export default function ChatPage() {
                         if (!lastMessage) return null;
 
                         // Determine the other user in the chat
-                        const otherUser = chat.mentor.clerkUserId === user?.id 
+                        const otherUser = chat.mentor.id === user?.id 
                             ? chat.mentee 
                             : chat.mentor;
 
                         // Check if the last message was sent by the current user
-                        const isYourMessage = lastMessage.sender.clerkUserId === user?.id;
+                        const isYourMessage = lastMessage.sender.id === user?.id;
 
                         // Only show unread count if the message is from the other user
                         const displayUnreadCount = !isYourMessage ? chat._count.messages : 0;

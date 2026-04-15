@@ -1,10 +1,11 @@
 import axios, { AxiosError } from "axios";
 import { ApiResponse } from "@/types/ApiResponse";
+import axiosClient from "@/lib/axiosClient";
 
 export async function fetchMyProfile() {
     try {
         console.log("fetching profile from backend....")
-        const response = await axios.get(`/api/user/profile`);
+        const response = await axiosClient.get(`/api/user/profile`);
         return response.data.data;
     } catch (error) {
         const axiosError = error as AxiosError<ApiResponse>
@@ -21,7 +22,7 @@ export async function updateMyProfile(profileData: {
 }) {
     try {
         console.log("Updating profile with data...");
-        const response = await axios.patch(`/api/user/profile`, profileData);
+        const response = await axiosClient.patch(`/api/user/profile`, profileData);
         return response.data.data;
     } catch (error) {
         const axiosError = error as AxiosError<ApiResponse>
@@ -30,10 +31,10 @@ export async function updateMyProfile(profileData: {
     }
 }
 
-export async function fetchUserById(params: { clerkUserId: string }) {
+export async function fetchUserById(params: { userId: string }) {
     try {
         //console.log("userid: ", params.clerkUserId)
-        const response = await axios.get(`/api/user/${params.clerkUserId}`)
+        const response = await axiosClient.get(`/api/user/${params.userId}`)
         return response.data
     } catch (error) {
         const axiosError = error as AxiosError<ApiResponse>
@@ -45,7 +46,7 @@ export async function fetchUserById(params: { clerkUserId: string }) {
 export async function fetchAUserProfile(userId: string) {
     try {
         console.log("fetching another user's profile...")
-        const response = await axios.get(`/api/user/${userId}`)
+        const response = await axiosClient.get(`/api/user/${userId}`)
         return response.data.data;
     } catch (error) {
         const axiosError = error as AxiosError<ApiResponse>

@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useAuth, useUser } from '@clerk/nextjs'
-import axios from 'axios'
 import { toast } from 'sonner'
 import InitialScreen from '@/components/video-call/InitialScreen'
 import { Spinner } from '@/components/ui/spinner'

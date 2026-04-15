@@ -6,12 +6,13 @@ import { updateMentorshipRequestStatusSchema } from "@/schema/createMentorshipRe
 import { z } from "zod";
 import { createNotification } from "@/lib/notification";
 import { NotificationType } from "@prisma/client";
+import { getSessionFromRequest } from "@/lib/auth";
 
 export async function PATCH(req: NextRequest,
     { params }: { params: Promise<{ requestId: string }> }
 ) {
-    const { userId } = await auth()
 
+    const userId = getSessionFromRequest(req)
     if (!userId) {
         return NextResponse.json({
             message: "Unauthenticated"
@@ -49,21 +50,18 @@ export async function PATCH(req: NextRequest,
             })
         }
 
-        const dbUser = await prisma.user.findUnique({
+        const userExists = await prisma.user.findUnique({
             where: {
-                clerkUserId: userId
+                id: userId
             }
         })
-
-        if (!dbUser) {
+        if(!userExists) {
             return NextResponse.json({
-                message: "User not found"
+                message: "user not found"
             }, {
                 status: 404
             })
         }
-
-        const dbUserId = dbUser.id
 
         const mentorshipRequestExists = await prisma.mentorshipRequest.findUnique({
             where: {
@@ -82,7 +80,7 @@ export async function PATCH(req: NextRequest,
             })
         }
 
-        if (mentorshipRequestExists.mentorId !== dbUserId) {
+        if (mentorshipRequestExists.mentorId !== userId) {
             return NextResponse.json({
                 message: "Unauthorized"
             }, {
@@ -153,11 +151,11 @@ export async function PATCH(req: NextRequest,
 
         const sendNotificationToMentee = await createNotification({
             userId: mentorshipRequestExists.menteeId,
-            senderId: dbUserId,
+            senderId: userId,
             mentorshipRequestId: requestId,
             type: action === "ACCEPT" ? NotificationType.MENTORSHIP_REQUEST_ACCEPTED : NotificationType.MENTORSHIP_REQUEST_REJECTED,
             title: action === "ACCEPT" ? "Your mentorship request was accepted" : "Your mentorship request was rejected",
-            message: `Your mentorship request for the skill ${mentorshipRequestExists.skill.name} was ${action === "ACCEPT" ? "accepted" : "rejected"} by ${dbUser.name}`
+            message: `Your mentorship request for the skill ${mentorshipRequestExists.skill.name} was ${action === "ACCEPT" ? "accepted" : "rejected"} by ${userExists.name}`
         })
 
         return NextResponse.json({
@@ -181,8 +179,8 @@ export async function PATCH(req: NextRequest,
 export async function GET(req: NextRequest,
     { params } : { params : Promise<{ requestId : string }> }
 ) {
-    const { userId } = await auth()
 
+    const userId = getSessionFromRequest(req)
     if (!userId) {
         return NextResponse.json({
             message: "Unauthenticated"
@@ -195,31 +193,28 @@ export async function GET(req: NextRequest,
 
     try {
 
-        const dbUser = await prisma.user.findUnique({
+        const userExists = await prisma.user.findUnique({
             where: {
-                clerkUserId: userId
+                id: userId
             }
         })
-
-        if (!dbUser) {
+        if(!userExists) {
             return NextResponse.json({
-                message: "User not found"
+                message: "user not found"
             }, {
                 status: 404
             })
         }
-
-        const dbUserId = dbUser?.id
 
         const mentorshipRequest = await prisma.mentorshipRequest.findFirst({
             where: {
                 id: requestId,
                 OR: [
                     {
-                        mentorId: dbUserId
+                        mentorId: userId
                     },
                     {
-                        menteeId: dbUserId
+                        menteeId: userId
                     }
                 ]
             },
@@ -240,7 +235,6 @@ export async function GET(req: NextRequest,
                                 name: true
                             }
                         },
-                        clerkUserId: true,
                         createdAt: true,
                     }
                 },

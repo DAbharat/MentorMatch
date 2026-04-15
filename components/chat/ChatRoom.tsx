@@ -16,7 +16,6 @@ type Message = {
     sender?: {
         id: string;
         name: string;
-        clerkUserId: string;
     };
     category?: string;
     isRead?: boolean;
@@ -167,7 +166,7 @@ export default function ChatRoom({
                             {/* Messages for this date */}
                             <div className="space-y-2 sm:space-y-3">
                                 {dateMessages.map((message) => {
-                                    const isSender = message.sender?.clerkUserId === currentUserId;
+                                    const isSender = message.sender?.id === currentUserId;
 
                                     return isSender ? (
                                         <SenderCard

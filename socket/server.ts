@@ -1,13 +1,14 @@
 import { createServer } from "node:http";
 import { Server } from "socket.io";
-import { verifyToken } from "@clerk/backend";
 import { sendMessageSchema } from "@/schema/messageSchema";
 import { socketHandshakeSchemaForChat } from "@/schema/socketHandshakeSchema";
+import { verifyToken } from "@/lib/auth";
 
 console.log("ENV PORT:", process.env.PORT);
-console.log("DATABASE_URL:", process.env.DATABASE_URL ? "✅ Set" : "❌ Missing");
-console.log("CLERK_SECRET_KEY:", process.env.CLERK_SECRET_KEY ? "✅ Set" : "❌ Missing");
-console.log("NEXT_PUBLIC_APP_URL:", process.env.NEXT_PUBLIC_APP_URL || "⚠️ Not set");
+console.log("DATABASE_URL:", process.env.DATABASE_URL ? "Set" : "Missing");
+console.log("ACCESS_TOKEN_SECRET:", process.env.ACCESS_TOKEN_SECRET ? "Set" : "Missing");
+console.log("REFRESH_TOKEN_SECRET:", process.env.REFRESH_TOKEN_SECRET ? "Set" : "Missing");
+console.log("NEXT_PUBLIC_APP_URL:", process.env.NEXT_PUBLIC_APP_URL || "Not set");
 
 const userSocketMap = new Map<string, string>()
 
@@ -17,23 +18,28 @@ async function initPrisma() {
         if (!process.env.DATABASE_URL) {
             throw new Error("DATABASE_URL environment variable is not set");
         }
-        if (!process.env.CLERK_SECRET_KEY) {
-            throw new Error("CLERK_SECRET_KEY is missing");
+        if (!process.env.ACCESS_TOKEN_SECRET) {
+            throw new Error("ACCESS_TOKEN_SECRET is missing");
         }
+        if (!process.env.REFRESH_TOKEN_SECRET) {
+            throw new Error("REFRESH_TOKEN_SECRET is missing");
+        }
+
         const { default: prismaClient } = await import("@/lib/prisma");
         prisma = prismaClient;
-        console.log("✅ Prisma initialized");
+
+        console.log("Prisma initialized");
         return true;
+
     } catch (err: any) {
-        console.error("❌ Failed to initialize Prisma:", err.message);
+        console.error("Failed to initialize Prisma:", err.message);
         return false;
     }
 }
 
 const PORT = Number(process.env.PORT) || 4000;
 
-const allowedOrigins = [ "http://localhost:3000", "http://localhost:3001", process.env.NEXT_PUBLIC_APP_URL,
-].filter(Boolean);
+const allowedOrigins = [ process.env.NEXT_PUBLIC_APP_URL, "http://localhost:3000", "http://localhost:3001"].filter(Boolean);
 
 process.on("uncaughtException", (err) => {
     console.error("UNCAUGHT EXCEPTION:", err);
@@ -88,10 +94,6 @@ const io = new Server(httpServer, {
     upgradeTimeout: 10000,
 });
 
-if (!process.env.CLERK_SECRET_KEY) {
-    throw new Error("CLERK_SECRET_KEY is missing");
-}
-
 io.use(async (socket, next) => {
     try {
         if (!prisma) {
@@ -116,11 +118,14 @@ io.use(async (socket, next) => {
         }
 
         try {
-            const session = await verifyToken(token, {
-                secretKey: process.env.CLERK_SECRET_KEY!,
-            });
+            const payload = verifyToken(token, "access")
 
-            const userId = session.sub;
+            if(!payload || !payload.userId) {
+                console.error("Invalid token payload")
+                return next(new Error("Invalid token"))
+            }
+
+            const userId = payload.userId;
             socket.data.userId = userId;
 
             if (chatId) {
@@ -131,14 +136,12 @@ io.use(async (socket, next) => {
                             select: {
                                 id: true,
                                 name: true,
-                                clerkUserId: true
                             }
                         },
                         mentee: {
                             select: {
                                 id: true,
                                 name: true,
-                                clerkUserId: true
                             }
                         }
                     }
@@ -149,7 +152,7 @@ io.use(async (socket, next) => {
                     return next(new Error("Chat not found"));
                 }
 
-                if (chat.mentor.clerkUserId !== userId && chat.mentee.clerkUserId !== userId) {
+                if (chat.mentor.id !== userId && chat.mentee.id !== userId) {
                     console.error("User not part of chat");
                     return next(new Error("Unauthorized"));
                 }
@@ -162,6 +165,7 @@ io.use(async (socket, next) => {
             }
 
             next();
+
         } catch (tokenErr: any) {
             console.error("Token verification failed:", tokenErr.message);
             return next(new Error("Invalid token"));
@@ -183,14 +187,12 @@ async function validateChat(chatId: string, userId: string) {
                     select: {
                         id: true,
                         name: true,
-                        clerkUserId: true
                     }
                 },
                 mentee: {
                     select: {
                         id: true,
                         name: true,
-                        clerkUserId: true
                     }
                 }
             }
@@ -198,11 +200,12 @@ async function validateChat(chatId: string, userId: string) {
 
         if (!chat) throw new Error("Chat not found");
 
-        if (chat.mentor.clerkUserId !== userId && chat.mentee.clerkUserId !== userId) {
+        if (chat.mentor.id !== userId && chat.mentee.id !== userId) {
             throw new Error("Unauthorized");
         }
 
         return chat;
+
     } catch (err: any) {
         throw new Error(err.message);
     }
@@ -219,14 +222,12 @@ async function validateSession(sessionId: string, userId: string) {
                     select: {
                         id: true,
                         name: true,
-                        clerkUserId: true
                     }
                 },
                 mentee: {
                     select: {
                         id: true,
                         name: true,
-                        clerkUserId: true
                     }
                 }
             }
@@ -237,8 +238,8 @@ async function validateSession(sessionId: string, userId: string) {
         }
 
         if (
-            session.mentor.clerkUserId !== userId &&
-            session.mentee.clerkUserId !== userId
+            session.mentor.id !== userId &&
+            session.mentee.id !== userId
         ) {
             throw new Error("Unauthorized");
         }
@@ -292,7 +293,9 @@ io.on("connection", async (socket) => {
                 if (!content.trim()) return;
 
                 const user = await prisma.user.findUnique({
-                    where: { clerkUserId: userId }
+                    where: { 
+                        id: userId 
+                    }
                 });
 
                 if (!user) {
@@ -312,13 +315,13 @@ io.on("connection", async (socket) => {
                             select: {
                                 id: true,
                                 name: true,
-                                clerkUserId: true
                             }
                         }
                     }
                 });
 
                 io.to(`chat_${chatId}`).emit("new_message", message);
+
             } catch (err: any) {
                 console.error("Error sending message:", err.message);
                 socket.emit("chat:error", {
@@ -338,8 +341,8 @@ io.on("connection", async (socket) => {
 
                 const session = await validateSession(sessionId, userId);
 
-                const menteeClerkId = session.mentee.clerkUserId;
-                const menteeSocketId = userSocketMap.get(menteeClerkId);
+                const menteeId = session.mentee.id;
+                const menteeSocketId = userSocketMap.get(menteeId);
 
                 if(!menteeSocketId) {
                     return socket.emit("session:error", {
@@ -373,6 +376,7 @@ io.on("connection", async (socket) => {
                 socket.data.sessionId = sessionId;
 
                 socket.to(room).emit("webrtc:peer-joined", { userId });
+
             } catch (err: any) {
                 console.error("WebRTC join error:", err.message);
                 socket.emit("webrtc:error", {
@@ -394,6 +398,7 @@ io.on("connection", async (socket) => {
                     offer,
                     from: userId,
                 });
+
             } catch (err: any) {
                 console.error("WebRTC offer error:", err.message);
                 socket.emit("webrtc:error", { message: err.message });
@@ -412,6 +417,7 @@ io.on("connection", async (socket) => {
                     answer,
                     from: userId,
                 });
+
             } catch (err: any) {
                 console.error("WebRTC answer error:", err.message);
                 socket.emit("webrtc:error", { message: err.message });
@@ -430,6 +436,7 @@ io.on("connection", async (socket) => {
                     candidate,
                     from: userId,
                 });
+
             } catch (err: any) {
                 console.error("WebRTC ICE candidate error:", err.message);
                 socket.emit("webrtc:error", { message: err.message });
@@ -468,22 +475,22 @@ io.on("connection", async (socket) => {
 });
 
 async function startServer() {
-    console.log("🚀 Starting Socket.IO server...");
+    console.log("Starting Socket.IO server...");
 
     const prismaReady = await initPrisma();
 
     if (!prismaReady) {
-        console.warn("⚠️  Server starting without database - Socket.IO will work but database operations will fail");
+        console.warn("Server starting without database - Socket.IO will work but database operations will fail");
     }
 
     httpServer.listen(PORT, "0.0.0.0", () => {
-        console.log(`✅ Socket server is running on port: ${PORT}`);
-        console.log(`📡 Socket.IO path: /socket.io`);
-        console.log(`⚡ Transports: websocket, polling`);
+        console.log(`Socket server is running on port: ${PORT}`);
+        console.log(`Socket.IO path: /socket.io`);
+        console.log(`Transports: websocket, polling`);
     });
 }
 
 startServer().catch((err) => {
-    console.error("❌ Failed to start server:", err);
+    console.error("Failed to start server:", err);
     process.exit(1);
 });

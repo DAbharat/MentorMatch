@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
+import { getSessionFromRequest } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
 
-    const { userId } = await auth();
-
+    const userId = getSessionFromRequest(req)
     if (!userId) {
         return NextResponse.json({
             message: "Unauthorized"
@@ -15,27 +15,23 @@ export async function POST(req: NextRequest) {
     }
 
     try {
-        const dbUser = await prisma.user.findUnique({
-            where: { 
-                clerkUserId: userId
+        const userExists = await prisma.user.findUnique({
+            where: {
+                id: userId
             }
-        });
-
-        if (!dbUser) {
+        })
+        if(!userExists) {
             return NextResponse.json({
-                message: "User not found",
-                completedCount: 0
+                message: "User not found"
             }, {
-                status: 200
-            });
+                status: 404
+            })
         }
-
-        const dbUserId = dbUser.id;
 
         const stuckSessions = await prisma.session.findMany({
             where: {
                 status: "IN_PROGRESS",
-                mentorId: dbUserId,
+                mentorId: userId,
                 metricsComputedAt: null
             },
             include: {

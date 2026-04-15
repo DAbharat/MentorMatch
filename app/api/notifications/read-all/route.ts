@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
+import { getSessionFromRequest } from "@/lib/auth";
 
 export async function PATCH(request: NextRequest) {
-    const { userId } = await auth()
 
+    const userId = getSessionFromRequest(request)
     if(!userId) {
         return NextResponse.json({
             message: "Unauthenticated"
@@ -14,25 +15,22 @@ export async function PATCH(request: NextRequest) {
     }
 
     try {
-        const dbUser = await prisma.user.findUnique({
+        const userExists = await prisma.user.findUnique({
             where: {
-                clerkUserId: userId
+                id: userId
             }
         })
-
-        if (!dbUser) {
+        if(!userExists) {
             return NextResponse.json({
-                message: "User not found"
+                message: "user not found."
             }, {
                 status: 404
             })
         }
-
-        const dbUserId = dbUser.id
-
+        
         const updateAllNotifications = await prisma.notification.updateMany({
             where: {
-                userId: dbUserId,
+                userId,
                 isRead: false
             },
             data: {

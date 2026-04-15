@@ -1,5 +1,6 @@
 import axios, { AxiosError } from "axios";
 import { ApiResponse } from "@/types/ApiResponse";
+import axiosClient from "@/lib/axiosClient";
 
 export async function fetchAllMessage(chatId: string, limit: number = 20, cursor?: string) {
     try {
@@ -7,7 +8,7 @@ export async function fetchAllMessage(chatId: string, limit: number = 20, cursor
         const params = new URLSearchParams({ limit: limit.toString() });
         if (cursor) params.append("cursor", cursor);
 
-        const response = await axios.get(`/api/chats/${chatId}/messages?${params.toString()}`)
+        const response = await axiosClient.get(`/api/chats/${chatId}/messages?${params.toString()}`)
         return response.data
     } catch (error) {
         const axiosError = error as AxiosError<ApiResponse>
@@ -19,7 +20,7 @@ export async function fetchAllMessage(chatId: string, limit: number = 20, cursor
 export async function sendMessage(chatId: string, content: string) {
     try {
         console.log("sending message...", content)
-        const response = await axios.post(`/api/chats/${chatId}/messages`, { content })
+        const response = await axiosClient.post(`/api/chats/${chatId}/messages`, { content })
         return response.data
     } catch (error) {
         const axiosError = error as AxiosError<ApiResponse>
@@ -31,7 +32,7 @@ export async function sendMessage(chatId: string, content: string) {
 export async function fetchAllChatsForAUser() {
     try {
         console.log("fetching all chats...")
-        const response = await axios.get(`/api/chats`)
+        const response = await axiosClient.get(`/api/chats`)
         return response.data
     } catch (error) {
         const axiosError = error as AxiosError<ApiResponse>
@@ -42,7 +43,7 @@ export async function fetchAllChatsForAUser() {
 
 export async function markChatMessagesAsRead(chatId: string) {
     try {
-        const response = await axios.patch(`/api/chats/${chatId}/messages/read`)
+        const response = await axiosClient.patch(`/api/chats/${chatId}/messages/read`)
         return response.data
     } catch (error) {
         const axiosError = error as AxiosError<ApiResponse>

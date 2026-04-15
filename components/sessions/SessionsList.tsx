@@ -33,7 +33,7 @@ const DM_Sans_Font = DM_Sans({
 
 type SessionsListProps = {
   sessions: Session[]
-  currentUserClerkId: string | null
+  currentUserId: string | null
   loading: boolean
   onConfirm: (sessionId: string) => void
   onCancel: (sessionId: string) => void
@@ -52,7 +52,7 @@ function truncateWords(text: string, limit: number = 8) {
 
 export default function SessionsList({
   sessions,
-  currentUserClerkId,
+  currentUserId,
   loading,
   onConfirm,
   onCancel,
@@ -289,7 +289,7 @@ export default function SessionsList({
   }
 
   const isMentor = (session: Session) =>
-    session.mentor.clerkUserId === currentUserClerkId
+    session.mentor.id === currentUserId
 
   return (
     <div className={`${DM_Sans_Font.className} bg-[#0b090a] min-h-screen`}>

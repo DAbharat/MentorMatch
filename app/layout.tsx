@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { ClerkProvider } from "@clerk/nextjs";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { DM_Sans } from "next/font/google";
@@ -33,17 +32,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider>
-      <html lang="en">
-        <body
-          className={`${DM_Sans_Font.className} antialiased`}
-        >
-          <TooltipProvider>
-            <RootLayoutClient>{children}</RootLayoutClient>
-          </TooltipProvider>
-          <Toaster />
-        </body>
-      </html>
-    </ClerkProvider>
+    <html lang="en">
+      <body
+        className={`${DM_Sans_Font.className} antialiased`}
+      >
+        <TooltipProvider>
+          <RootLayoutClient>{children}</RootLayoutClient>
+        </TooltipProvider>
+        <Toaster />
+      </body>
+    </html>
   );
 }

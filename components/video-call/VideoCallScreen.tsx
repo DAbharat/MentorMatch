@@ -9,12 +9,10 @@ type VideoCallScreenProps = {
     mentor: {
         id: string;
         name: string;
-        clerkUserId: string;
     };
     mentee: {
         id: string;
         name: string;
-        clerkUserId: string;
     };
     localStream: MediaStream | null;
     remoteStream: MediaStream | null;

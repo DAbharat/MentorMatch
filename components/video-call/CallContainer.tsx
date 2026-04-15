@@ -10,12 +10,10 @@ type CallContainerProps = {
     mentor: {
         id: string;
         name: string;
-        clerkUserId: string;
     };
     mentee: {
         id: string;
         name: string;
-        clerkUserId: string;
     };
     isUserMentor: boolean;
     elapsedTime: string;

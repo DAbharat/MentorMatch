@@ -1,47 +1,55 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { verifyToken } from './lib/auth';
 
-
-const isPublicRoute = createRouteMatcher([
+const publicRoutes = [
     "/",
-    "/sign-in(.*)?",
-    "/sign-up(.*)?",
+    "/sign-in",
+    "/sign-up",
     "/home",
-    "/search(.*)?",
-    "/profile/(.*)?", // Allow viewing public profiles
-    "/api/users", // Allow searching for users/skills
-    "/api/users/(.*)?/feedback", // Allow viewing feedback on public profiles
-    "/api/user/(.*)?", // Allow viewing user profiles (protected routes check auth themselves)
-    "/api/webhook/clerk"
-])
+    "/search",
+    "/profile",
+    "/api/users"
+];
 
+function isPublicRoute(pathname: string): boolean {
+    return publicRoutes.some(route => pathname.startsWith(route));
+}
 
-export default clerkMiddleware(async (auth, request) => {
-    const { userId } = await auth();
-    const pathname = request.nextUrl.pathname;
+export async function middleware(req: NextRequest) {
+    const pathname = req.nextUrl.pathname;
+    console.log("Middleware: Request received for: ", pathname)
 
-    console.log("Middleware: Request received for", pathname);
+    let userId: string | null = null;
+    const accessToken = req.cookies.get("accessToken")?.value
 
-    const isAuthPage =
-        pathname.startsWith("/sign-in") ||
-        pathname.startsWith("/sign-up")
+    if (accessToken) {
+        try {
+            const payload = verifyToken(accessToken, "access")
+            userId = payload?.userId || null;
+        } catch (error: any) {
+            console.log("Invalid token: ", error.message)
+            userId = null
+        }
+    }
 
+    const isAuthPage = pathname.startsWith("/sign-in") || pathname.startsWith("sign-up")
     if (userId && isAuthPage) {
-        console.log("Middleware: Redirecting authenticated user to /profile");
-        return NextResponse.redirect(new URL("/profile", request.url));
+        console.log("Middleware: Redirecting authenticated user to /profile")
+        return NextResponse.json(new URL("/profile", req.url))
     }
 
-    if (!userId && !isPublicRoute(request)) {
-        console.log("Middleware: Redirecting unauthenticated user to /sign-in");
-        return NextResponse.redirect(new URL("/sign-in", request.url));
+    if(!userId && !isPublicRoute(pathname)) {
+        console.log("Middleware: Redirecting unauthenticated users to /sign-in")
+        return NextResponse.json(new URL("/sign-in", req.url))
     }
 
-    if (!isPublicRoute(request)) {
-        console.log("Middleware: Protecting route", pathname);
-        await auth.protect();
+    const response = NextResponse.next()
+    if (userId) {
+        response.headers.set("x-user-id", userId)
     }
-
-});
+    return response
+}
 
 export const config = {
     matcher: [

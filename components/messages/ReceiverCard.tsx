@@ -11,7 +11,6 @@ type ReceiverCardProps = {
     sender: {
         id: string;
         name: string;
-        clerkUserId: string;
     };
     createdAt: string;
     category?: string;

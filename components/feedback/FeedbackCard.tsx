@@ -9,12 +9,10 @@ type FeedbackCardProps = {
     mentor: {
         id: string;
         name: string;
-        clerkUserId: string
     },
     mentee: {
         id: string;
         name: string;
-        clerkuserId: string;
     },
     skill: {
         id: string;

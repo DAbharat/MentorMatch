@@ -5,12 +5,13 @@ import { createMentorshipRequestSchema } from "@/schema/createMentorshipRequestS
 import { z } from "zod";
 import { createNotification } from "@/lib/notification";
 import { NotificationType } from "@prisma/client";
+import { getSessionFromRequest } from "@/lib/auth";
 
 export async function POST(req: NextRequest,
     { params }: { params: Promise<{ mentorId: string }> }
 ) {
-    const { userId } = await auth()
 
+    const userId = getSessionFromRequest(req)
     if (!userId) {
         return NextResponse.json({
             message: "Unauthenticated"
@@ -51,24 +52,20 @@ export async function POST(req: NextRequest,
     const { initialMessage, skillId } = parsed.data;
 
     try {
-        const dbUser = await prisma.user.findUnique({
+        const userExists = await prisma.user.findUnique({
             where: {
-                clerkUserId: userId
+                id: userId
             }
         })
-
-        if (!dbUser) {
+        if (!userExists) {
             return NextResponse.json({
                 message: "User not found"
-            }, {
+            }), {
                 status: 404
-            })
+            }
         }
 
-        const dbUserId = dbUser.id
-
-
-        if (mentorId === dbUserId) {
+        if (mentorId === userId) {
             return NextResponse.json({
                 message: "You cannot send a mentorship request to yourself"
             }, {
@@ -110,10 +107,11 @@ export async function POST(req: NextRequest,
         })
 
         if (!skillExistsForMentor) {
-            return NextResponse.json(
-                { message: "Invalid skill selected" },
-                { status: 400 }
-            )
+            return NextResponse.json({
+                message: "Invalid skill selected"
+            }, {
+                status: 400
+            })
         }
 
         const skill = await prisma.skill.findUnique({
@@ -128,7 +126,7 @@ export async function POST(req: NextRequest,
         const mentorshipRequestExists = await prisma.mentorshipRequest.findFirst({
             where: {
                 mentorId: mentorId,
-                menteeId: dbUserId,
+                menteeId: userId,
                 skillId: skillId,
                 status: "PENDING"
             }
@@ -143,12 +141,12 @@ export async function POST(req: NextRequest,
             })
         }
 
-        console.log("Creating mentorship request from", dbUserId, "to", mentorId, "for skill", skillId)
+        console.log("Creating mentorship request from", userId, "to", mentorId, "for skill", skillId)
 
         const createRequest = await prisma.mentorshipRequest.create({
             data: {
                 mentorId: mentorId,
-                menteeId: dbUserId,
+                menteeId: userId,
                 initialMessage: initialMessage,
                 skillId: skillId,
                 status: "PENDING",
@@ -161,10 +159,10 @@ export async function POST(req: NextRequest,
         try {
             const sendNotificationToMentor = await createNotification({
                 userId: mentorId,
-                senderId: dbUserId,
+                senderId: userId,
                 type: NotificationType.MENTORSHIP_REQUEST_RECEIVED,
                 title: "Received a mentorship request",
-                message: `You received a mentorship request from ${dbUser.name} for the skill ${skill?.name || 'Unknown'}`
+                message: `You received a mentorship request from ${userExists.name} for the skill ${skill?.name || 'Unknown'}`
             })
             console.log("Notification sent successfully:", sendNotificationToMentor.id)
         } catch (notificationError) {

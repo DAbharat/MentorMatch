@@ -17,7 +17,6 @@ const DM_Sans_Font = DM_Sans({
 type MentorInfo = {
     id: string
     name: string
-    clerkUserId: string
     skillsOffered: { id: string; name: string }[]
 }
 
@@ -47,7 +46,7 @@ export default function ScheduleSessionPage({ params }: PageProps) {
         const loadMentor = async () => {
             try {
                 setLoading(true)
-                const response = await fetchUserById({ clerkUserId: mentorId })
+                const response = await fetchUserById({ userId: mentorId })
 
                 if (!response?.data) {
                     throw new Error("Failed to load mentor information")

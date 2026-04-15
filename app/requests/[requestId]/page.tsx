@@ -20,7 +20,6 @@ type RequestId = {
     mentee: {
         id: string
         name: string
-        clerkUserId: string
         skillsOffered: { id: string; name: string }[]
         skillsWanted: { id: string; name: string }[]
     }

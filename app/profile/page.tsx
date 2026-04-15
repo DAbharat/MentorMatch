@@ -9,7 +9,6 @@ import ProfileHeader from '@/components/profile/ProfileHeader';
 import ProfileFeedback from '@/components/profile/ProfileFeedback';
 import ProfileStats from '@/components/profile/ProfileStats';
 import ProfileTabs from '@/components/profile/ProfileTabs';
-import axios, { AxiosError } from 'axios';
 import { ApiResponse } from '@/types/ApiResponse';
 import { redirect, useRouter } from 'next/navigation';
 import { Profile } from '@/types/profile';
@@ -170,7 +169,6 @@ export default function ProfilePage() {
                     name={profile.name}
                     bio={profile.bio || ""}
                     createdAt={profile.createdAt}
-                    clerkUserId={profile.clerkUserId}
                     skillsOffered={profile.skillsOffered}
                     skillsWanted={profile.skillsWanted}
                 />

@@ -5,10 +5,11 @@ import { createFeedbackSchema } from "@/schema/createFeedbackSchema";
 import { z } from "zod";
 import { createNotification } from "@/lib/notification";
 import { NotificationType } from "@prisma/client";
+import { getSessionFromRequest } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
-    const { userId } = await auth();
 
+    const userId = getSessionFromRequest(req)
     if (!userId) {
         return NextResponse.json({
             message: "Unauthorized"
@@ -40,13 +41,12 @@ export async function POST(req: NextRequest) {
         const { mentorId } = body
         const { rating, comment, sessionId } = parsed.data
 
-        const dbUser = await prisma.user.findUnique({
+        const userExists = await prisma.user.findUnique({
             where: {
-                clerkUserId: userId
+                id: userId
             }
         })
-
-        if (!dbUser) {
+        if(!userExists) {
             return NextResponse.json({
                 message: "User not found"
             }, {
@@ -54,9 +54,7 @@ export async function POST(req: NextRequest) {
             })
         }
 
-        const dbUserId = dbUser.id
-
-        if (mentorId.toString() === dbUserId.toString()) {
+        if (mentorId.toString() === userId.toString()) {
             return NextResponse.json({
                 message: "You cannot give feedback to yourself"
             }, {
@@ -85,7 +83,7 @@ export async function POST(req: NextRequest) {
             where: {
                 id: sessionId,
                 mentorId,
-                menteeId: dbUserId,
+                menteeId: userId,
                 status: "COMPLETED",
             },
         })
@@ -100,7 +98,7 @@ export async function POST(req: NextRequest) {
         const feedbackExists = await prisma.userFeedback.findUnique({
             where: {
                 mentorId: mentorId,
-                menteeId: dbUserId,
+                menteeId: userId,
                 session: {
                     status: "COMPLETED"
                 },
@@ -120,7 +118,7 @@ export async function POST(req: NextRequest) {
             const createFeedback = await tx.userFeedback.create({
                 data: {
                     mentorId,
-                    menteeId: dbUserId,
+                    menteeId: userId,
                     sessionId,
                     skillId: sessionExists.skillId,
                     rating,
@@ -157,10 +155,10 @@ export async function POST(req: NextRequest) {
             await tx.notification.create({
                 data: {
                     userId: mentorId,
-                    senderId: dbUserId,
+                    senderId: userId,
                     type: NotificationType.FEEDBACK_RECEIVED,
                     title: "New feedback received",
-                    message: `${dbUser.name} rated you ${rating} stars`
+                    message: `${userExists.name} rated you ${rating} stars`
                 }
             });
 
@@ -193,8 +191,8 @@ export async function GET(req: NextRequest,
         params: Promise<{ mentorId: string }>
     }
 ) {
-    const { mentorId } = await params
 
+    const { mentorId } = await params
     if (!mentorId) {
         return NextResponse.json({
             message: "Mentor ID is required"

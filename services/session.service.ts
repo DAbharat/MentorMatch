@@ -1,9 +1,10 @@
 import axios, { AxiosError } from "axios";
 import { ApiResponse } from "@/types/ApiResponse";
+import axiosClient from "@/lib/axiosClient";
 
 export async function fetchAllSessions() {
     try {
-        const response = await axios.get("/api/sessions")
+        const response = await axiosClient.get("/api/sessions")
         return response.data
     } catch (error) {
         const axiosError = error as AxiosError<ApiResponse>
@@ -14,7 +15,7 @@ export async function fetchAllSessions() {
 
 export async function fetchSessionById(sessionId: string) {
     try {
-        const response = await axios.get(`/api/sessions/${sessionId}`)
+        const response = await axiosClient.get(`/api/sessions/${sessionId}`)
         return response.data
     } catch (error) {
         const axiosError = error as AxiosError<ApiResponse>
@@ -25,7 +26,7 @@ export async function fetchSessionById(sessionId: string) {
 
 export async function confirmSession(sessionId: string) {
     try {
-        const response = await axios.patch(`/api/sessions/${sessionId}`, { action: "CONFIRM" })
+        const response = await axiosClient.patch(`/api/sessions/${sessionId}`, { action: "CONFIRM" })
         console.log("responsedata: ", response.data)
         return response.data
     } catch (error) {
@@ -37,7 +38,7 @@ export async function confirmSession(sessionId: string) {
 
 export async function startSession(sessionId: string) {
     try {
-        const response = await axios.patch(`/api/sessions/${sessionId}`, { action: "START"})
+        const response = await axiosClient.patch(`/api/sessions/${sessionId}`, { action: "START"})
         return response.data
     } catch (error) {
         const axiosError = error as AxiosError<ApiResponse>
@@ -48,7 +49,7 @@ export async function startSession(sessionId: string) {
 
 export async function cancelSession(sessionId: string) {
     try {
-        const response = await axios.patch(`/api/sessions/${sessionId}`, { action: "CANCEL" })
+        const response = await axiosClient.patch(`/api/sessions/${sessionId}`, { action: "CANCEL" })
         return response.data
     } catch (error) {
         const axiosError = error as AxiosError<ApiResponse>
@@ -59,7 +60,7 @@ export async function cancelSession(sessionId: string) {
 
 export async function completeSession(sessionId: string, isAutoEnd = false) {
     try {
-        const response = await axios.patch(`/api/sessions/${sessionId}`, { action: "COMPLETE", isAutoEnd })
+        const response = await axiosClient.patch(`/api/sessions/${sessionId}`, { action: "COMPLETE", isAutoEnd })
         return response.data
     } catch (error) {
         const axiosError = error as AxiosError<ApiResponse>
@@ -77,7 +78,7 @@ export async function createSession(sessionData: {
 }) {
     try {
         console.log("session data: ", sessionData)
-        const response = await axios.post("/api/sessions", sessionData)
+        const response = await axiosClient.post("/api/sessions", sessionData)
         return response.data
     } catch (error) {
         const axiosError = error as AxiosError<ApiResponse>
@@ -86,14 +87,14 @@ export async function createSession(sessionData: {
     }
 }
 
-export async function checkMentorshipSessionStatus(mentorClerkId: string) {
+export async function checkMentorshipSessionStatus(mentorId: string) {
     try {
         const allSessions = await fetchAllSessions()
         const sessions = allSessions.sessions || []
         
         const mentorshipSession = sessions.find((session: any) => 
-            session.mentor.clerkUserId === mentorClerkId || 
-            session.mentee.clerkUserId === mentorClerkId
+            session.mentor.id === mentorId || 
+            session.mentee.id === mentorId
         )
         
         if (!mentorshipSession) {
@@ -114,7 +115,7 @@ export async function checkMentorshipSessionStatus(mentorClerkId: string) {
 
 export async function cleanupStuckSessions() {
     try {
-        const response = await axios.post("/api/sessions/cleanup-stuck")
+        const response = await axiosClient.post("/api/sessions/cleanup-stuck")
         console.log("Cleanup response:", response.data)
         return response.data
     } catch (error) {

@@ -5,10 +5,11 @@ import { createSessionSchema } from "@/schema/sessionSchema";
 import { z } from "zod";
 import { createNotification } from "@/lib/notification";
 import { NotificationType } from "@prisma/client";
+import { getSessionFromRequest } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
-    const { userId } = await auth()
 
+    const userId = getSessionFromRequest(req)
     if (!userId) {
         return NextResponse.json({
             message: "Unauthenticated"
@@ -18,13 +19,12 @@ export async function GET(req: NextRequest) {
     }
 
     try {
-        const dbUser = await prisma.user.findUnique({
+        const userExists = await prisma.user.findUnique({
             where: {
-                clerkUserId: userId
+                id: userId
             }
         })
-
-        if (!dbUser) {
+        if(!userExists) {
             return NextResponse.json({
                 message: "User not found"
             }, {
@@ -35,8 +35,12 @@ export async function GET(req: NextRequest) {
         const sessions = await prisma.session.findMany({
             where: {
                 OR: [
-                    { mentorId: dbUser.id },
-                    { menteeId: dbUser.id }
+                    { 
+                        mentorId: userId 
+                    },
+                    { 
+                        menteeId: userId 
+                    }
                 ]
             },
             select: {
@@ -53,14 +57,12 @@ export async function GET(req: NextRequest) {
                     select: {
                         id: true,
                         name: true,
-                        clerkUserId: true
                     }
                 },
                 mentee: {
                     select: {
                         id: true,
                         name: true,
-                        clerkUserId: true
                     }
                 },
                 skill: {
@@ -93,8 +95,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-    const { userId } = await auth()
 
+    const userId = getSessionFromRequest(req)
     if (!userId) {
         return NextResponse.json({
             message: "Unauthenticated"
@@ -141,27 +143,20 @@ export async function POST(req: NextRequest) {
             })
         }
 
-        const dbUser = await prisma.user.findUnique({
+        const userExists = await prisma.user.findUnique({
             where: {
-                clerkUserId: userId
-            },
-            select: {
-                id: true,
-                name: true
+                id: userId
             }
         })
-
-        if (!dbUser) {
+        if(!userExists) {
             return NextResponse.json({
-                message: "Mentee not found"
+                message: "User not found"
             }, {
                 status: 404
             })
         }
 
-        const dbUserId = dbUser?.id
-
-        if (menteeId !== dbUserId) {
+        if (menteeId !== userId) {
             return NextResponse.json({
                 message: "Cannot create session for another user"
             }, {
@@ -208,10 +203,10 @@ export async function POST(req: NextRequest) {
 
         const sendNotificationToMentor = await createNotification({
             userId: mentorId,
-            senderId: dbUserId,
+            senderId: userId,
             type: NotificationType.SESSION_SCHEDULED,
             title: `New Session request`,
-            message: `${dbUser.name} requested session for the skill ${mentorExists.skillsOffered.find(s => s.id === skillId)?.name || "Unknown Skill"} scheduled at ${new Date(scheduledAt).toLocaleString()}`
+            message: `${userExists.name} requested session for the skill ${mentorExists.skillsOffered.find(s => s.id === skillId)?.name || "Unknown Skill"} scheduled at ${new Date(scheduledAt).toLocaleString()}`
         })
 
         return NextResponse.json({

@@ -17,7 +17,6 @@ type Message = {
     sender: {
         id: string
         name: string
-        clerkUserId: string
     }
 }
 

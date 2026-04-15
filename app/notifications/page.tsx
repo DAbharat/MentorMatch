@@ -36,7 +36,6 @@ type Notification = {
     sender?: {
         id: string
         name: string
-        clerkUserId: string
     }
 }
 

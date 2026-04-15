@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
+import { getSessionFromRequest } from "@/lib/auth";
 
 export async function DELETE(Req: NextRequest,
     { params } : { params : Promise<{ id : string }>}
 ) {
-    const { userId } = await auth()
 
-    if(!userId) {
+    const loggedInUserID = getSessionFromRequest(Req)
+    if(!loggedInUserID) {
         return NextResponse.json({
             message: "Unauthenticated"
         }, {
@@ -15,32 +16,28 @@ export async function DELETE(Req: NextRequest,
         })
     }
     
-    const { id } = await params
+    const { id: notificationId } = await params
 
     try {
-        const dbUser = await prisma.user.findUnique({
+        const userExists = await prisma.user.findUnique({
             where: {
-                clerkUserId: userId
+                id: loggedInUserID
             }
         })
-
-        if (!dbUser) {
+        if(!userExists) {
             return NextResponse.json({
                 message: "User not found"
-            }, {
+            }), {
                 status: 404
-            })
+            }
         }
-
-        const dbUserId = dbUser.id
 
         const deleteNotification = await prisma.notification.deleteMany({
             where: {
-                id: id,
-                userId: dbUserId
+                id: notificationId,
+                userId: loggedInUserID
             }
         })
-
         if(deleteNotification.count === 0) {
             return NextResponse.json({
                 message: "Notification not found"

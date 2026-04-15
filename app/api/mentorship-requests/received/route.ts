@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
+import { getSessionFromRequest } from "@/lib/auth";
 
 
 export async function GET(req: NextRequest) {
-    const { userId } = await auth()
 
+    const userId = getSessionFromRequest(req)
     if (!userId) {
         return NextResponse.json({
             message: "Unauthenticated"
@@ -20,17 +21,22 @@ export async function GET(req: NextRequest) {
         const cursor = searchParams.get("cursor")
         let nextCursor: string | null = null
 
-        const currentUser = await prisma.user.findUnique({
+        const userExists = await prisma.user.findUnique({
             where: {
-                clerkUserId: userId
+                id: userId
             }
         })
-
-        const currentUserId = currentUser?.id
+        if(!userId) {
+            return NextResponse.json({
+                message: "user not found"
+            }, {
+                status: 404
+            })
+        }
 
         const fetchRequests = await prisma.mentorshipRequest.findMany({
             where: {
-                mentorId: currentUserId,
+                mentorId: userId,
                 status: "PENDING"
             },
             include: {
@@ -39,7 +45,6 @@ export async function GET(req: NextRequest) {
                         id: true,
                         name: true,
                         email: true,
-                        clerkUserId: true,
                     }
                 },
                 mentee: {
@@ -47,7 +52,6 @@ export async function GET(req: NextRequest) {
                         id: true,
                         name: true,
                         email: true,
-                        clerkUserId: true,
                     }
                 },
                 skill: {

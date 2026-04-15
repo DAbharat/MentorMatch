@@ -6,13 +6,12 @@ import { useUser, useAuth } from '@clerk/nextjs'
 import ChatRoom from '@/components/chat/ChatRoom'
 import { useChatMessages } from '@/hooks/useChatMessages'
 import { useChatSocket } from '@/hooks/useChatSocket'
-import { markChatMessagesAsRead } from '@/services/messages.service'
+import { fetchAllChatsForAUser, markChatMessagesAsRead } from '@/services/messages.service'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Send, ArrowLeft } from 'lucide-react'
 import { Spinner } from '@/components/ui/spinner'
 import { toast } from 'sonner'
-import axios from 'axios'
 import { DM_Sans } from "next/font/google"
 
 const DM_Sans_Font = DM_Sans({
@@ -68,15 +67,15 @@ export default function ChatRoomPage() {
     useEffect(() => {
         const fetchChatDetails = async () => {
             try {
-                const response = await axios.get(`/api/chats`)
-                const allChats = response.data.chats
+                const data = await fetchAllChatsForAUser()
+                const allChats = data
                 const currentChat = allChats.find((chat: any) => chat.id === chatId)
                 
                 if (currentChat) {
                     setChatDetails(currentChat)
                     
                     // Determine the other user
-                    const other = currentChat.mentor.clerkUserId === user?.id 
+                    const other = currentChat.mentor.userId === user?.id 
                         ? currentChat.mentee 
                         : currentChat.mentor
                     setOtherUser(other)
@@ -150,7 +149,7 @@ export default function ChatRoomPage() {
     const handleVideoCall = () => {
         if (!otherUser) return
         
-        router.push(`/sessions/video-call?chatId=${chatId}&userId=${otherUser.clerkUserId}`)
+        router.push(`/sessions/video-call?chatId=${chatId}&userId=${otherUser.userId}`)
         
         toast.info("Starting video call...")
     }
@@ -180,7 +179,7 @@ export default function ChatRoomPage() {
                     lastSeen={connected ? "online" : "offline"}
                     messages={messages}
                     currentUserId={user?.id}
-                    otherUserClerkId={otherUser.clerkUserId}
+                    otherUserClerkId={otherUser.id}
                     onVideoCall={handleVideoCall}
                     onBack={() => router.back()}
                 />
