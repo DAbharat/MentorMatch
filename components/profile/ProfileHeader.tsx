@@ -3,7 +3,6 @@ import React, { useState } from 'react'
 import { DM_Sans } from 'next/font/google';
 import { Button } from '../retroui/Button';
 import { useRouter } from 'next/navigation';
-import { UserButton, useUser } from '@clerk/nextjs';
 import { toast } from 'sonner';
 import RequestFormContainer from '../mentorship-request/RequestFormContainer';
 import { MessageCircleMore } from 'lucide-react';
@@ -14,6 +13,7 @@ import { Textarea } from '../ui/textarea';
 import { updateMyProfile } from '@/services/profile.service';
 import { AxiosError } from 'axios';
 import { ApiResponse } from '@/types/ApiResponse';
+import { useAuth } from '@/hooks/useAuth';
 
 
 const DM_Sans_Font = DM_Sans({
@@ -31,7 +31,6 @@ type ProfileHeaderProps = {
   name: string;
   bio: string;
   createdAt: string;
-  clerkUserId: string;
   skillsOffered: Skills[];
   skillsWanted: Skills[];
   hasAcceptedRequest?: boolean;
@@ -44,11 +43,11 @@ function getMemberSince(createdAt: string) {
 }
 
 export default function ProfileHeader(
-  { id, name, bio, createdAt, clerkUserId, skillsOffered, skillsWanted, hasAcceptedRequest = false, chatId, hasActiveConfirmedSession = false }: ProfileHeaderProps
+  { id, name, bio, createdAt, skillsOffered, skillsWanted, hasAcceptedRequest = false, chatId, hasActiveConfirmedSession = false }: ProfileHeaderProps
 ) {
   const memberSince = getMemberSince(createdAt);
   const router = useRouter()
-  const { user } = useUser()
+  const { userId } = useAuth()
   const [open, setOpen] = useState(false)
   const [isEditSheetOpen, setIsEditSheetOpen] = useState(false)
   const [formData, setFormData] = useState({
@@ -89,7 +88,7 @@ export default function ProfileHeader(
     }
   };
 
-  const isOwner = user?.id === clerkUserId
+  const isOwner = userId === id
 
   return (
     <div className={`bg-linear-to-br bg-[#0b090a] ${DM_Sans_Font.className}`}>
@@ -116,7 +115,7 @@ export default function ProfileHeader(
 
               {/* Button exactly below "Member since" */}
               {isOwner ? (
-                user && (
+                userId && (
                   <Button
                     size="sm"
                     className="mt-6 bg-transparent rounded-full border border-[#d3d3d3]/50 border-b-2 text-[#d3d3d3] px-8 py-2"
@@ -125,7 +124,7 @@ export default function ProfileHeader(
                     Edit Profile
                   </Button>
                 )
-              ) : user && hasAcceptedRequest && chatId ? (
+              ) : userId && hasAcceptedRequest && chatId ? (
                 <div className="flex gap-2 mt-6">
                   <Button
                     size="sm"
@@ -138,7 +137,7 @@ export default function ProfileHeader(
                   <Button
                     size="sm"
                     className="bg-transparent rounded-full border border-[#d3d3d3]/50 border-b-2 text-[#d3d3d3] px-8 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                    onClick={() => user ? setOpen(true) : router.push("/sign-in")}
+                    onClick={() => userId ? setOpen(true) : router.push("/sign-in")}
                     disabled={hasActiveConfirmedSession}
                     title={hasActiveConfirmedSession ? "You have an active confirmed session. Wait until it completes to send another request." : "Send a new mentorship request"}
                   >
@@ -149,13 +148,13 @@ export default function ProfileHeader(
                 <Button
                   size="sm"
                   className="mt-6 bg-transparent rounded-full border border-[#d3d3d3]/50 text-[#d3d3d3] border-b-2 px-8 py-2"
-                  onClick={() => user ? setOpen(true) : router.push("/sign-in")}
+                  onClick={() => userId ? setOpen(true) : router.push("/sign-in")}
                 >
                   Send Request
                 </Button>
               )}
             </div>
-            {user && open && (
+            {userId && open && (
               <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
                 <div className="bg-[#111315] border border-[#1f1f1f] rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
                   <RequestFormContainer
@@ -169,7 +168,7 @@ export default function ProfileHeader(
             )}
 
             {/* Edit Profile Sheet */}
-            {user && isOwner && (
+            {userId && isOwner && (
               <Sheet open={isEditSheetOpen} onOpenChange={setIsEditSheetOpen}>
                 <SheetContent className={`${DM_Sans_Font.className} bg-[#111315] flex flex-col p-0 sm:max-w-lg w-full`}>
 

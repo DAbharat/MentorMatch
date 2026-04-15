@@ -12,7 +12,6 @@ type ChatCardProps = {
     sender: {
         id: string;
         name: string;
-        clerkUserId: string;
     }
     createdAt: string;
     unreadCount?: number;

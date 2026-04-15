@@ -1,3 +1,4 @@
+import axiosClient from '@/lib/axiosClient';
 import { ApiResponse } from '@/types/ApiResponse';
 import axios, { AxiosError } from 'axios'
 import React from 'react'
@@ -9,7 +10,7 @@ export async function MentorshipRequestService(requestData: {
 }) {
     try {
         console.log("fetching request api...")
-        const response = await axios.post(`/api/users/${requestData.mentorId}/mentorship-request`, requestData)
+        const response = await axiosClient.post(`/api/users/${requestData.mentorId}/mentorship-request`, requestData)
         return response.data
     } catch (error) {
         const axiosError = error as AxiosError<ApiResponse>;
@@ -25,7 +26,7 @@ export async function receivedMentorshipRequests(limit: number = 10, cursor?: st
 
         if(cursor) params.append("cursor", cursor)
 
-        const response = await axios.get(`/api/mentorship-requests/received?${params.toString()}`)
+        const response = await axiosClient.get(`/api/mentorship-requests/received?${params.toString()}`)
         return response.data
     } catch (error) {
         const axiosError = error as AxiosError<ApiResponse>;
@@ -42,7 +43,7 @@ export async function sentMentorshipRequests(status?: string, limit: number = 10
         if(cursor) params.append("cursor", cursor)
         if(status) params.append("status", status)
 
-        const response = await axios.get(`/api/mentorship-requests/sent?${params.toString()}`)
+        const response = await axiosClient.get(`/api/mentorship-requests/sent?${params.toString()}`)
         return response.data
     } catch (error) {
         const axiosError = error as AxiosError<ApiResponse>;
@@ -57,7 +58,7 @@ export async function updateMentorshipRequestStatus(
 ) {
     try {
         console.log(`Updating mentorship request ${requestId} to ${status}...`)
-        const response = await axios.patch(`/api/mentorship-requests/${requestId}`, { status })
+        const response = await axiosClient.patch(`/api/mentorship-requests/${requestId}`, { status })
         return response.data
     } catch (error) {
         const axiosError = error as AxiosError<ApiResponse>;
@@ -69,7 +70,7 @@ export async function updateMentorshipRequestStatus(
 export async function getMentorshipRequestById(requestId: string) {
     try {
         console.log("Fetching request by id...")
-        const response = await axios.get(`/api/mentorship-requests/${requestId}`)
+        const response = await axiosClient.get(`/api/mentorship-requests/${requestId}`)
         //console.log("request response: ", response)
         return response.data
     } catch (error) {
@@ -89,7 +90,7 @@ export async function getMentorshipRequestsByUsers(
         const params = new URLSearchParams({ mentorId, menteeId });
         if (status) params.append("status", status);
         
-        const response = await axios.get(`/api/mentorship-requests?${params.toString()}`)
+        const response = await axiosClient.get(`/api/mentorship-requests?${params.toString()}`)
         return response.data
     } catch (error) {
         const axiosError = error as AxiosError<ApiResponse>;

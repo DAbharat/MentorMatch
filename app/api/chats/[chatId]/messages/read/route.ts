@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
+import { getSessionFromRequest } from "@/lib/auth";
 
 export async function PATCH(req: NextRequest,
     { params }: { params: Promise<{ chatId: string }> }
 ) {
-    const { userId } = await auth()
 
+    const userId = getSessionFromRequest(req)
     if (!userId) {
         return NextResponse.json({
             message: "Unauthenticated"
@@ -16,7 +17,6 @@ export async function PATCH(req: NextRequest,
     }
 
     const { chatId } = await params
-
     if (!chatId) {
         return NextResponse.json({
             message: "Chat ID is required"
@@ -26,26 +26,18 @@ export async function PATCH(req: NextRequest,
     }
 
     try {
-        const dbUser = await prisma.user.findUnique({
+        const userExists = await prisma.user.findUnique({
             where: {
-                clerkUserId: userId
-            },
-            select: {
-                id: true,
-                name: true,
-                clerkUserId: true
+                id: userId
             }
         })
-
-        if (!dbUser) {
+        if(!userExists) {
             return NextResponse.json({
-                message: "User not found"
+                message: "user not found"
             }, {
                 status: 404
             })
         }
-
-        const dbUserId = dbUser.id
 
         const chat = await prisma.chat.findUnique({
             where: {
@@ -57,7 +49,6 @@ export async function PATCH(req: NextRequest,
                 skillId: true
             }
         })
-
         if (!chat) {
             return NextResponse.json({
                 message: "Chat not found"
@@ -65,8 +56,7 @@ export async function PATCH(req: NextRequest,
                 status: 404
             })
         }
-
-        if (chat.mentorId !== dbUserId && chat.menteeId !== dbUserId) {
+        if (chat.mentorId !== userId && chat.menteeId !== userId) {
             return NextResponse.json({
                 message: "Unauthorized"
             }, {
@@ -79,7 +69,7 @@ export async function PATCH(req: NextRequest,
                 chatId: chatId,
                 isRead: false,
                 senderId: {
-                    not: dbUserId
+                    not: userId
                 }
             },
             data: {

@@ -1,3 +1,4 @@
+import axiosClient from '@/lib/axiosClient';
 import { ApiResponse } from '@/types/ApiResponse';
 import axios, { AxiosError } from 'axios';
 import React from 'react'
@@ -25,7 +26,7 @@ export default async function searchService(params: {
         }
 
         console.log("searching for user with required skill or username...", { name: params.name, skill: params.skill, limit: params.limit, cursor: params.cursor })
-        const response = await axios.get(`/api/users?${query.toString()}`)
+        const response = await axiosClient.get(`/api/users?${query.toString()}`)
         return response.data.data
 
     } catch (error) {

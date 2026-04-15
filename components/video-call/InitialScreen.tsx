@@ -8,12 +8,10 @@ type InitialScreenProps = {
     mentor: {
         id: string;
         name: string;
-        clerkUserId: string;
     };
     mentee: {
         id: string;
         name: string;
-        clerkUserId: string;
     };
     micEnabled: boolean;
     cameraEnabled: boolean;

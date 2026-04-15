@@ -25,7 +25,6 @@ type RequestSidebarFormProps = {
     mentee: {
         id: string
         name: string
-        clerkUserId: string
         skillsOffered: { id: string; name: string }[]
         skillsWanted: { id: string; name: string }[]
     }
@@ -71,7 +70,7 @@ export default function RequestSidebarForm({
                 </div>
 
                 <div className="flex-1 min-w-0 space-y-1">
-                    <Link href={`/profile/${mentee.clerkUserId}`} className="text-sm font-bold truncate hover:underline cursor-pointer">{mentee.name}</Link>
+                    <Link href={`/profile/${mentee.id}`} className="text-sm font-bold truncate hover:underline cursor-pointer">{mentee.name}</Link>
                     <p className="text-xs text-muted-foreground">
                         Mentorship Request
                     </p>

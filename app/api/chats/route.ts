@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
+import { getSessionFromRequest } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
-    const { userId } = await auth()
 
+    const userId = getSessionFromRequest(req)
     if(!userId) {
         return NextResponse.json({
             message: "Unauthenticated"
@@ -17,33 +18,26 @@ export async function GET(req: NextRequest) {
     const searchChatByName = url.searchParams.get("name")?.trim()
 
     try {
-        const dbUser = await prisma.user.findUnique({
+        const userExists = await prisma.user.findUnique({
             where: {
-                clerkUserId: userId
-            },
-            select: {
-                id: true,
-                name: true,
+                id: userId
             }
         })
-
-        if (!dbUser) {
+        if(!userExists) {
             return NextResponse.json({
-                message: "User not found"
+                message: "user not found."
             }, {
                 status: 404
             })
         }
 
-        const dbUserId = dbUser.id
-
         const whereClause: any = {
             OR: [
                 {
-                    mentorId: dbUserId
+                    mentorId: userId
                 },
                 {
-                    menteeId: dbUserId
+                    menteeId: userId
                 }
             ]
         };
@@ -96,14 +90,12 @@ export async function GET(req: NextRequest) {
                     select: {
                         id: true,
                         name: true,
-                        clerkUserId: true
                     }
                 },
                 mentee: {
                     select: {
                         id: true,
                         name: true,
-                        clerkUserId: true
                     }
                 },
                 skill: {
@@ -126,7 +118,6 @@ export async function GET(req: NextRequest) {
                             select: {
                                 id: true,
                                 name: true,
-                                clerkUserId: true
                             }
                         }
                     }
@@ -137,7 +128,7 @@ export async function GET(req: NextRequest) {
                             where: {
                                 isRead: false,
                                 senderId: {
-                                    not: dbUserId
+                                    not: userId
                                 }
                             }
                         }

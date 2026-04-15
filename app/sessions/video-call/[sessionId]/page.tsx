@@ -2,8 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { useAuth, useUser } from '@clerk/nextjs'
-import axios from 'axios'
+import { useAuth } from '@/hooks/useAuth'
 import { toast } from 'sonner'
 import InitialScreen from '@/components/video-call/InitialScreen'
 import { Spinner } from '@/components/ui/spinner'
@@ -18,8 +17,7 @@ export default function VideoCallPage() {
   const params = useParams<{ sessionId: string }>()
   const sessionId = params.sessionId
 
-  const { user } = useUser()
-  const { getToken } = useAuth()
+  const { userId } = useAuth()
 
   const socketRef = useRef<Socket | null>(null)
   const [socket, setSocket] = useState<Socket | null>(null)
@@ -28,26 +26,19 @@ export default function VideoCallPage() {
   const socketInitializedRef = useRef(false)
 
   useEffect(() => {
-    if (user?.id) {
+    if (userId) {
       // User loaded
     }
-  }, [user?.id])
+  }, [userId])
 
-  // Initialize socket with Clerk token - only once
+  // Initialize socket with JWT - only once
   useEffect(() => {
-    if (socketInitializedRef.current || !user?.id) return
+    if (socketInitializedRef.current || !userId) return
 
     socketInitializedRef.current = true
 
     const initSocket = async () => {
       try {
-        const token = await getToken({ skipCache: true })
-
-        if (!token) {
-          socketInitializedRef.current = false
-          return
-        }
-
         if (socketRef.current?.connected) {
           setSocket(socketRef.current)
           return
@@ -59,7 +50,7 @@ export default function VideoCallPage() {
 
         socketRef.current = io(process.env.NEXT_PUBLIC_SOCKET_URL!, {
           transports: ["websocket", "polling"],
-          auth: { token, sessionId },
+          auth: { sessionId },
           withCredentials: true,
           reconnection: true,
           reconnectionAttempts: 5,
@@ -95,7 +86,7 @@ export default function VideoCallPage() {
         socketRef.current.disconnect()
       }
     }
-  }, [user?.id, sessionId, getToken])
+  }, [userId, sessionId])
 
   const {
     localStream,

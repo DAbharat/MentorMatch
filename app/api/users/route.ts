@@ -58,7 +58,6 @@ export async function GET(req: NextRequest) {
             where: whereClause,
             select: {
                 id: true,
-                clerkUserId: true,
                 name: true,
                 skillsOffered: {
                     select: {
@@ -110,7 +109,6 @@ export async function GET(req: NextRequest) {
 
         const data = searchUsers.map(u => ({
             id: u.id,
-            clerkUserId: u.clerkUserId,
             name: u.name,
             skillsOffered: u.skillsOffered.map(s => s.name),
             skillsWanted: u.skillsWanted.map(s => s.name),

@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import { useSignIn } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Label } from "@/components/ui/label";
@@ -11,6 +10,7 @@ import { Eye, EyeOff, CheckCircle2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { DM_Sans } from "next/font/google";
 import { toast } from "sonner"
+import { login } from "@/services/account.service";
 
 const DM_Sans_Font = DM_Sans({
   weight: ["400", "500", "700"],
@@ -18,190 +18,30 @@ const DM_Sans_Font = DM_Sans({
 })
 
 export default function SignIn() {
-  const signInHook = useSignIn();
-  const { isLoaded } = signInHook;
   const router = useRouter();
 
-  const [emailAddress, setEmailAddress] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
-  const [needsSecondFactor, setNeedsSecondFactor] = useState(false);
-  const [code, setCode] = useState("");
-
-  if (!isLoaded) return null;
-
-  const { signIn, setActive } = signInHook
-
-  async function handleGoogleSignUp() {
-    try {
-      await signIn.authenticateWithRedirect({
-        strategy: "oauth_google",
-        redirectUrl: "/sso-callback",
-        redirectUrlComplete: "/",
-      });
-    } catch (err: any) {
-      toast.error("Google sign in failed");
-      setError(err?.errors?.[0]?.message || "Google sign in failed");
-    }
-  }
+  const [isLoading, setIsLoading] = useState(false);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    setError("");
+    setIsLoading(true);
 
     try {
-      const result = await signIn.create({
-        identifier: emailAddress,
-        password,
-      });
-
-      if (result.status === "complete") {
-        await setActive({ session: result.createdSessionId });
-        router.push("/profile");
-      }
-      else if (result.status === "needs_second_factor") {
-        setNeedsSecondFactor(true);
-
-        await signIn.prepareSecondFactor({
-          strategy: "email_code",
-        });
-
-        toast.success("Verification code sent to your email");
-      }
-      else {
-        toast.error("Sign in failed");
-        setError("Sign in failed");
-      }
+      await login({ email, password });
+      toast.success("Logged in successfully! Redirecting...");
+      router.push("/profile");
     } catch (err: any) {
-      toast.error("Sign in failed");
-      setError(err?.errors?.[0]?.message || "Sign in failed");
+      const errorMsg = err?.message || "Login failed. Please try again.";
+      setError(errorMsg);
+      toast.error(errorMsg);
+    } finally {
+      setIsLoading(false);
     }
-  }
-
-  async function verifySecondFactor(e: React.FormEvent) {
-    e.preventDefault();
-
-    try {
-      const result = await signIn.attemptSecondFactor({
-        strategy: "email_code",
-        code,
-      });
-
-      if (result.status === "complete") {
-        await setActive({ session: result.createdSessionId });
-        router.push("/profile");
-      } else {
-        toast.error("Invalid code");
-      }
-    } catch (err: any) {
-      toast.error("Verification failed");
-    }
-  }
-
-  if (needsSecondFactor) {
-    return (
-      <div className={`min-h-screen flex items-center justify-center bg-[#0b090a] p-3 sm:p-4 md:p-6 ${DM_Sans_Font.className}`}>
-        <div className="w-full max-w-6xl bg-[#0b090a] rounded-2xl sm:rounded-3xl shadow-xl sm:shadow-2xl overflow-hidden grid grid-cols-1 md:grid-cols-2 my-4">
-
-          {/* Left: Verification */}
-          <div className="bg-[#0b090a] p-6 sm:p-8 md:p-10 lg:p-12">
-            <div className="max-w-md mx-auto md:mx-0">
-
-              <div className="mb-6 sm:mb-8">
-                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#d3d3d3] tracking-tight">
-                  Verify Your Email
-                </h1>
-                <p className="text-sm sm:text-base text-gray-600 mt-1 sm:mt-2 font-light">
-                  We've sent a verification code to{" "}
-                  <span className="font-semibold text-[#d3d3d3] break-all">
-                    {emailAddress}
-                  </span>
-                </p>
-              </div>
-
-              <form onSubmit={verifySecondFactor} className="space-y-5 sm:space-y-6">
-                <div>
-                  <Label className="text-xs sm:text-sm text-muted-foreground font-semibold mb-2 block">
-                    Verification Code
-                  </Label>
-                  <Input
-                    value={code}
-                    onChange={(e) => setCode(e.target.value)}
-                    placeholder="000000"
-                    maxLength={6}
-                    className="h-12 sm:h-14 text-center text-xl sm:text-2xl tracking-[0.5em] font-bold rounded-lg sm:rounded-xl bg-[#1a1a1d] border-white/10 text-[#d3d3d3]"
-                    required
-                  />
-                  <p className="text-xs text-gray-500 text-center mt-2 sm:mt-3">
-                    Check your email inbox and spam folder
-                  </p>
-                </div>
-
-                {error && (
-                  <Alert className="rounded-lg sm:rounded-xl border-red-200 bg-red-50">
-                    <AlertDescription className="text-xs sm:text-sm text-red-800">
-                      {error}
-                    </AlertDescription>
-                  </Alert>
-                )}
-
-                <Button
-                  type="submit"
-                  className="w-full h-11 sm:h-12 bg-[#d3d3d3] hover:bg-[#bcbcbc] text-black font-semibold text-sm sm:text-base rounded-full shadow-lg hover:shadow-xl transition-all duration-200"
-                >
-                  Verify Email
-                </Button>
-
-                <button
-                  type="button"
-                  onClick={() => setNeedsSecondFactor(false)}
-                  className="w-full text-xs sm:text-sm text-gray-500 hover:text-gray-400 font-medium"
-                >
-                  Back to sign in
-                </button>
-              </form>
-
-              <p className="text-xs text-gray-400 text-center mt-10 sm:mt-12">
-                © {new Date().getFullYear()} Acme. All rights reserved
-              </p>
-            </div>
-          </div>
-
-          {/* Right panel (unchanged) */}
-          <div className="hidden md:flex items-center justify-center bg-[#111315] text-white p-8 xl:p-10 relative overflow-hidden rounded-4xl">
-            <div className="absolute top-0 right-0 w-72 h-72 xl:w-96 xl:h-96 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
-            <div className="absolute bottom-0 left-0 w-64 h-64 xl:w-80 xl:h-80 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
-
-            <div className="max-w-md text-center relative z-10">
-              <h2 className="text-2xl xl:text-3xl font-bold mb-3 xl:mb-4 leading-tight">
-                Find mentors. Share skills. Grow faster
-              </h2>
-              <p className="text-sm xl:text-base mb-6 xl:mb-8 text-indigo-100 font-light">
-                Continue your learning journey
-              </p>
-
-              <div className="w-full bg-white/10 backdrop-blur-sm rounded-xl xl:rounded-2xl p-4 xl:p-6 mb-6 xl:mb-8 border border-white/20 shadow-2xl">
-                <div className="h-40 xl:h-48 w-full bg-linear-to-br from-white/20 to-white/5 rounded-lg xl:rounded-xl flex items-center justify-center">
-                  <div className="text-center">
-                    <CheckCircle2 className="w-12 h-12 xl:w-16 xl:h-16 mx-auto mb-2 xl:mb-3 text-white/80" />
-                    <p className="text-xs xl:text-sm font-medium text-white/90">
-                      Dashboard Preview
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-center gap-4 xl:gap-6 text-xs xl:text-sm text-indigo-100/80 font-medium">
-                <span className="hover:text-white">Github</span>
-                <span className="text-white/30">•</span>
-                <span className="hover:text-white">Google</span>
-              </div>
-            </div>
-          </div>
-
-        </div>
-      </div>
-    );
   }
 
   return (
@@ -224,8 +64,8 @@ export default function SignIn() {
               <Button
                 type="button"
                 variant="outline"
-                className="w-full h-11 sm:h-12 rounded-lg sm:rounded-xl border-2 border-gray-200 bg-[#111315] text-[#d3d3d3] font-medium text-sm transition-all duration-200 shadow-sm"
-                onClick={handleGoogleSignUp}
+                className="w-full h-11 sm:h-12 rounded-lg sm:rounded-xl border-2 border-gray-200 bg-[#111315] text-[#d3d3d3] font-medium text-sm transition-all duration-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isLoading}
               >
                 <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3" viewBox="0 0 24 24">
                   <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -257,11 +97,12 @@ export default function SignIn() {
                 <Input
                   id="email"
                   type="email"
-                  value={emailAddress}
-                  onChange={(e) => setEmailAddress(e.target.value)}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter your email address"
                   className="h-11 sm:h-12 rounded-lg sm:rounded-xl bg-[#1a1a1d] border-white/10 text-[#d3d3d3] placeholder:text-white/25 focus-visible:ring-white/20 focus-visible:border-white/30 transition-all text-sm sm:text-base"
                   required
+                  disabled={isLoading}
                 />
               </div>
 
@@ -281,11 +122,13 @@ export default function SignIn() {
                     placeholder="Enter your password"
                     className="h-11 sm:h-12 pr-11 sm:pr-12 rounded-lg sm:rounded-xl bg-[#1a1a1d] border-white/10 text-[#d3d3d3] placeholder:text-white/25 focus-visible:ring-white/20 focus-visible:border-white/30 transition-all text-sm sm:text-base"
                     required
+                    disabled={isLoading}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                    disabled={isLoading}
                   >
                     {showPassword ? (
                       <EyeOff className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -309,9 +152,10 @@ export default function SignIn() {
 
               <Button
                 type="submit"
-                className="w-full h-11 sm:h-12 bg-[#d3d3d3] hover:bg-[#bcbcbc] text-black font-semibold text-sm sm:text-base rounded-full shadow-lg hover:shadow-xl transition-all duration-200 mt-5 sm:mt-6"
+                disabled={isLoading}
+                className="w-full h-11 sm:h-12 bg-[#d3d3d3] hover:bg-[#bcbcbc] text-black font-semibold text-sm sm:text-base rounded-full shadow-lg hover:shadow-xl transition-all duration-200 mt-5 sm:mt-6 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Sign In
+                {isLoading ? "Signing In..." : "Sign In"}
               </Button>
             </form>
 
@@ -331,7 +175,7 @@ export default function SignIn() {
           </div>
         </div>
 
-        {/* Right: Promo panel — hidden on mobile, visible from md up */}
+        {/* Right: Promo panel */}
         <div className="hidden md:flex items-center justify-center bg-[#111315] text-white p-8 xl:p-10 relative overflow-hidden rounded-4xl">
           <div className="absolute top-0 right-0 w-72 h-72 xl:w-96 xl:h-96 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
           <div className="absolute bottom-0 left-0 w-64 h-64 xl:w-80 xl:h-80 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />

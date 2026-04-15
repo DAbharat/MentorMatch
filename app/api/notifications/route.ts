@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
+import { getSessionFromRequest } from "@/lib/auth";
 
 export async function GET(request: NextRequest) {
-    const { userId } = await auth()
+    const userId = getSessionFromRequest(request)
 
     if (!userId) {
         console.log("Unauthenticated request to /api/notifications")
@@ -23,34 +24,16 @@ export async function GET(request: NextRequest) {
         let nextCursor: string | null = null
 
         console.log("Fetching notifications for userId:", userId, "params:", { limit, filter, cursor })
-
-        const dbUser = await prisma.user.findUnique({
-            where: {
-                clerkUserId: userId
-            }
-        })
-
-        if (!dbUser) {
-            console.log("User not found in database for clerkUserId:", userId)
-            return NextResponse.json({
-                message: "User not found"
-            }, {
-                status: 404
-            })
-        }
-
-        const dbUserId = dbUser.id
-        console.log("Found dbUser:", dbUserId)
         
         const totalNotifications = await prisma.notification.count({
             where: {
-                userId: dbUserId
+                userId
             }
         })
         console.log("Total notifications in database for this user:", totalNotifications)
         
         const whereClause: { userId: string, isRead?: boolean } = {
-            userId: dbUserId
+            userId
         }
 
         if(filter === "read") {
@@ -69,7 +52,6 @@ export async function GET(request: NextRequest) {
                         select: {
                             id: true,
                             name: true,
-                            clerkUserId: true
                         }
                     }
                 },
@@ -85,7 +67,7 @@ export async function GET(request: NextRequest) {
 
             prisma.notification.count({
                 where: {
-                    userId: dbUserId,
+                    userId,
                     isRead: false
                 }
             })
@@ -118,7 +100,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
-    const { userId } = await auth()
+    const userId = getSessionFromRequest(request)
 
     if (!userId) {
         return NextResponse.json({
@@ -129,28 +111,24 @@ export async function DELETE(request: NextRequest) {
     }
 
     try {
-        const dbUser = await prisma.user.findUnique({
+        const userExists = await prisma.user.findUnique({
             where: {
-                clerkUserId: userId
+                id: userId
             }
         })
-
-        if (!dbUser) {
+        if(!userExists) {
             return NextResponse.json({
-                message: "User not found"
+                message: "User not found."
             }, {
                 status: 404
             })
         }
 
-        const dbUserId = dbUser.id
-
         const deleteAllNotifications = await prisma.notification.deleteMany({
             where: {
-                userId: dbUserId
+                userId
             }
         })
-
         if (deleteAllNotifications.count === 0) {
             return NextResponse.json({
                 message: "No notifications to delete"

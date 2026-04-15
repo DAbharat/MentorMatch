@@ -1,5 +1,5 @@
 generator client {
-  provider        = "prisma-client-js"
+  provider = "prisma-client-js"
 }
 
 datasource db {
@@ -7,15 +7,21 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  clerkUserId String   @unique 
-  email     String   @unique
-  name      String
-  bio       String?
-  createdAt DateTime @default(now())
+  id                  String    @id @default(uuid())
+  clerkUserId         String?    @unique
+  email               String    @unique
+  password            String
+  failedLoginAttempts Int       @default(0)
+  lockedUntil         DateTime?
+  lastLoginAt         DateTime?
+  name                String
+  bio                 String?
+  createdAt           DateTime  @default(now())
 
   averageRating Float?
-  ratingCount   Int @default(0)
+  ratingCount   Int    @default(0)
+
+  authSessions AuthSession[]
 
   skillsOffered Skill[] @relation("OfferedSkills")
   skillsWanted  Skill[] @relation("WantedSkills")
@@ -36,16 +42,26 @@ model User {
   feedbackReceived UserFeedback[] @relation("MentorFeedback")
   feedbackGiven    UserFeedback[] @relation("MenteeFeedback")
 
-  notifications Notification[] @relation("UserNotifications")
+  notifications     Notification[] @relation("UserNotifications")
   notificationsSent Notification[] @relation("SenderNotifications")
 
   @@index([email, id])
 }
 
+model AuthSession {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id])
+  refreshToken String   @unique
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+
+  @@index([userId])
+}
 
 model Skill {
-  id   String @id @default(uuid())
-  name String @unique
+  id                  String @id @default(uuid())
+  name                String @unique
   normalizedSkillName String @unique
 
   offeredBy User[] @relation("OfferedSkills")
@@ -56,7 +72,7 @@ model Skill {
   feedback UserFeedback[]
 
   mentorshipRequests MentorshipRequest[]
-  chats Chat[] @relation("SkillChats")
+  chats              Chat[]              @relation("SkillChats")
 }
 
 model Session {
@@ -79,9 +95,9 @@ model Session {
 
   feedback UserFeedback?
 
-  completedBy SessionCompletedBy? 
+  completedBy SessionCompletedBy?
 
-  roomId            String @unique
+  roomId            String    @unique
   callStartedAt     DateTime?
   callEndedAt       DateTime?
   totalCallDuration Int?
@@ -103,7 +119,6 @@ model Session {
   @@index([scheduledAt])
   @@index([status, callStartedAt, metricsComputedAt])
 }
-
 
 enum SessionStatus {
   PENDING
@@ -131,7 +146,7 @@ model UserFeedback {
   session   Session @relation(fields: [sessionId], references: [id])
 
   skillId String
-  skill   Skill @relation(fields: [skillId], references: [id])
+  skill   Skill  @relation(fields: [skillId], references: [id])
 
   rating  Int
   comment String
@@ -160,7 +175,7 @@ model MentorshipRequest {
   initialMessage String?
 
   skillId String
-  skill   Skill @relation(fields: [skillId], references: [id])
+  skill   Skill  @relation(fields: [skillId], references: [id])
 
   notifications Notification[]
 
@@ -187,9 +202,9 @@ model Chat {
   menteeId String
   skillId  String
 
-  mentor User @relation("MentorChats", fields: [mentorId], references: [id])
-  mentee User @relation("MenteeChats", fields: [menteeId], references: [id])
-  skill Skill @relation("SkillChats", fields: [skillId], references: [id])
+  mentor User  @relation("MentorChats", fields: [mentorId], references: [id])
+  mentee User  @relation("MenteeChats", fields: [menteeId], references: [id])
+  skill  Skill @relation("SkillChats", fields: [skillId], references: [id])
 
   messages Message[]
 
@@ -202,15 +217,15 @@ model Message {
   id String @id @default(uuid())
 
   chatId String
-  chat   Chat @relation(fields: [chatId], references: [id])
+  chat   Chat   @relation(fields: [chatId], references: [id])
 
   senderId String
-  sender   User @relation(fields: [senderId], references: [id])
+  sender   User   @relation(fields: [senderId], references: [id])
 
   content String
 
-  isDelivered Boolean @default(false)
-  isRead      Boolean @default(false)
+  isDelivered Boolean   @default(false)
+  isRead      Boolean   @default(false)
   readAt      DateTime?
 
   createdAt DateTime @default(now())
@@ -245,17 +260,17 @@ model Notification {
   id String @id @default(uuid())
 
   userId String
-  user User @relation("UserNotifications", fields: [userId], references: [id])
+  user   User   @relation("UserNotifications", fields: [userId], references: [id])
 
-  senderId String?           
-  sender   User? @relation("SenderNotifications", fields: [senderId], references: [id])
+  senderId String?
+  sender   User?   @relation("SenderNotifications", fields: [senderId], references: [id])
 
   mentorshipRequestId String?
   mentorshipRequest   MentorshipRequest? @relation(fields: [mentorshipRequestId], references: [id])
 
   type NotificationType
 
-  title String
+  title   String
   message String
 
   isRead Boolean @default(false)
@@ -280,12 +295,12 @@ enum NotificationType {
 }
 
 model WebhookLog {
-  id String @id @default(uuid())
-  svixId String @unique
-  eventType String
-  eventData Json
-  receivedAt DateTime @default(now())
-  status WebhookStatus
+  id         String        @id @default(uuid())
+  svixId     String        @unique
+  eventType  String
+  eventData  Json
+  receivedAt DateTime      @default(now())
+  status     WebhookStatus
 }
 
 enum WebhookStatus {

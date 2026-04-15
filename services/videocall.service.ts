@@ -1,3 +1,4 @@
+import axiosClient from "@/lib/axiosClient"
 import { ApiResponse } from "@/types/ApiResponse"
 import { WebRTCConfig } from "@/types/WebRTCConfig"
 import axios, { AxiosError } from "axios"
@@ -8,7 +9,7 @@ export async function startVideoCall(sessionId: string): Promise<WebRTCConfig> {
     }
     
     try {
-        const response = await axios.get<WebRTCConfig>(`/api/sessions/${sessionId}/webrtc/config`)
+        const response = await axiosClient.get<WebRTCConfig>(`/api/sessions/${sessionId}/webrtc/config`)
         return response.data
     } catch (error:any) {
         const axiosError = error as AxiosError<ApiResponse>

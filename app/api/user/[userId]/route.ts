@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
+import { getSessionFromRequest } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
-    const { userId: currentClerkUserId } = await auth();
+    const userId = getSessionFromRequest(req)
     const url = new URL(req.url);
-    const profileClerkUserId = url.pathname.split("/").pop();
+    const profileUserId = url.pathname.split("/").pop();
 
-    if (!profileClerkUserId) {
+    if (!profileUserId) {
         return NextResponse.json({
             message: "Bad Request: User ID is required in the URL"
         }, {
@@ -18,11 +18,10 @@ export async function GET(req: NextRequest) {
     try {
         const fetchUser = await prisma.user.findUnique({
             where: {
-                clerkUserId: profileClerkUserId
+                id: profileUserId
             },
             select: {
                 id: true,
-                clerkUserId: true,
                 name: true,
                 bio: true,
                 ratingCount: true,
@@ -69,9 +68,9 @@ export async function GET(req: NextRequest) {
         let chatId = null;
         let hasActiveConfirmedSession = false;
 
-        if (currentClerkUserId && currentClerkUserId !== profileClerkUserId) {
+        if (userId && userId !== profileUserId) {
             const currentUser = await prisma.user.findUnique({
-                where: { clerkUserId: currentClerkUserId },
+                where: { id: userId },
                 select: { id: true }
             });
 
@@ -182,7 +181,6 @@ export async function GET(req: NextRequest) {
 
         const data = {
             id: fetchUser.id,
-            clerkUserId: fetchUser.clerkUserId,
             name: fetchUser.name,
             bio: fetchUser.bio,
             createdAt: fetchUser.createdAt,

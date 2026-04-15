@@ -1,3 +1,4 @@
+import axiosClient from '@/lib/axiosClient'
 import { ApiResponse } from '@/types/ApiResponse'
 import axios, { AxiosError } from 'axios'
 import React from 'react'
@@ -15,11 +16,7 @@ export async function FetchAllNotifications(params?: {
         if(params?.limit) query.append("limit", params.limit.toString())
 
         console.log("Fetching notifications with params:", params)
-        const response = await axios.get(`/api/notifications?${query.toString()}`)
-        console.log("Notifications response:", response.data)
-        console.log("Notifications array:", response.data.notifications)
-        console.log("Notifications count:", response.data.notifications?.length || 0)
-        console.log("Unread count:", response.data.unreadCount)
+        const response = await axiosClient.get(`/api/notifications?${query.toString()}`)
         return response.data
     } catch (error) {
         const axiosError = error as AxiosError<ApiResponse>
@@ -35,7 +32,7 @@ export async function FetchAllNotifications(params?: {
 export async function deleteAllNotifications() {
     try {
         console.log("deleting notifications...")
-        const response = await axios.delete(`/api/notifications`)
+        const response = await axiosClient.delete(`/api/notifications`)
         return response.data
     } catch (error) {
         const axiosError = error as AxiosError<ApiResponse>
@@ -51,7 +48,7 @@ export async function deleteAllNotifications() {
 export async function deleteNotificationById(notificationId: string) {
     try {
         console.log("deleting single notification...")
-        const response = await axios.delete(`/api/notifications/${notificationId}`)
+        const response = await axiosClient.delete(`/api/notifications/${notificationId}`)
         return response.data 
     } catch (error) {
         const axiosError = error as AxiosError<ApiResponse>
@@ -67,7 +64,7 @@ export async function deleteNotificationById(notificationId: string) {
 export async function markAllNotificationsAsRead() {
     try {
         console.log("marking all as read...")
-        const response = await axios.patch(`/api/notifications/read-all`)
+        const response = await axiosClient.patch(`/api/notifications/read-all`)
         return response.data
     } catch (error) {
         const axiosError = error as AxiosError<ApiResponse>
@@ -83,7 +80,7 @@ export async function markAllNotificationsAsRead() {
 export async function markSingleNotificationAsRead(notificationId: string) {
     try {
         console.log("marking one noti as read...", notificationId)
-        const response = await axios.patch(`/api/notifications/${notificationId}/read`)
+        const response = await axiosClient.patch(`/api/notifications/${notificationId}/read`)
         return response.data
     } catch (error) {
         const axiosError = error as AxiosError<ApiResponse>

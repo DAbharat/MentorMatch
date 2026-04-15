@@ -18,12 +18,10 @@ type RequestSidebarProps = {
     mentee?: {
         id: string
         name: string
-        clerkUserId: string
     };
     mentor?: {
         id: string
         name: string
-        clerkUserId: string
     };
     skill?: {
         id: string;
@@ -57,7 +55,7 @@ export default function RequestSidebarCard(
     }
 
     const handleScheduleSession = () => {
-        router.push(`/sessions/schedule/${mentor?.clerkUserId}/${id}`)
+        router.push(`/sessions/schedule/${mentor?.id}/${id}`)
     }
 
     const getStatusBadge = (status: string) => {
@@ -75,7 +73,7 @@ export default function RequestSidebarCard(
 
     const displayUser = isSentView ? mentor : mentee
     const userName = displayUser?.name || "Unknown User"
-    const userClerkId = displayUser?.clerkUserId
+    const userId = displayUser?.id
 
   return (
     <Card className="p-3 sm:p-4 w-full bg-[#161a1d] border-none">
@@ -93,8 +91,8 @@ export default function RequestSidebarCard(
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                     {/* Name + badge */}
                     <div className="flex items-center gap-1.5 min-w-0">
-                        {userClerkId && (
-                            <Link href={`/profile/${userClerkId}`} onClick={(e) => e.stopPropagation()} className="min-w-0">
+                        {userId && (
+                            <Link href={`/profile/${userId}`} onClick={(e) => e.stopPropagation()} className="min-w-0">
                                 <span className="text-[#d3d3d3] text-sm font-semibold truncate hover:underline block">
                                     {userName}
                                 </span>

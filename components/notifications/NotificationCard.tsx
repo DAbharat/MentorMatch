@@ -43,7 +43,6 @@ type NotificationCardProps = {
     sender?: {
         id: string
         name: string
-        clerkUserId: string
     };
     onDeleted?: (notificationId: string) => void;
     onRead?: (notificationId: string) => void;
@@ -67,9 +66,9 @@ export default function NotificationCard(
 
     useEffect(() => {
         const checkSession = async () => {
-            if (showScheduleButton && sender?.clerkUserId) {
+            if (showScheduleButton && sender?.id) {
                 try {
-                    const result = await checkMentorshipSessionStatus(sender.clerkUserId)
+                    const result = await checkMentorshipSessionStatus(sender.id)
                     setSessionStatus(result)
                 } catch (error) {
                     console.error("Error checking session status:", error)
@@ -82,11 +81,11 @@ export default function NotificationCard(
         }
 
         checkSession()
-    }, [showScheduleButton, sender?.clerkUserId])
+    }, [showScheduleButton, sender?.id])
 
     const handleScheduleSession = () => {
-        if (sender?.clerkUserId) {
-            router.push(`/sessions/schedule/${sender.clerkUserId}`)
+        if (sender?.id) {
+            router.push(`/sessions/schedule/${sender.id}`)
         }
     }
 
@@ -172,8 +171,8 @@ export default function NotificationCard(
                     {/* Header Row */}
                     <div className="flex flex-wrap items-start justify-between gap-x-2 mb-1">
                         <div className="flex items-center gap-2 min-w-0 max-w-[70%]">
-                            {sender?.clerkUserId ? (
-                                <Link href={`/profile/${sender.clerkUserId}`} onClick={(e) => e.stopPropagation()} className="truncate">
+                            {sender?.id ? (
+                                <Link href={`/profile/${sender.id}`} onClick={(e) => e.stopPropagation()} className="truncate">
                                     <span className="text-sm font-semibold truncate hover:underline text-[#d3d3d3]">
                                         {senderName}
                                     </span>

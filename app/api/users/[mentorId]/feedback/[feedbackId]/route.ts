@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
+import { getSessionFromRequest } from "@/lib/auth";
 
 export async function DELETE(req: NextRequest,
     { params }: { params: Promise<{ mentorId: string; feedbackId: string }> }
 ) {
-    const { userId } = await auth()
 
+    const userId = getSessionFromRequest(req)
     if (!userId) {
         return NextResponse.json({
             message: "Unauthorized"
@@ -16,7 +17,6 @@ export async function DELETE(req: NextRequest,
     }
 
     const { mentorId, feedbackId } = await params
-
     if (!mentorId || !feedbackId) {
         return NextResponse.json(
             { message: "Invalid parameters" },

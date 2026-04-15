@@ -27,12 +27,10 @@ type Request = {
     mentee?: {
         id: string
         name: string
-        clerkUserId: string
     };
     mentor?: {
         id: string
         name: string
-        clerkUserId: string
     };
     skill?: {
         id: string;

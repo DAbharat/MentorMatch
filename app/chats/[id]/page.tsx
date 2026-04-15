@@ -2,17 +2,16 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { useUser, useAuth } from '@clerk/nextjs'
+import { useAuth } from '@/hooks/useAuth'
 import ChatRoom from '@/components/chat/ChatRoom'
 import { useChatMessages } from '@/hooks/useChatMessages'
 import { useChatSocket } from '@/hooks/useChatSocket'
-import { markChatMessagesAsRead } from '@/services/messages.service'
+import { fetchAllChatsForAUser, markChatMessagesAsRead } from '@/services/messages.service'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Send, ArrowLeft } from 'lucide-react'
 import { Spinner } from '@/components/ui/spinner'
 import { toast } from 'sonner'
-import axios from 'axios'
 import { DM_Sans } from "next/font/google"
 
 const DM_Sans_Font = DM_Sans({
@@ -23,15 +22,13 @@ const DM_Sans_Font = DM_Sans({
 export default function ChatRoomPage() {
     const params = useParams()
     const router = useRouter()
-    const { user } = useUser()
-    const { getToken } = useAuth()
+    const { userId, isLoading: authLoading } = useAuth()
     const chatId = params.id as string
 
     const [chatDetails, setChatDetails] = useState<any>(null)
     const [messageInput, setMessageInput] = useState('')
     const [isSending, setIsSending] = useState(false)
     const [otherUser, setOtherUser] = useState<any>(null)
-    const [token, setToken] = useState<string | null>(null)
     const messagesEndRef = useRef<HTMLDivElement>(null)
     const inputRef = useRef<HTMLInputElement>(null)
     const hasMarkedAsReadRef = useRef(false)
@@ -39,18 +36,6 @@ export default function ChatRoomPage() {
     const scrollToBottom = useCallback(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
     }, [])
-
-    // Get Clerk session token on mount
-    useEffect(() => {
-        (async () => {
-            try {
-                const sessionToken = await getToken()
-                setToken(sessionToken)
-            } catch (error: any) {
-                console.error("Failed to get session token:", error.message)
-            }
-        })()
-    }, [getToken, user])
 
     const { messages, isLoading, appendMessage } = useChatMessages(chatId)
 
@@ -60,7 +45,7 @@ export default function ChatRoomPage() {
     }, [appendMessage, scrollToBottom])
 
     const { socket, connected, isConnecting, socketError, typingUsers, emitTyping, emitStopTyping } = useChatSocket({
-        token: token || '',
+        token: '',
         chatId,
         onNewMessage: handleNewMessage,
     })
@@ -68,15 +53,15 @@ export default function ChatRoomPage() {
     useEffect(() => {
         const fetchChatDetails = async () => {
             try {
-                const response = await axios.get(`/api/chats`)
-                const allChats = response.data.chats
+                const data = await fetchAllChatsForAUser()
+                const allChats = data
                 const currentChat = allChats.find((chat: any) => chat.id === chatId)
                 
                 if (currentChat) {
                     setChatDetails(currentChat)
                     
                     // Determine the other user
-                    const other = currentChat.mentor.clerkUserId === user?.id 
+                    const other = currentChat.mentor.userId === userId 
                         ? currentChat.mentee 
                         : currentChat.mentor
                     setOtherUser(other)
@@ -87,10 +72,10 @@ export default function ChatRoomPage() {
             }
         }
 
-        if (user?.id) {
+        if (userId) {
             fetchChatDetails()
         }
-    }, [chatId, user?.id])
+    }, [chatId, userId])
 
     useEffect(() => {
         if (messages.length > 0) {
@@ -99,7 +84,7 @@ export default function ChatRoomPage() {
     }, [messages, scrollToBottom])
 
     useEffect(() => {
-        if (chatId && user?.id && !hasMarkedAsReadRef.current) {
+        if (chatId && userId && !hasMarkedAsReadRef.current) {
             hasMarkedAsReadRef.current = true
             markChatMessagesAsRead(chatId)
                 .then(() => {
@@ -109,7 +94,7 @@ export default function ChatRoomPage() {
                     console.error("Failed to mark messages as read:", error)
                 })
         }
-    }, [chatId, user?.id])
+    }, [chatId, userId])
 
     // Handle message sending
     const handleSendMessage = async (e: React.FormEvent) => {
@@ -150,15 +135,23 @@ export default function ChatRoomPage() {
     const handleVideoCall = () => {
         if (!otherUser) return
         
-        router.push(`/sessions/video-call?chatId=${chatId}&userId=${otherUser.clerkUserId}`)
+        router.push(`/sessions/video-call?chatId=${chatId}&userId=${otherUser.userId}`)
         
         toast.info("Starting video call...")
     }
 
-    if (isLoading) {
+    if (authLoading || isLoading) {
         return (
             <div className="flex items-center justify-center min-h-screen">
                 <Spinner />
+            </div>
+        )
+    }
+
+    if (!userId) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <p className="text-muted-foreground">Unauthorized</p>
             </div>
         )
     }
@@ -179,8 +172,8 @@ export default function ChatRoomPage() {
                     roomName={otherUser.name}
                     lastSeen={connected ? "online" : "offline"}
                     messages={messages}
-                    currentUserId={user?.id}
-                    otherUserClerkId={otherUser.clerkUserId}
+                    currentUserId={userId}
+                    otherUserId={otherUser.id}
                     onVideoCall={handleVideoCall}
                     onBack={() => router.back()}
                 />

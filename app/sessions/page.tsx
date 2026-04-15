@@ -6,32 +6,23 @@ import SessionsList from "@/components/sessions/SessionsList"
 import { fetchAllSessions, confirmSession, cancelSession, startSession } from "@/services/session.service"
 import { fetchMyProfile } from "@/services/profile.service"
 import { io, Socket } from "socket.io-client"
-import { useAuth, useUser } from "@clerk/nextjs"
+import { useAuth } from "@/hooks/useAuth"
 import { Session } from "@/types/session"
 
 export default function SessionsPage() {
     const [sessions, setSessions] = useState<Session[]>([])
-    const [currentUserClerkId, setCurrentUserClerkId] = useState<string | null>(null)
+    const [currentUserID, setCurrentUserID] = useState<string | null>(null)
     const [loading, setLoading] = useState(true)
     const [socket, setSocket] = useState<Socket | null>(null)
     const [activeSessions, setActiveSessions] = useState<string[]>([])
 
-    const { user } = useUser()
-    const { getToken } = useAuth()
+    const { userId } = useAuth()
 
     useEffect(() => {
         const initSocket = async () => {
             try {
-                const token = await getToken({ skipCache: true })
-
-                if(!token) {
-                    console.error("No token obtained from Clerk")
-                    return
-                }
-
                 const newSocket = io(process.env.NEXT_PUBLIC_SOCKET_URL!, {
                     transports: ["websocket", "polling"],
-                    auth: { token },
                     withCredentials: true
                 })
 
@@ -43,7 +34,7 @@ export default function SessionsPage() {
 
         initSocket()
 
-    }, [getToken])
+    }, [])
 
     const loadSessions = async () => {
         try {
@@ -53,7 +44,7 @@ export default function SessionsPage() {
                 fetchMyProfile()
             ])
             setSessions(sessionsResponse.sessions)
-            setCurrentUserClerkId(currentUser.clerkUserId)
+            setCurrentUserID(currentUser.userId)
 
             const inProgressSessions = sessionsResponse.sessions
                 .filter((s: Session) => s.status === "IN_PROGRESS")
@@ -124,7 +115,7 @@ export default function SessionsPage() {
     return (
         <SessionsList
             sessions={sessions}
-            currentUserClerkId={currentUserClerkId}
+            currentUserId={currentUserID}
             loading={loading}
             onConfirm={handleConfirm}
             onCancel={handleCancel}

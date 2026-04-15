@@ -4,9 +4,11 @@ import prisma from "@/lib/prisma";
 import { updateProfileSchema } from "@/schema/profileSchema";
 import { z } from "zod";
 import { resolveSkills } from "@/lib/skills";
+import { getSessionFromRequest } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
-    const { userId } = await auth()
+
+    const userId = getSessionFromRequest(req)
 
     console.log("GET /api/user/profile: userId from auth middleware:", userId);
 
@@ -23,11 +25,10 @@ export async function GET(req: NextRequest) {
     try {
         const userProfile = await prisma.user.findUnique({
             where: {
-                clerkUserId: userId
+                id: userId
             },
             select: {
                 id: true,
-                clerkUserId: true,
                 name: true,
                 bio: true,
                 averageRating: true,
@@ -61,7 +62,6 @@ export async function GET(req: NextRequest) {
                 createdAt: true
             }
         })
-
         if (!userProfile) {
             return NextResponse.json({
                 message: "User profile not found"
@@ -70,7 +70,6 @@ export async function GET(req: NextRequest) {
             })
         }
 
-
         const joinedAt = new Date(userProfile.createdAt).toLocaleDateString(
             "en-US",
             { year: "numeric", month: "short" }
@@ -78,7 +77,6 @@ export async function GET(req: NextRequest) {
 
         const data = {
             id: userProfile.id,
-            clerkUserId: userProfile.clerkUserId,
             name: userProfile.name,
             bio: userProfile.bio,
             createdAt: userProfile.createdAt,
@@ -113,7 +111,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
-    const { userId } = await auth()
+
+    const userId = getSessionFromRequest(req)
 
     console.log("PATCH /api/user/profile: userId from auth middleware:", userId);
 
@@ -148,10 +147,11 @@ export async function PATCH(req: NextRequest) {
 
     const existingUser = await prisma.user.findUnique({
         where: {
-            clerkUserId: userId
+            id: userId
         },
         select: {
-            id: true
+            id: true,
+            name : true
         },
     });
 
@@ -189,12 +189,11 @@ export async function PATCH(req: NextRequest) {
 
         const updateProfile = await prisma.user.update({
             where: {
-                clerkUserId: userId
+                id: userId
             },
             data,
             select: {
                 id: true,
-                clerkUserId: true,
                 name: true,
                 bio: true,
                 skillsOffered: true,

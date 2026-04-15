@@ -66,13 +66,13 @@ export default function SearchPage({
           <div className="space-y-4">
             {data.map((user, index) => (
               <ProfileCard
-                onClick={() => { router.push(`/profile/${user.clerkUserId}`) }} 
+                onClick={() => { router.push(`/profile/${user.id}`) }} 
                 key={user.id || index}
                 skillsOffered={user.skillsOffered || []}
                 name={user.name || "Unknown"}
                 rating={user.averageRating || 0}
+                id={user.id}
                 completedSessions={user.completedSessions || 0}
-                clerkUserId={user.clerkUserId || ""}
               />
             ))}
           </div>

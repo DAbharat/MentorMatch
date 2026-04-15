@@ -3,11 +3,12 @@ import { auth } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
 import { callEventSchema } from "@/schema/callEventSchema";
 import { z } from "zod";
+import { getSessionFromRequest } from "@/lib/auth";
 
 export async function POST(req: NextRequest, 
 { params }: { params: Promise<{ sessionId : string }>} )  {
-    const { userId } = await auth()
 
+    const userId = getSessionFromRequest(req)
     if(!userId) {
         return NextResponse.json({
             message: "Unauthorized"

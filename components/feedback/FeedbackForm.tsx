@@ -18,12 +18,10 @@ type FeddbackFormProps = {
     mentor: {
         id: string;
         name: string;
-        clerkUserId: string
     },
     mentee: {
         id: string;
         name: string;
-        clerkUserId: string;
     },
     skill: {
         id: string;

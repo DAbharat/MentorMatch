@@ -1,5 +1,3 @@
-"use client";
-
 import Link from "next/link";
 import { Bell, MessageCircleMore, User2 } from "lucide-react";
 import { DM_Sans } from "next/font/google";
@@ -11,7 +9,6 @@ import { FetchAllNotifications } from "@/services/notification.service";
 import { fetchAllChatsForAUser } from "@/services/messages.service";
 import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
-import { useUser } from "@clerk/nextjs";
 import { Button } from "../retroui/Button";
 import {
   DropdownMenu,
@@ -28,7 +25,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "../ui/alert-dialog";
-import useSignOut from "@/hooks/useSignOut";
+import axios from "axios";
+import { logout } from "@/services/account.service";
 
 const DM_Sans_Font = DM_Sans({
     weight: ["400", "500", "700"],
@@ -38,8 +36,8 @@ const DM_Sans_Font = DM_Sans({
 export default function Navbar() {
     const router = useRouter();
     const pathname = usePathname();
-    const { user, isLoaded } = useUser();
-    const handleSignOut = useSignOut();
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
 
     const [unreadCount, setUnreadCount] = useState(0)
     const [unreadMessagesCount, setUnreadMessagesCount] = useState(0)
@@ -50,7 +48,21 @@ export default function Navbar() {
     const isProfileActive = pathname.startsWith('/profile');
 
     useEffect(() => {
-        if (!user) return;
+        const checkAuth = async () => {
+            try {
+                const hasRefreshToken = document.cookie.includes('refreshToken');
+                setIsAuthenticated(hasRefreshToken);
+            } catch (error) {
+                setIsAuthenticated(false);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        checkAuth();
+    }, []);
+
+    useEffect(() => {
+        if (!isAuthenticated) return;
 
         const fetchNotifications = async () => {
             try {
@@ -83,7 +95,7 @@ export default function Navbar() {
 
         fetchNotifications()
         fetchMessages()
-    }, [user])
+    }, [isAuthenticated])
 
     useEffect(() => {
         if (!isNotificationsActive && unreadCount > 0) {
@@ -96,6 +108,19 @@ export default function Navbar() {
             setUnreadMessagesCount(0)
         }
     }, [pathname])
+
+    async function handleSignOut() {
+        try {
+            await logout()
+            toast.success("Signed out successfully");
+            setShowSignOutDialog(false);
+            setIsAuthenticated(false);
+            router.push("/sign-in");
+        } catch (error) {
+            toast.error("Failed to sign out");
+            console.error("Logout error:", error);
+        }
+    }
 
     return (
         <nav
@@ -124,7 +149,7 @@ export default function Navbar() {
                     </div>
 
                     <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-                        {user ? (
+                        {isAuthenticated ? (
                             <>
                                 <button
                                     className={`relative p-1.5 sm:p-2 rounded-lg transition-colors ${
@@ -221,7 +246,7 @@ export default function Navbar() {
                     </div>
 
                     <div className="flex items-center gap-3 justify-end">
-                        {user ? (
+                        {isAuthenticated ? (
                             <>
                                 <Tooltip>
                                     <TooltipTrigger asChild>

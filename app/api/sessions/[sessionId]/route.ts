@@ -7,6 +7,7 @@ import { computeSessionMetrices } from "@/lib/session-metrics";
 import { stat } from "fs";
 import { createNotification } from "@/lib/notification";
 import { NotificationType } from "@prisma/client";
+import { getSessionFromRequest } from "@/lib/auth";
 
 type TransitionRule = {
     from: SessionStatus[];
@@ -99,8 +100,8 @@ const ACTION_HANDLERS: Record<string, ActionHandler> = {
 export async function PATCH(req: NextRequest,
     { params }: { params: Promise<{ sessionId: string }> }
 ) {
-    const { userId } = await auth()
 
+    const userId = getSessionFromRequest(req)
     if (!userId) {
         return NextResponse.json({
             message: "Unauthenticated"
@@ -142,17 +143,12 @@ export async function PATCH(req: NextRequest,
         })
         console.log("getsession", getSession)
 
-        const dbUser = await prisma.user.findUnique({
+        const userExists = await prisma.user.findUnique({
             where: {
-                clerkUserId: userId
-            },
-            select: {
-                id: true,
-                name: true
+                id: userId
             }
         })
-
-        if(!dbUser) {
+        if(!userExists) {
             return NextResponse.json({
                 message: "User not found"
             }, {
@@ -160,10 +156,8 @@ export async function PATCH(req: NextRequest,
             })
         }
 
-        const dbUserId = dbUser.id
-
-        const isMentor = dbUserId === getSession?.mentorId
-        const isMentee = dbUserId === getSession?.menteeId
+        const isMentor = userId === getSession?.mentorId
+        const isMentee = userId === getSession?.menteeId
 
         if (!getSession) {
             return NextResponse.json({
@@ -228,7 +222,7 @@ export async function PATCH(req: NextRequest,
 
         const sendNotification = await createNotification({
             userId: isMentor ? getSession.menteeId : getSession.mentorId,
-            senderId: dbUserId,
+            senderId: userId,
             type: action === "CONFIRM" ? NotificationType.SESSION_CONFIRMED :
                 action === "START" ? NotificationType.SESSION_STARTED :
                 NotificationType.SESSION_CANCELLED,
@@ -255,8 +249,8 @@ export async function PATCH(req: NextRequest,
 export async function GET(req: NextRequest,
     { params } : { params: Promise<{sessionId : string}> }
 ) {
-    const { userId } = await auth()
 
+    const userId = getSessionFromRequest(req)
     if (!userId) {
         return NextResponse.json({
             message: "Unauthenticated"
@@ -277,14 +271,12 @@ export async function GET(req: NextRequest,
                     select: {
                         id: true,
                         name: true,
-                        clerkUserId: true
                     }
                 },
                 mentee: {
                     select: {
                         id: true,
                         name: true,
-                        clerkUserId: true
                     }
                 }
             }
@@ -298,7 +290,7 @@ export async function GET(req: NextRequest,
             })
         }
 
-        if(userId !== session?.mentor?.clerkUserId && userId !== session?.mentee?.clerkUserId) {
+        if(userId !== session?.mentor?.id && userId !== session?.mentee?.id) {
             return NextResponse.json({
                 message: "Unauthorized"
             }, {

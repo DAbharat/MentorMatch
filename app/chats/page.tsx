@@ -4,7 +4,7 @@ import ChatCard from '@/components/chat/ChatCard';
 import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation';
 import { fetchAllChatsForAUser } from '@/services/messages.service';
-import { useUser } from '@clerk/nextjs';
+import { useAuth } from '@/hooks/useAuth';
 import { Spinner } from '@/components/ui/spinner';
 import { DM_Sans } from "next/font/google"
 import { Search } from 'lucide-react'
@@ -19,12 +19,10 @@ type Chat = {
     mentor: {
         id: string;
         name: string;
-        clerkUserId: string;
     }
     mentee: {
         id: string;
         name: string;
-        clerkUserId: string;
     }
     messages: {
         id: string;
@@ -34,7 +32,6 @@ type Chat = {
         sender: {
             id: string;
             name: string;
-            clerkUserId: string;
         }
     }[]
     _count: {
@@ -48,7 +45,7 @@ export default function ChatPage() {
     const [searchInput, setSearchInput] = useState("");
     const [searchQuery, setSearchQuery] = useState("");
     const router = useRouter();
-    const { user } = useUser();
+    const { userId, isLoading: authLoading } = useAuth();
 
     useEffect(() => {
         const fetchChats = async () => {
@@ -81,10 +78,18 @@ export default function ChatPage() {
         return mentorName.includes(query) || menteeName.includes(query);
     });
 
-    if (loading) {
+    if (loading || authLoading) {
         return (
             <div className="flex items-center justify-center min-h-screen">
                 <Spinner />
+            </div>
+        );
+    }
+
+    if (!userId) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <p className="text-muted-foreground">Unauthorized</p>
             </div>
         );
     }
@@ -124,12 +129,12 @@ export default function ChatPage() {
                         if (!lastMessage) return null;
 
                         // Determine the other user in the chat
-                        const otherUser = chat.mentor.clerkUserId === user?.id 
+                        const otherUser = chat.mentor.id === userId 
                             ? chat.mentee 
                             : chat.mentor;
 
                         // Check if the last message was sent by the current user
-                        const isYourMessage = lastMessage.sender.clerkUserId === user?.id;
+                        const isYourMessage = lastMessage.sender.id === userId;
 
                         // Only show unread count if the message is from the other user
                         const displayUnreadCount = !isYourMessage ? chat._count.messages : 0;

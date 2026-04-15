@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useEffect, useState } from 'react'
-import { useUser } from '@clerk/nextjs'
+import { useAuth } from '@/hooks/useAuth'
 import { toast } from 'sonner';
 import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/retroui/Button';
@@ -9,7 +9,6 @@ import ProfileHeader from '@/components/profile/ProfileHeader';
 import ProfileFeedback from '@/components/profile/ProfileFeedback';
 import ProfileStats from '@/components/profile/ProfileStats';
 import ProfileTabs from '@/components/profile/ProfileTabs';
-import axios, { AxiosError } from 'axios';
 import { ApiResponse } from '@/types/ApiResponse';
 import { redirect, useRouter } from 'next/navigation';
 import { Profile } from '@/types/profile';
@@ -23,7 +22,7 @@ const RETRY_DELAYS = [500, 1000, 2000, 4000, 8000] // ms
 
 export default function ProfilePage() {
     const router = useRouter();
-    const { isLoaded, isSignedIn, user } = useUser();
+    const { userId, isLoading: authLoading } = useAuth();
 
     const [profile, setProfile] = useState<Profile | null>(null);
     const [loading, setLoading] = useState(true);
@@ -31,23 +30,23 @@ export default function ProfilePage() {
     const [feedbacks, setFeedbacks] = useState([]);
 
     useEffect(() => {
-        if (!isLoaded) {
+        if (authLoading) {
             console.log("ProfilePage: User data not loaded yet.");
             return;
         }
 
-        if (!isSignedIn) {
+        if (!userId) {
             console.log("ProfilePage: User not signed in. Redirecting to /sign-in.");
             toast.error("You must be signed in to view your profile");
             router.replace("/sign-in");
         } else {
             console.log("ProfilePage: User is signed in.");
         }
-    }, [isLoaded, isSignedIn, router, user]);
+    }, [authLoading, userId, router]);
 
     useEffect(() => {
         console.log("ProfilePage: Attempting to load profile.");
-        if (!isLoaded || !isSignedIn) return;
+        if (authLoading || !userId) return;
 
         const fetchUserWithRetry = async (retryCount = 0) => {
             try {
@@ -100,7 +99,7 @@ export default function ProfilePage() {
         };
 
         fetchUserWithRetry();
-    }, [isLoaded, isSignedIn, router]);
+    }, [authLoading, userId, router]);
 
     useEffect(() => {
         const loadFeedbacks = async () => {
@@ -117,7 +116,7 @@ export default function ProfilePage() {
         loadFeedbacks();
     }, [profile])
 
-    if (!isLoaded || loading) {
+    if (authLoading || loading) {
         console.log("ProfilePage: Loading skeleton displayed.");
         return (
             <div className="flex items-center justify-center min-h-screen bg-[#0b090a]">
@@ -170,7 +169,6 @@ export default function ProfilePage() {
                     name={profile.name}
                     bio={profile.bio || ""}
                     createdAt={profile.createdAt}
-                    clerkUserId={profile.clerkUserId}
                     skillsOffered={profile.skillsOffered}
                     skillsWanted={profile.skillsWanted}
                 />
