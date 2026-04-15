@@ -27,9 +27,9 @@ export async function DELETE(Req: NextRequest,
         if(!userExists) {
             return NextResponse.json({
                 message: "User not found"
-            }), {
+            }, {
                 status: 404
-            }
+            })
         }
 
         const deleteNotification = await prisma.notification.deleteMany({

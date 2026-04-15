@@ -6,14 +6,14 @@ import { Spinner } from "@/components/ui/spinner";
 import ProfileHeader from "@/components/profile/ProfileHeader";
 import ProfileTabs from "@/components/profile/ProfileTabs";
 import { toast } from "sonner";
-import { useUser } from "@clerk/nextjs";
+import { useAuth } from "@/hooks/useAuth";
 import { Skeleton } from "@/components/ui/skeleton";
 import { fetchAUserProfile } from "@/services/profile.service";
 import { fetchFeedbacks } from "@/services/feedback.service";
 
 export default function PublicProfilePage() {
   const router = useRouter();
-  const { user } = useUser();
+  const { userId: currentUserId } = useAuth();
   const params = useParams<{ userId: string }>()
 
   const userId = params.userId;
@@ -42,10 +42,10 @@ export default function PublicProfilePage() {
   }, [userId, router]);
 
   useEffect(() => {
-    if (user && user.id === userId) {
+    if (currentUserId && currentUserId === userId) {
       router.replace("/profile");
     }
-  }, [user, userId, router]);
+  }, [currentUserId, userId, router]);
 
   useEffect(() => {
     const loadFeedbacks = async () => {

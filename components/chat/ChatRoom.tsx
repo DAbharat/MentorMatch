@@ -27,7 +27,7 @@ type ChatRoomProps = {
     lastSeen?: string;
     messages?: Message[];
     currentUserId?: string;
-    otherUserClerkId?: string;
+    otherUserId?: string;
     onVideoCall?: () => void;
     onBack?: () => void;
 }
@@ -37,7 +37,7 @@ export default function ChatRoom({
     lastSeen = "last seen 41 minutes ago",
     messages = [],
     currentUserId = "current-user",
-    otherUserClerkId,
+    otherUserId,
     onVideoCall,
     onBack
 }: ChatRoomProps) {
@@ -102,9 +102,9 @@ export default function ChatRoom({
                         </span>
                     </div>
                     <div className="flex flex-col min-w-0">
-                        {otherUserClerkId ? (
+                        {otherUserId ? (
                             <Link 
-                                href={`/profile/${otherUserClerkId}`}
+                                href={`/profile/${otherUserId}`}
                                 className="font-semibold text-xs sm:text-sm leading-tight truncate transition-colors"
                                 style={{ color: '#e2e0f0' }}
                             >

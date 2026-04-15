@@ -6,7 +6,7 @@ import SessionsList from "@/components/sessions/SessionsList"
 import { fetchAllSessions, confirmSession, cancelSession, startSession } from "@/services/session.service"
 import { fetchMyProfile } from "@/services/profile.service"
 import { io, Socket } from "socket.io-client"
-import { useAuth, useUser } from "@clerk/nextjs"
+import { useAuth } from "@/hooks/useAuth"
 import { Session } from "@/types/session"
 
 export default function SessionsPage() {
@@ -16,22 +16,13 @@ export default function SessionsPage() {
     const [socket, setSocket] = useState<Socket | null>(null)
     const [activeSessions, setActiveSessions] = useState<string[]>([])
 
-    const { user } = useUser()
-    const { getToken } = useAuth()
+    const { userId } = useAuth()
 
     useEffect(() => {
         const initSocket = async () => {
             try {
-                const token = await getToken({ skipCache: true })
-
-                if(!token) {
-                    console.error("No token obtained from Clerk")
-                    return
-                }
-
                 const newSocket = io(process.env.NEXT_PUBLIC_SOCKET_URL!, {
                     transports: ["websocket", "polling"],
-                    auth: { token },
                     withCredentials: true
                 })
 
@@ -43,7 +34,7 @@ export default function SessionsPage() {
 
         initSocket()
 
-    }, [getToken])
+    }, [])
 
     const loadSessions = async () => {
         try {

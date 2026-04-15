@@ -60,9 +60,9 @@ export async function POST(req: NextRequest,
         if (!userExists) {
             return NextResponse.json({
                 message: "User not found"
-            }), {
+            }, {
                 status: 404
-            }
+            })
         }
 
         if (mentorId === userId) {
