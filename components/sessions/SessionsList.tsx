@@ -25,6 +25,7 @@ import { cleanupStuckSessions, completeSession } from "@/services/session.servic
 import { createFeedback } from "@/services/feedback.service"
 import FeedbackForm from "../feedback/FeedbackForm"
 import { Session } from "@/types/session"
+import { useAuth } from "@/hooks/useAuth"
 
 const DM_Sans_Font = DM_Sans({
   weight: ["400", "500", "700"],
@@ -52,7 +53,7 @@ function truncateWords(text: string, limit: number = 8) {
 
 export default function SessionsList({
   sessions,
-  currentUserId,
+  currentUserId: propCurrentUserId,
   loading,
   onConfirm,
   onCancel,
@@ -60,6 +61,10 @@ export default function SessionsList({
   activeSessions,
 }: SessionsListProps) {
   const router = useRouter()
+  const { userId: hookUserId } = useAuth()
+  
+  // Use hook userId as primary source, fall back to prop if needed
+  const currentUserId = hookUserId || propCurrentUserId
   const [filter, setFilter] = useState<
     "all" | "pending" | "confirmed" | "completed"
   >("all")
@@ -288,8 +293,10 @@ export default function SessionsList({
     return colors[status] || "bg-gray-100 text-gray-800"
   }
 
-  const isMentor = (session: Session) =>
-    session.mentor.id === currentUserId
+  const isMentor = (session: Session) => {
+    if (!currentUserId) return false
+    return session.mentor.id === currentUserId
+  }
 
   return (
     <div className={`${DM_Sans_Font.className} bg-[#0b090a] min-h-screen`}>

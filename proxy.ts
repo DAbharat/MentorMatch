@@ -8,7 +8,6 @@ const publicRoutes = [
     "/sign-up",
     "/home",
     "/search",
-    "/profile",
     "/api/users"
 ];
 
@@ -33,15 +32,15 @@ export async function proxy(req: NextRequest) {
         }
     }
 
-    const isAuthPage = pathname.startsWith("/sign-in") || pathname.startsWith("sign-up")
+    const isAuthPage = pathname.startsWith("/sign-in") || pathname.startsWith("/sign-up")
     if (userId && isAuthPage) {
         console.log("Middleware: Redirecting authenticated user to /profile")
-        return NextResponse.json(new URL("/profile", req.url))
+        return NextResponse.redirect(new URL("/profile", req.url))
     }
 
     if(!userId && !isPublicRoute(pathname)) {
         console.log("Middleware: Redirecting unauthenticated users to /sign-in")
-        return NextResponse.json(new URL("/sign-in", req.url))
+        return NextResponse.redirect(new URL("/sign-in", req.url))
     }
 
     const response = NextResponse.next()
