@@ -32,7 +32,8 @@ export default function SignIn() {
     setIsLoading(true);
 
     try {
-      await login({ email, password });
+      const user = await login({ email, password });
+      localStorage.setItem("userId", user.id);
       toast.success("Logged in successfully! Redirecting...");
       router.push("/profile");
     } catch (err: any) {

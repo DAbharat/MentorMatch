@@ -27,6 +27,7 @@ import {
 } from "../ui/alert-dialog";
 import axios from "axios";
 import { logout } from "@/services/account.service";
+import { useAuth } from "@/hooks/useAuth";
 
 const DM_Sans_Font = DM_Sans({
     weight: ["400", "500", "700"],
@@ -36,8 +37,8 @@ const DM_Sans_Font = DM_Sans({
 export default function Navbar() {
     const router = useRouter();
     const pathname = usePathname();
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [isLoading, setIsLoading] = useState(true);
+    const { userId, isLoading } = useAuth();
+    const isAuthenticated = !!userId;
 
     const [unreadCount, setUnreadCount] = useState(0)
     const [unreadMessagesCount, setUnreadMessagesCount] = useState(0)
@@ -46,20 +47,6 @@ export default function Navbar() {
     const isChatsActive = pathname.startsWith('/chats');
     const isNotificationsActive = pathname.startsWith('/notifications');
     const isProfileActive = pathname.startsWith('/profile');
-
-    useEffect(() => {
-        const checkAuth = async () => {
-            try {
-                const hasRefreshToken = document.cookie.includes('refreshToken');
-                setIsAuthenticated(hasRefreshToken);
-            } catch (error) {
-                setIsAuthenticated(false);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        checkAuth();
-    }, []);
 
     useEffect(() => {
         if (!isAuthenticated) return;
@@ -112,9 +99,9 @@ export default function Navbar() {
     async function handleSignOut() {
         try {
             await logout()
+            localStorage.removeItem("userId");
             toast.success("Signed out successfully");
             setShowSignOutDialog(false);
-            setIsAuthenticated(false);
             router.push("/sign-in");
         } catch (error) {
             toast.error("Failed to sign out");

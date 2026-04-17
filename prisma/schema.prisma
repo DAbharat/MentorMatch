@@ -7,19 +7,18 @@ datasource db {
 }
 
 model User {
-  id                  String    @id @default(uuid())
-  clerkUserId         String?    @unique
-  email               String    @unique
-  password            String
-  failedLoginAttempts Int       @default(0)
-  lockedUntil         DateTime?
-  lastLoginAt         DateTime?
-  name                String
-  bio                 String?
-  createdAt           DateTime  @default(now())
-
-  averageRating Float?
-  ratingCount   Int    @default(0)
+  id                         String    @id @default(uuid())
+  clerkUserId                String?   @unique
+  email                      String    @unique
+  password                   String
+  name                       String
+  bio                        String?
+  averageRating              Float?
+  ratingCount                Int       @default(0)
+  createdAt                  DateTime  @default(now())
+  failedLoginAttempts        Int       @default(0)
+  lockedUntil                DateTime?
+  lastLoginAt                DateTime?
 
   authSessions AuthSession[]
 
@@ -51,7 +50,7 @@ model User {
 model AuthSession {
   id           String   @id @default(uuid())
   userId       String
-  user         User     @relation(fields: [userId], references: [id])
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   refreshToken String   @unique
   expiresAt    DateTime
   createdAt    DateTime @default(now())
@@ -82,12 +81,12 @@ model Session {
   menteeId String
   skillId  String
 
-  mentor User  @relation("Mentor", fields: [mentorId], references: [id])
-  mentee User  @relation("Mentee", fields: [menteeId], references: [id])
-  skill  Skill @relation(fields: [skillId], references: [id])
+  mentor User  @relation("Mentor", fields: [mentorId], references: [id], onDelete: Cascade)
+  mentee User  @relation("Mentee", fields: [menteeId], references: [id], onDelete: Cascade)
+  skill  Skill @relation(fields: [skillId], references: [id], onDelete: Cascade)
 
   mentorshipRequestId String?
-  mentorshipRequest   MentorshipRequest? @relation(fields: [mentorshipRequestId], references: [id])
+  mentorshipRequest   MentorshipRequest? @relation(fields: [mentorshipRequestId], references: [id], onDelete: Cascade)
 
   scheduledAt DateTime
 
@@ -137,16 +136,16 @@ model UserFeedback {
   id String @id @default(uuid())
 
   mentorId String
-  mentor   User   @relation("MentorFeedback", fields: [mentorId], references: [id])
+  mentor   User   @relation("MentorFeedback", fields: [mentorId], references: [id], onDelete: Cascade)
 
   menteeId String
-  mentee   User   @relation("MenteeFeedback", fields: [menteeId], references: [id])
+  mentee   User   @relation("MenteeFeedback", fields: [menteeId], references: [id], onDelete: Cascade)
 
   sessionId String  @unique
-  session   Session @relation(fields: [sessionId], references: [id])
+  session   Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
   skillId String
-  skill   Skill  @relation(fields: [skillId], references: [id])
+  skill   Skill  @relation(fields: [skillId], references: [id], onDelete: Cascade)
 
   rating  Int
   comment String
@@ -165,17 +164,17 @@ model MentorshipRequest {
   id String @id @default(uuid())
 
   mentorId String
-  mentor   User   @relation("MentorRequests", fields: [mentorId], references: [id])
+  mentor   User   @relation("MentorRequests", fields: [mentorId], references: [id], onDelete: Cascade)
 
   menteeId String
-  mentee   User   @relation("MenteeRequests", fields: [menteeId], references: [id])
+  mentee   User   @relation("MenteeRequests", fields: [menteeId], references: [id], onDelete: Cascade)
 
   sessions Session[]
 
   initialMessage String?
 
   skillId String
-  skill   Skill  @relation(fields: [skillId], references: [id])
+  skill   Skill  @relation(fields: [skillId], references: [id], onDelete: Cascade)
 
   notifications Notification[]
 
@@ -202,9 +201,9 @@ model Chat {
   menteeId String
   skillId  String
 
-  mentor User  @relation("MentorChats", fields: [mentorId], references: [id])
-  mentee User  @relation("MenteeChats", fields: [menteeId], references: [id])
-  skill  Skill @relation("SkillChats", fields: [skillId], references: [id])
+  mentor User  @relation("MentorChats", fields: [mentorId], references: [id], onDelete: Cascade)
+  mentee User  @relation("MenteeChats", fields: [menteeId], references: [id], onDelete: Cascade)
+  skill  Skill @relation("SkillChats", fields: [skillId], references: [id], onDelete: Cascade)
 
   messages Message[]
 
@@ -217,10 +216,10 @@ model Message {
   id String @id @default(uuid())
 
   chatId String
-  chat   Chat   @relation(fields: [chatId], references: [id])
+  chat   Chat   @relation(fields: [chatId], references: [id], onDelete: Cascade)
 
   senderId String
-  sender   User   @relation(fields: [senderId], references: [id])
+  sender   User   @relation(fields: [senderId], references: [id], onDelete: Cascade)
 
   content String
 
@@ -238,10 +237,10 @@ model CallEvent {
   id String @id @default(uuid())
 
   sessionId String
-  session   Session @relation(fields: [sessionId], references: [id])
+  session   Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
   userId String
-  user   User   @relation(fields: [userId], references: [id])
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   eventType CallEventType
   timestamp DateTime      @default(now())
@@ -260,13 +259,13 @@ model Notification {
   id String @id @default(uuid())
 
   userId String
-  user   User   @relation("UserNotifications", fields: [userId], references: [id])
+  user   User   @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
 
   senderId String?
-  sender   User?   @relation("SenderNotifications", fields: [senderId], references: [id])
+  sender   User?   @relation("SenderNotifications", fields: [senderId], references: [id], onDelete: Cascade)
 
   mentorshipRequestId String?
-  mentorshipRequest   MentorshipRequest? @relation(fields: [mentorshipRequestId], references: [id])
+  mentorshipRequest   MentorshipRequest? @relation(fields: [mentorshipRequestId], references: [id], onDelete: Cascade)
 
   type NotificationType
 
