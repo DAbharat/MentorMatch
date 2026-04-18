@@ -99,7 +99,6 @@ export default function Navbar() {
     async function handleSignOut() {
         try {
             await logout()
-            localStorage.removeItem("userId");
             toast.success("Signed out successfully");
             setShowSignOutDialog(false);
             router.push("/sign-in");

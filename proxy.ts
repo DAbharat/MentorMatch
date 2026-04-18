@@ -38,7 +38,11 @@ export async function proxy(req: NextRequest) {
         return NextResponse.redirect(new URL("/profile", req.url))
     }
 
-    if(!userId && !isPublicRoute(pathname)) {
+    if (userId && pathname === "/") {
+        return NextResponse.redirect(new URL("/profile", req.url))
+    }
+
+    if (!userId && !isPublicRoute(pathname)) {
         console.log("Middleware: Redirecting unauthenticated users to /sign-in")
         return NextResponse.redirect(new URL("/sign-in", req.url))
     }

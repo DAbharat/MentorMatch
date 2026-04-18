@@ -16,6 +16,7 @@ import {
   Clock,
   ChevronRight,
 } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 // ─── Design Tokens ────────────────────────────────────────────────────────────
 const T = {
@@ -215,6 +216,9 @@ function Card({ children, style = {} }: { children: React.ReactNode; style?: Rea
 // HERO
 // ══════════════════════════════════════════════════════════════════════════════
 function Hero() {
+
+  const { userId } = useAuth()
+
   return (
     <section style={{
       position: "relative",
@@ -298,7 +302,7 @@ function Hero() {
           marginBottom: 64,
           animation: "fadeUp 0.7s 0.24s ease both",
         }}>
-          <BtnPri href="/sign-in">Find a mentor <ArrowRight size={14} /></BtnPri>
+          <BtnPri href={userId ? `/profile/${userId}` : "/sign-in"}>Find a mentor <ArrowRight size={14} /></BtnPri>
           <BtnSec href="#how">See how it works</BtnSec>
         </div>
 
@@ -899,6 +903,9 @@ function SchedulePreview() {
 // CTA
 // ══════════════════════════════════════════════════════════════════════════════
 function CTA() {
+
+  const { userId } = useAuth()
+  
   return (
     <section id="cta" style={{ padding: "120px 24px", position: "relative", overflow: "hidden", textAlign: "center" }}>
       <Orb size={640} opacity={0.1} style={{ top: "50%", left: "50%", transform: "translate(-50%,-50%)" }} />
@@ -928,7 +935,7 @@ function CTA() {
             No commitment — just a conversation.
           </p>
           <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap", marginBottom: 32 }}>
-            <BtnPri href="/sign-in">Find a mentor <ArrowRight size={14} /></BtnPri>
+            <BtnPri href={userId ? `/profile/${userId}` : "/sign-in"}>Find a mentor <ArrowRight size={14} /></BtnPri>
             <BtnSec href="#features">See features</BtnSec>
           </div>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 24, flexWrap: "wrap" }}>

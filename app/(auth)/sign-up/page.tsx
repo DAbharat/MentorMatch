@@ -33,7 +33,15 @@ export default function SignUp() {
     setIsLoading(true);
 
     try {
-      await register({ name, email, password });
+      const response = await register({ name, email, password });
+      console.log("Sign-up response:", response)
+      console.log("Response keys:", Object.keys(response))
+      
+      localStorage.setItem("userId", response.id);
+      localStorage.setItem("authToken", response.accessToken);
+      
+      console.log("Stored in localStorage - userId:", response.id, "authToken:", response.accessToken?.substring(0, 20))
+      
       toast.success("Account created successfully! Redirecting...");
       router.push("/profile");
     } catch (err: any) {

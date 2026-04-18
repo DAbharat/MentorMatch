@@ -28,7 +28,15 @@ export const useChatSocket = ({
 
     useEffect(() => {
         if (!token || !chatId) {
+            console.log("Skipping socket connection: token or chatId missing", { token: !!token, chatId })
             setIsConnecting(false)
+            return
+        }
+        
+        if (token.length < 10) {
+            console.error("Invalid token format")
+            setIsConnecting(false)
+            setSocketError("Invalid token")
             return
         }
 
