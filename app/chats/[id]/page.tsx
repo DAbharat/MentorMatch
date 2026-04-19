@@ -82,7 +82,7 @@ export default function ChatRoomPage() {
     }, [appendMessage, scrollToBottom])
 
     const { socket, connected, isConnecting, socketError, typingUsers, emitTyping, emitStopTyping } = useChatSocket({
-        token: token || '',
+        token: token || undefined,
         chatId,
         onNewMessage: handleNewMessage,
     })

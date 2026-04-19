@@ -17,9 +17,16 @@ export function getChatSocket(token: string, chatId: string): Socket {
     throw new Error("NEXT_PUBLIC_SOCKET_URL is not defined");
   }
 
+  console.log("Creating Socket.IO connection with auth:", { 
+    token: token ? `${token.substring(0, 10)}...` : 'MISSING', 
+    chatId,
+    url
+  });
+
   const socket = io(url, {
     transports: ["websocket", "polling"],
     auth: { token, chatId },
+    query: { token, chatId },  // Send auth in query string for polling transport
     withCredentials: true,
 
     reconnection: true,

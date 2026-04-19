@@ -13,7 +13,20 @@ console.log("NEXT_PUBLIC_APP_URL:", process.env.NEXT_PUBLIC_APP_URL || "Not set"
 const userSocketMap = new Map<string, string>()
 
 let prisma: any = null;
+let prismaInitializing = false;
+
 async function initPrisma() {
+    if (prismaInitializing) {
+
+        let retries = 0;
+        while (!prisma && retries < 50) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            retries++;
+        }
+        return !!prisma;
+    }
+
+    prismaInitializing = true;
     try {
         if (!process.env.DATABASE_URL) {
             throw new Error("DATABASE_URL environment variable is not set");
@@ -25,15 +38,52 @@ async function initPrisma() {
             throw new Error("REFRESH_TOKEN_SECRET is missing");
         }
 
-        const { default: prismaClient } = await import("@/lib/prisma");
-        prisma = prismaClient;
+        try {
+            const prismaModule = await import("@/lib/prisma");
+            
+            const prismaDefault = prismaModule.default as any;
+            const prismaExport = prismaModule.prisma as any;
+            
+            let candidate = null;
+            
+            if (prismaDefault && typeof prismaDefault === 'object' && 'session' in prismaDefault) {
+                candidate = prismaDefault;
+            }
+            
+            if (!candidate && prismaExport && typeof prismaExport === 'object' && 'session' in prismaExport) {
+                candidate = prismaExport;
+            }
+            
+            if (!candidate) {
+                for (const [key, value] of Object.entries(prismaModule)) {
+                    if (value && typeof value === 'object' && 'session' in value) {
+                        candidate = value as any;
+                        break;
+                    }
+                }
+            }
+            
+            if (!candidate) {
+                console.error("Failed to find PrismaClient with session model in any export");
+                throw new Error("Could not find Prisma session model in any export");
+            }
+            
+            prisma = candidate;
+            console.log("✓ Prisma initialized successfully");
+            
+        } catch (importErr: any) {
+            console.error("Failed to import Prisma:", importErr.message);
+            throw importErr;
+        }
 
-        console.log("Prisma initialized");
         return true;
 
     } catch (err: any) {
         console.error("Failed to initialize Prisma:", err.message);
+        prisma = null;
         return false;
+    } finally {
+        prismaInitializing = false;
     }
 }
 
@@ -101,12 +151,12 @@ io.use(async (socket, next) => {
             return next(new Error("Server is not ready"));
         }
 
-        const parsed = socketHandshakeSchemaForChat.safeParse(
-            socket.handshake.auth
-        );
+        const authData = socket.handshake.auth || socket.handshake.query || {};
+        
+        const parsed = socketHandshakeSchemaForChat.safeParse(authData);
 
         if (!parsed.success) {
-            console.error("Invalid handshake schema:", parsed.error.message);
+            console.error("Invalid handshake schema");
             return next(new Error("Invalid handshake data"));
         }
 
@@ -177,7 +227,9 @@ io.use(async (socket, next) => {
 });
 
 async function validateChat(chatId: string, userId: string) {
-    if (!prisma) throw new Error("Server not ready");
+    if (!prisma) {
+        throw new Error("Server not ready");
+    }
 
     try {
         const chat = await prisma.chat.findUnique({
@@ -207,12 +259,19 @@ async function validateChat(chatId: string, userId: string) {
         return chat;
 
     } catch (err: any) {
-        throw new Error(err.message);
+        console.error("validateChat error:", err.message);
+        throw err;
     }
 }
 
 async function validateSession(sessionId: string, userId: string) {
-    if (!prisma) throw new Error("Server not ready");
+    if (!prisma) {
+        throw new Error("Server error: Database not initialized");
+    }
+
+    if (!prisma.session) {
+        throw new Error("Server error: Session model not available");
+    }
 
     try {
         const session = await prisma.session.findUnique({
@@ -250,12 +309,21 @@ async function validateSession(sessionId: string, userId: string) {
 
         return session;
     } catch (err: any) {
-        throw new Error(err.message);
+        console.error("validateSession error:", err.message);
+        throw err;
     }
 }
 
 io.on("connection", async (socket) => {
     const { chatId, userId } = socket.data;
+    
+    if (!prisma) {
+        console.error("Connection attempted but Prisma not ready");
+        socket.emit("connection:error", { message: "Server not ready" });
+        socket.disconnect();
+        return;
+    }
+
     userSocketMap.set(userId, socket.id);
 
     socket.on("error", (error) => {
@@ -479,14 +547,37 @@ async function startServer() {
 
     const prismaReady = await initPrisma();
 
-    if (!prismaReady) {
-        console.warn("Server starting without database - Socket.IO will work but database operations will fail");
+    if (!prismaReady || !prisma) {
+        console.error("FATAL: Failed to initialize Prisma");
+        console.error("Prisma state:", {
+            exists: !!prisma,
+            hasSession: prisma?.session ? true : false,
+        });
+        console.error("\nTroubleshooting:");
+        console.error("1. Ensure Prisma has been generated: npm run prisma:generate");
+        console.error("2. Check if @/lib/prisma.ts is exporting the PrismaClient correctly");
+        console.error("3. Verify DATABASE_URL is set correctly");
+        process.exit(1);
     }
 
+    if (!prisma.session || !prisma.chat) {
+        console.error("FATAL: Prisma initialized but models are missing");
+        console.error("Available properties:", Object.keys(prisma).slice(0, 30));
+        console.error("\nThis likely means:");
+        console.error("1. Prisma Client was not generated after schema changes");
+        console.error("2. The Prisma schema needs to be run: npx prisma generate");
+        process.exit(1);
+    }
+
+    console.log("✓ Prisma is ready with all required models");
+    console.log("✓ Session model available");
+    console.log("✓ Chat model available");
+
     httpServer.listen(PORT, "0.0.0.0", () => {
-        console.log(`Socket server is running on port: ${PORT}`);
-        console.log(`Socket.IO path: /socket.io`);
-        console.log(`Transports: websocket, polling`);
+        console.log(`✓ Socket server is running on port: ${PORT}`);
+        console.log(`✓ Socket.IO path: /socket.io`);
+        console.log(`✓ Transports: websocket, polling`);
+        console.log("✓ Server is ready to accept connections");
     });
 }
 
