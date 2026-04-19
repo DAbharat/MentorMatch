@@ -3,7 +3,7 @@ import { Socket } from "socket.io-client"
 import { getChatSocket, resetChatSocket } from "@/lib/chatSocket"
 
 interface UseChatSocketProps {
-    token: string
+    token: string | undefined
     chatId: string
     onNewMessage: (msg: any) => void
 }
@@ -27,9 +27,11 @@ export const useChatSocket = ({
     }, [onNewMessage])
 
     useEffect(() => {
-        if (!token || !chatId) {
+        // Validate token before creating socket
+        if (!token || token.trim() === '' || !chatId) {
             console.log("Skipping socket connection: token or chatId missing", { token: !!token, chatId })
             setIsConnecting(false)
+            socketRef.current = null
             return
         }
         

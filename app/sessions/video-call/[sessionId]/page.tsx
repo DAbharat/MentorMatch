@@ -109,10 +109,6 @@ export default function VideoCallPage() {
           console.error("Error: ", error.message)
         })
 
-        socketRef.current.onAny((event, ...args) => {
-          console.log("Event:", event, args)
-        })
-
         setSocket(socketRef.current)
       } catch (error) {
         socketInitializedRef.current = false
