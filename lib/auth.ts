@@ -86,7 +86,8 @@ export async function register(req: NextRequest): Promise<NextResponse> {
                 id: createuser.id,
                 name: createuser.name,
                 email: createuser.email
-            }
+            },
+            accessToken: accessToken
         })
 
         setAuthCookies(res, accessToken, refreshToken)
@@ -114,7 +115,7 @@ export function generateAccessToken(userId: string): string {
     return jwt.sign({
         userId
     }, ACCESS_TOKEN_SECRET, {
-        expiresIn: "15m"
+        expiresIn: "1h"
     })
 }
 
@@ -128,12 +129,11 @@ export function generateRefreshToken(userId: string): string {
 
 export function verifyToken(token: string, type: "access" | "refresh"): { userId: string } | null {
     try {
-
         const secret = type === "access" ? ACCESS_TOKEN_SECRET : REFRESH_TOKEN_SECRET
         const decoded = jwt.verify(token, secret) as { userId: string }
-
         return decoded
-    } catch (error) {
+    } catch (error: any) {
+        console.error(`Token verification error (${type}):`, error.message)
         return null
     }
 }

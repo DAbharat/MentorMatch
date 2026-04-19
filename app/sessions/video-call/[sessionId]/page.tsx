@@ -1,8 +1,9 @@
 "use client"
 
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
+import { refresh } from '@/services/account.service'
 import { toast } from 'sonner'
 import InitialScreen from '@/components/video-call/InitialScreen'
 import { Spinner } from '@/components/ui/spinner'
@@ -16,8 +17,10 @@ import VideoCallScreen from '@/components/video-call/VideoCallScreen'
 export default function VideoCallPage() {
   const params = useParams<{ sessionId: string }>()
   const sessionId = params.sessionId
+  const router = useRouter()
 
   const { userId } = useAuth()
+  const [token, setToken] = useState<string | null>(null)
 
   const socketRef = useRef<Socket | null>(null)
   const [socket, setSocket] = useState<Socket | null>(null)
@@ -25,15 +28,42 @@ export default function VideoCallPage() {
   const [role, setRole] = useState<"MENTOR" | "MENTEE" | null>(null)
   const socketInitializedRef = useRef(false)
 
+  // Refresh token and get a fresh one before socket connection
+  useEffect(() => {
+    const refreshAndSetToken = async () => {
+      try {
+        const storedToken = localStorage.getItem('authToken')
+        if (!storedToken) {
+          router.push("/sign-in")
+          return
+        }
+
+        const newToken = await refresh()
+        if (newToken) {
+          localStorage.setItem('authToken', newToken)
+          setToken(newToken)
+        } else {
+          toast.error("Failed to retrieve authentication token")
+        }
+      } catch (error) {
+        console.error("Failed to refresh token:", error)
+        router.push("/sign-in")
+      }
+    }
+
+    if (typeof window !== 'undefined' && userId) {
+      refreshAndSetToken()
+    }
+  }, [userId, router])
+
   useEffect(() => {
     if (userId) {
       // User loaded
     }
   }, [userId])
 
-  // Initialize socket with JWT - only once
   useEffect(() => {
-    if (socketInitializedRef.current || !userId) return
+    if (socketInitializedRef.current || !userId || !token) return
 
     socketInitializedRef.current = true
 
@@ -50,7 +80,7 @@ export default function VideoCallPage() {
 
         socketRef.current = io(process.env.NEXT_PUBLIC_SOCKET_URL!, {
           transports: ["websocket", "polling"],
-          auth: { sessionId },
+          auth: { token, sessionId },
           withCredentials: true,
           reconnection: true,
           reconnectionAttempts: 5,
@@ -58,19 +88,29 @@ export default function VideoCallPage() {
         })
 
         socketRef.current.on("connect", () => {
-          // Connected
+          console.log("Socket connected.")
         })
 
         socketRef.current.on("connect_error", (error: any) => {
-          // Connection error
+          console.log("Socket connection error: ", error.message)
+          toast.error("Failed to connect to Server.")
         })
 
         socketRef.current.on("disconnect", (reason: string) => {
+          console.warn("Diconnected: ", reason)
           hasJoinedRef.current = false
+
+          if (reason === "io server disconnect") {
+            socketRef.current?.connect
+          }
         })
 
         socketRef.current.on("error", (error: any) => {
-          // Socket error
+          console.error("Error: ", error.message)
+        })
+
+        socketRef.current.onAny((event, ...args) => {
+          console.log("Event:", event, args)
         })
 
         setSocket(socketRef.current)
@@ -86,7 +126,7 @@ export default function VideoCallPage() {
         socketRef.current.disconnect()
       }
     }
-  }, [userId, sessionId])
+  }, [userId, sessionId, token])
 
   const {
     localStream,
@@ -110,8 +150,6 @@ export default function VideoCallPage() {
     iceServers: webrtcConfig?.iceServers || [],
     socket
   })
-
-  const router = useRouter()
 
   const [session, setSession] = useState<any>(null)
   const [loading, setLoading] = useState(true)
@@ -268,15 +306,15 @@ export default function VideoCallPage() {
       .toString()
       .padStart(2, "0")}`
 
-  const handleToggleMic = () => {
+  const handleToggleMic = useCallback(() => {
     toggleMute()
-  }
+  }, [toggleMute])
 
-  const handleToggleCamera = () => {
+  const handleToggleCamera = useCallback(() => {
     toggleCamera()
-  }
+  }, [toggleCamera])
 
-  const handleJoinCall = async () => {
+  const handleJoinCall = useCallback(async () => {
     joinAttemptedRef.current = true
     setPhase("CONNECTING")
     hasJoinedRef.current = false
@@ -300,9 +338,9 @@ export default function VideoCallPage() {
       setPhase("INITIAL")
       joinAttemptedRef.current = false
     }
-  }
+  }, [sessionId, socket])
 
-  const handleAutoEndCall = async () => {
+  const handleAutoEndCall = useCallback(async () => {
     setPhase("ENDED")
     endCall()
     hasJoinedRef.current = false
@@ -315,14 +353,14 @@ export default function VideoCallPage() {
     }
 
     router.push("/sessions")
-  }
+  }, [sessionId, endCall, router])
 
-  const handleEndCall = async () => {
+  const handleEndCall = useCallback(async () => {
     setPhase("ENDED")
     endCall()
     hasJoinedRef.current = false
     router.push("/sessions")
-  }
+  }, [endCall, router])
 
   useEffect(() => {
     if (phase === "IN CALL" && session?.totalCallDuration) {

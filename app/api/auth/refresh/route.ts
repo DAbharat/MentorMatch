@@ -57,7 +57,8 @@ export async function POST(req: NextRequest) {
         })
 
         const response = NextResponse.json({
-            message: "Token refreshed"
+            message: "Token refreshed",
+            accessToken: newAccessToken
         })
 
         setAuthCookies(response, newAccessToken, newRefreshToken)

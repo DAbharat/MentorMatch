@@ -23,20 +23,20 @@ type Message = {
 }
 
 type ChatRoomProps = {
-    roomName?: string;
-    lastSeen?: string;
-    messages?: Message[];
-    currentUserId?: string;
-    otherUserId?: string;
+    roomName: string;
+    lastSeen: string;
+    messages: Message[];
+    currentUserId: string;
+    otherUserId: string;
     onVideoCall?: () => void;
     onBack?: () => void;
 }
 
 export default function ChatRoom({
-    roomName = "Team Unicorns",
-    lastSeen = "last seen 41 minutes ago",
+    roomName,
+    lastSeen,
     messages = [],
-    currentUserId = "current-user",
+    currentUserId,
     otherUserId,
     onVideoCall,
     onBack
@@ -77,7 +77,7 @@ export default function ChatRoom({
         .join('')
         .toUpperCase();
 
-    return (
+        return (
         <div className="flex flex-col h-full w-full bg-[#0b090a] overflow-hidden">
             {/* Header */}
             <div className="flex items-center justify-between px-3 sm:px-5 py-2.5 sm:py-3 border-b border-[#1e1c1e] bg-[#0b090a] shrink-0">

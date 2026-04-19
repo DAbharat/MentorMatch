@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
+import { refresh } from '@/services/account.service'
 import ChatRoom from '@/components/chat/ChatRoom'
 import { useChatMessages } from '@/hooks/useChatMessages'
 import { useChatSocket } from '@/hooks/useChatSocket'
@@ -24,6 +25,8 @@ export default function ChatRoomPage() {
     const router = useRouter()
     const { userId, isLoading: authLoading } = useAuth()
     const chatId = params.id as string
+    
+    const [token, setToken] = useState<string | null>(null)
 
     const [chatDetails, setChatDetails] = useState<any>(null)
     const [messageInput, setMessageInput] = useState('')
@@ -32,6 +35,40 @@ export default function ChatRoomPage() {
     const messagesEndRef = useRef<HTMLDivElement>(null)
     const inputRef = useRef<HTMLInputElement>(null)
     const hasMarkedAsReadRef = useRef(false)
+
+    // Refresh token and get a fresh one before socket connection
+    useEffect(() => {
+        const refreshAndSetToken = async () => {
+            try {
+                // Only refresh if user is authenticated
+                const storedToken = localStorage.getItem('authToken')
+                if (!storedToken) {
+                    // User not authenticated, redirect to login
+                    router.push("/sign-in")
+                    return
+                }
+
+                // Call refresh service to ensure token is fresh
+                const newToken = await refresh()
+                
+                if (newToken) {
+                    // Store the fresh token in localStorage
+                    localStorage.setItem('authToken', newToken)
+                    setToken(newToken)
+                } else {
+                    toast.error("Failed to retrieve authentication token")
+                }
+            } catch (error) {
+                console.error("Failed to refresh token:", error)
+                // If refresh fails, user needs to login again
+                router.push("/sign-in")
+            }
+        }
+
+        if (typeof window !== 'undefined' && userId) {
+            refreshAndSetToken()
+        }
+    }, [userId, router])
 
     const scrollToBottom = useCallback(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -45,7 +82,7 @@ export default function ChatRoomPage() {
     }, [appendMessage, scrollToBottom])
 
     const { socket, connected, isConnecting, socketError, typingUsers, emitTyping, emitStopTyping } = useChatSocket({
-        token: '',
+        token: token || '',
         chatId,
         onNewMessage: handleNewMessage,
     })
@@ -53,8 +90,8 @@ export default function ChatRoomPage() {
     useEffect(() => {
         const fetchChatDetails = async () => {
             try {
-                const data = await fetchAllChatsForAUser()
-                const allChats = data
+                const response = await fetchAllChatsForAUser()
+                const allChats = response.chats
                 const currentChat = allChats.find((chat: any) => chat.id === chatId)
                 
                 if (currentChat) {
@@ -62,8 +99,8 @@ export default function ChatRoomPage() {
                     
                     // Determine the other user
                     const other = currentChat.mentor.userId === userId 
-                        ? currentChat.mentee 
-                        : currentChat.mentor
+                        ? currentChat.mentor 
+                        : currentChat.mentee
                     setOtherUser(other)
                 }
             } catch (error) {

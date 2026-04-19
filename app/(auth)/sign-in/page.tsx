@@ -32,8 +32,15 @@ export default function SignIn() {
     setIsLoading(true);
 
     try {
-      const user = await login({ email, password });
-      localStorage.setItem("userId", user.id);
+      const response = await login({ email, password });
+      console.log("Sign-in response:", response)
+      console.log("Response keys:", Object.keys(response))
+      
+      localStorage.setItem("userId", response.id);
+      localStorage.setItem("authToken", response.accessToken);
+      
+      console.log("Stored in localStorage - userId:", response.id, "authToken:", response.accessToken?.substring(0, 20))
+      
       toast.success("Logged in successfully! Redirecting...");
       router.push("/profile");
     } catch (err: any) {
