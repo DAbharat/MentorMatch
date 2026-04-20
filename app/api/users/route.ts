@@ -1,11 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
+import { buildCacheKey, cacheGet, cacheSet } from "@/lib/cache";
 
 export async function GET(req: NextRequest) {
     const url = new URL(req.url);
     const searchName = url.searchParams.get("name")?.trim()
     const searchSkill = url.searchParams.get("skill")?.trim()
+
+    const { searchParams } = new URL(req.url);
+    const limit = Number(searchParams.get("limit")) || 10
+    const cursor = searchParams.get("cursor")
+    let nextCursor: string | null = null
+
+    const cachekey = buildCacheKey(
+        "search",
+        "users",
+        `${searchName || ""}:${searchSkill || ""}:${cursor || "start"}:${limit}`
+    )
 
     if (!searchName && !searchSkill) {
         return NextResponse.json({
@@ -16,12 +28,17 @@ export async function GET(req: NextRequest) {
     }
 
     try {
-        const { searchParams } = new URL(req.url);
-        const limit = Number(searchParams.get("limit")) || 10
-        const cursor = searchParams.get("cursor")
-        let nextCursor: string | null = null
+        const cached = await cacheGet<any>(cachekey)
+        if(cached) {
+            return NextResponse.json(
+                cached,
+                {
+                    status: 200
+                }
+            )
+        }
 
-        const whereClause: any = searchName || searchSkill ? { 
+        const whereClause: any = searchName || searchSkill ? {
             OR: []
         } : {};
 
@@ -102,7 +119,7 @@ export async function GET(req: NextRequest) {
             }
         })
 
-        if(searchUsers.length > limit) {
+        if (searchUsers.length > limit) {
             const nextUsers = searchUsers.pop()
             nextCursor = nextUsers!.id
         }
@@ -116,16 +133,23 @@ export async function GET(req: NextRequest) {
             completedSessions: u._count.sessionsAsMentor + u._count.sessionsAsMentee
         }));
 
-        return NextResponse.json({
+        const response = {
             message: "Users fetched successfully",
             count: searchUsers.length,
             data,
             pagination: {
                 nextCursor
             }
-        }, {
-            status: 200
-        })
+        }
+
+        await cacheSet(cachekey, response, 300)
+        return NextResponse.json(
+            response,
+            {
+                status: 200
+            }
+        )
+
     } catch (error) {
         console.error("Error searching users by name:", error)
         return NextResponse.json({

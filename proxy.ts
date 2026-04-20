@@ -12,7 +12,10 @@ const publicRoutes = [
 ];
 
 function isPublicRoute(pathname: string): boolean {
-    return publicRoutes.some(route => pathname.startsWith(route));
+    return publicRoutes.some(route => {
+        if (route === "/") return pathname === "/";
+        return pathname.startsWith(route);
+    });
 }
 
 export async function proxy(req: NextRequest) {
@@ -36,6 +39,10 @@ export async function proxy(req: NextRequest) {
     if (userId && isAuthPage) {
         console.log("Middleware: Redirecting authenticated user to /profile")
         return NextResponse.redirect(new URL("/profile", req.url))
+    }
+
+    if (!userId && pathname !== "/sign-in" && !isPublicRoute(pathname)) {
+        return NextResponse.redirect(new URL("/sign-in", req.url))
     }
 
     if (userId && pathname === "/") {

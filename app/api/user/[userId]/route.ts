@@ -1,6 +1,100 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getSessionFromRequest } from "@/lib/auth";
+import { buildCacheKey, cacheGet, cacheInvalidatePattern, cacheSet } from "@/lib/cache";
+
+const CACHE_PREFIX = "cache:v1"
+
+async function getDynamicFields(
+    viewerId: string | null,
+    profileUserId: string
+) {
+    let hasAcceptedRequest = false;
+    let chatId = null;
+    let hasActiveConfirmedSession = false;
+
+    if (viewerId && viewerId !== profileUserId) {
+        const acceptedRequest = await prisma.mentorshipRequest.findFirst({
+            where: {
+                OR: [
+                    {
+                        mentorId: profileUserId,
+                        menteeId: viewerId,
+                        status: "ACCEPTED"
+                    },
+                    {
+                        mentorId: viewerId,
+                        menteeId: profileUserId,
+                        status: "ACCEPTED"
+                    }
+                ]
+            },
+            select: {
+                mentorId: true,
+                menteeId: true,
+                skillId: true
+            }
+        })
+
+        if (acceptedRequest) {
+            hasAcceptedRequest = true;
+
+            const chat = await prisma.chat.upsert({
+                where: {
+                    mentorId_menteeId_skillId: {
+                        mentorId: acceptedRequest.mentorId,
+                        menteeId: acceptedRequest.menteeId,
+                        skillId: acceptedRequest.skillId
+                    }
+                },
+                update: {},
+                create: {
+                    mentorId: acceptedRequest.mentorId,
+                    menteeId: acceptedRequest.menteeId,
+                    skillId: acceptedRequest.skillId
+                },
+                select: {
+                    id: true
+                }
+            })
+            await cacheInvalidatePattern(`${CACHE_PREFIX}:chat:list:${acceptedRequest.mentorId}`)
+            await cacheInvalidatePattern(`${CACHE_PREFIX}:chat:list:${acceptedRequest.menteeId}`)
+
+            chatId = chat.id
+
+            const confirmedSession = await prisma.session.findFirst({
+                where: {
+                    OR: [
+                        {
+                            mentorId: acceptedRequest.mentorId,
+                            menteeId: acceptedRequest.menteeId
+                        },
+                        {
+                            mentorId: acceptedRequest.menteeId,
+                            menteeId: acceptedRequest.mentorId
+                        }
+                    ],
+                    skillId: acceptedRequest.skillId,
+                    status: "CONFIRMED",
+                    scheduledAt: {
+                        gte: new Date()
+                    }
+                },
+                select: {
+                    id: true
+                }
+            })
+
+            hasActiveConfirmedSession = !!confirmedSession
+        }
+    }
+
+    return {
+        hasAcceptedRequest,
+        chatId,
+        hasActiveConfirmedSession
+    }
+}
 
 export async function GET(req: NextRequest) {
     const userId = getSessionFromRequest(req)
@@ -15,7 +109,24 @@ export async function GET(req: NextRequest) {
         });
     }
 
+    const cacheKey = buildCacheKey("user", "profile", profileUserId)
+
     try {
+        const cached = await cacheGet<any>(cacheKey)
+        if (cached) {
+            const dynamic = await getDynamicFields(userId, profileUserId)
+
+            return NextResponse.json({
+                message: "User fetched successfully (cached)",
+                data: {
+                    ...cached,
+                    ...dynamic
+                }
+            }, {
+                status: 200
+            })
+        }
+
         const fetchUser = await prisma.user.findUnique({
             where: {
                 id: profileUserId
@@ -64,122 +175,11 @@ export async function GET(req: NextRequest) {
             });
         }
 
-        let hasAcceptedRequest = false;
-        let chatId = null;
-        let hasActiveConfirmedSession = false;
+        const dynamic = await getDynamicFields(userId, profileUserId)
 
-        if (userId && userId !== profileUserId) {
-            const currentUser = await prisma.user.findUnique({
-                where: { id: userId },
-                select: { id: true }
-            });
+        const joinedAt = new Date(fetchUser.createdAt).toLocaleDateString("en-US");
 
-            if (currentUser) {
-                const acceptedRequest = await prisma.mentorshipRequest.findFirst({
-                    where: {
-                        OR: [
-                            {
-                                mentorId: fetchUser.id,
-                                menteeId: currentUser.id,
-                                status: "ACCEPTED"
-                            },
-                            {
-                                mentorId: currentUser.id,
-                                menteeId: fetchUser.id,
-                                status: "ACCEPTED"
-                            }
-                        ]
-                    },
-                    select: {
-                        skillId: true
-                    }
-                });
-
-                if (acceptedRequest) {
-                    hasAcceptedRequest = true;
-
-                    const fullRequest = await prisma.mentorshipRequest.findFirst({
-                        where: {
-                            OR: [
-                                {
-                                    mentorId: fetchUser.id,
-                                    menteeId: currentUser.id,
-                                    status: "ACCEPTED"
-                                },
-                                {
-                                    mentorId: currentUser.id,
-                                    menteeId: fetchUser.id,
-                                    status: "ACCEPTED"
-                                }
-                            ]
-                        },
-                        select: {
-                            mentorId: true,
-                            menteeId: true,
-                            skillId: true
-                        }
-                    });
-
-                    if (fullRequest) {
-                        const chat = await prisma.chat.upsert({
-                            where: {
-                                mentorId_menteeId_skillId: {
-                                    mentorId: fullRequest.mentorId,
-                                    menteeId: fullRequest.menteeId,
-                                    skillId: fullRequest.skillId
-                                }
-                            },
-                            update: {},
-                            create: {
-                                mentorId: fullRequest.mentorId,
-                                menteeId: fullRequest.menteeId,
-                                skillId: fullRequest.skillId
-                            },
-                            select: {
-                                id: true
-                            }
-                        });
-
-                        chatId = chat.id;
-
-                        const confirmedSession = await prisma.session.findFirst({
-                            where: {
-                                OR: [
-                                    {
-                                        mentorId: fullRequest.mentorId,
-                                        menteeId: fullRequest.menteeId,
-                                    },
-                                    {
-                                        mentorId: fullRequest.menteeId,
-                                        menteeId: fullRequest.mentorId,
-                                    }
-                                ],
-                                skillId: fullRequest.skillId,
-                                status: "CONFIRMED",
-                                scheduledAt: {
-                                    gte: new Date()
-                                }
-                            },
-                            select: {
-                                id: true,
-                                scheduledAt: true
-                            }
-                        });
-
-                        hasActiveConfirmedSession = !!confirmedSession;
-                    }
-                }
-            }
-        }
-
-        const options = {
-            year: "numeric",
-            month: "short"
-        } as const
-
-        const joinedAt = new Date(fetchUser.createdAt).toLocaleDateString("en-US", options);
-
-        const data = {
+        const baseProfile = {
             id: fetchUser.id,
             name: fetchUser.name,
             bio: fetchUser.bio,
@@ -195,10 +195,13 @@ export async function GET(req: NextRequest) {
 
             skillsOffered: fetchUser.skillsOffered,
             skillsWanted: fetchUser.skillsWanted,
+        }
 
-            hasAcceptedRequest,
-            chatId,
-            hasActiveConfirmedSession
+        await cacheSet(cacheKey, baseProfile)
+
+        const data = {
+            ...baseProfile,
+            ...dynamic
         }
 
         return NextResponse.json({

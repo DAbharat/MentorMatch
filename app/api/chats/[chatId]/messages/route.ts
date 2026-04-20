@@ -4,6 +4,9 @@ import prisma from "@/lib/prisma";
 import { sendMessageSchema } from "@/schema/messageSchema";
 import { z } from "zod";
 import { getSessionFromRequest } from "@/lib/auth";
+import { buildChatCacheKey, cacheGet, cacheInvalidatePattern, cacheSet } from "@/lib/cache";
+
+const CACHE_PREFIX = "cache:v1";
 
 export async function POST(
     req: NextRequest,
@@ -47,20 +50,20 @@ export async function POST(
     try {
         const { content } = parsed.data
         //console.log("content: ", content)
-        
+
         const userExists = await prisma.user.findUnique({
             where: {
                 id: userId
             }
         })
-        if(!userExists) {
+        if (!userExists) {
             return NextResponse.json({
                 message: "user not found."
             }, {
                 status: 404
             })
         }
-        
+
         const chatExists = await prisma.chat.findUnique({
             where: {
                 id: chatId,
@@ -100,7 +103,7 @@ export async function POST(
             }
         })
 
-        if(!mentorShipRequest || mentorShipRequest.status !== "ACCEPTED") {
+        if (!mentorShipRequest || mentorShipRequest.status !== "ACCEPTED") {
             return NextResponse.json({
                 message: "Cannot send message in this chat"
             }, {
@@ -117,12 +120,17 @@ export async function POST(
         })
         console.log("message: ", createMessage)
 
+        await cacheInvalidatePattern(`${CACHE_PREFIX}:chat:list:${chatExists.mentorId}`)
+        await cacheInvalidatePattern(`${CACHE_PREFIX}:chat:list:${chatExists.menteeId}`)
+        await cacheInvalidatePattern(`${CACHE_PREFIX}:chat:messages:${chatId}:*`)
+        
         return NextResponse.json({
             message: "Message sent successfully",
             data: createMessage
         }, {
             status: 201
         })
+
     } catch (error) {
         console.error("Error creating message:", error)
         return NextResponse.json({
@@ -155,24 +163,35 @@ export async function GET(req: NextRequest,
         })
     }
 
+    const { searchParams } = req.nextUrl
+    const limit = Math.min(Number(searchParams.get("limit")) || 20, 50);
+    const cursor = searchParams.get("cursor")
+    let nextCursor: string | null = null
+
+    const cacheKey = buildChatCacheKey(chatId, cursor, limit)
+
     try {
+        const cached = await cacheGet<any>(cacheKey);
+        if (cached) {
+            return NextResponse.json(
+                cached,
+                {
+                    status: 200
+                })
+        }
+
         const userExists = await prisma.user.findUnique({
             where: {
                 id: userId
             }
         })
-        if(!userExists) {
+        if (!userExists) {
             return NextResponse.json({
-                message: "user not found."
+                message: "User not found."
             }, {
                 status: 404
             })
         }
-
-        const { searchParams } = req.nextUrl
-        const limit = Number(searchParams.get("limit")) || 20
-        const cursor = searchParams.get("cursor")
-        let nextCursor: string | null = null
 
         const chatExists = await prisma.chat.findUnique({
             where: {
@@ -193,7 +212,7 @@ export async function GET(req: NextRequest,
             })
         }
 
-        if(chatExists.mentorId !== userId && chatExists.menteeId !== userId) {
+        if (chatExists.mentorId !== userId && chatExists.menteeId !== userId) {
             return NextResponse.json({
                 message: "Unauthorized"
             }, {
@@ -236,15 +255,21 @@ export async function GET(req: NextRequest,
             nextCursor = nextItem!.id
         }
 
-        return NextResponse.json({
+        const response = {
             data: messages,
             pagination: {
                 nextCursor,
                 limit,
             },
-        }, {
-            status: 200
-        })
+        }
+
+        await cacheSet(cacheKey, response, 30)
+        return NextResponse.json(
+            response,
+            {
+                status: 200
+            })
+
     } catch (error) {
         console.error("Error fetching messages:", error)
         return NextResponse.json({
