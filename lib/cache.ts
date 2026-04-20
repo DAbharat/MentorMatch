@@ -1,12 +1,23 @@
 import redis from "./redis";
 
 const DEFAULT_TTL = Number(process.env.REDIS_TTL) || 3600;
+const CACHE_PREFIX = "cache:v1";
+const STATS_KEY = `${CACHE_PREFIX}:stats`
 
-const cacheStats = {
-    hits: 0,
-    misses: 0,
-    sets: 0,
-    deletes: 0
+export function buildCacheKey(
+    domain: string,
+    entity: string,
+    id: string
+) {
+    return `${CACHE_PREFIX}:${domain}:${entity}:${id}`
+}
+
+export function buildChatCacheKey(
+    chatId: string,
+    cursor: string | null,
+    limit: number
+) {
+    return `${CACHE_PREFIX}:chat:messages:${chatId}:${cursor || "first"}:${limit}`
 }
 
 export async function cacheGet<T>(key: string): Promise<T | null> {
@@ -14,11 +25,11 @@ export async function cacheGet<T>(key: string): Promise<T | null> {
         const data = await redis.get(key);
         
         if(data) {
-            cacheStats.hits++;
+            await redis.hincrby(STATS_KEY, "hits", 1)
             console.log(`Cache HIT: ${key}`)
             return JSON.parse(data)
         } else {
-            cacheStats.misses++;
+            await redis.hincrby(STATS_KEY, "misses", 1)
             console.log(`Cache MISS: ${key}`)
             return null;
         }
@@ -46,7 +57,7 @@ export async function cacheSet(
 ): Promise<boolean> {
     try {
         await redis.set(key, JSON.stringify(value), "EX", ttl);
-        cacheStats.sets++;
+        await redis.hincrby(STATS_KEY, "sets", 1)
         return true;
     } catch (error: any) {
         console.error("Cache SET error:", error.message);
@@ -56,8 +67,8 @@ export async function cacheSet(
 
 export async function cacheDelete(key: string): Promise<boolean> {
     try {
-        const result = await redis.del(key);
-        cacheStats.deletes += result;
+        const deleted = await redis.del(key);
+        await redis.hincrby(STATS_KEY, "deletes", deleted)
         return true;
     } catch (error: any) {
         console.error("Cache DELETE error:", error.message);
@@ -77,7 +88,7 @@ export async function cacheInvalidatePattern(pattern: string): Promise<void> {
 
             if (keys.length > 0) {
                 const deleted = await redis.del(...keys);
-                cacheStats.deletes += deleted;
+                await redis.hincrby(STATS_KEY, "deletes", deleted)
             }
 
         } while (cursor !== "0");
@@ -87,12 +98,22 @@ export async function cacheInvalidatePattern(pattern: string): Promise<void> {
     }
 }
 
-export function cacheStatsReport() {
-    const total = cacheStats.hits + cacheStats.misses;
-    const hitRate = total > 0 ? (cacheStats.hits / total) * 100 : 0;
+export async function cacheStatsReport() {
+    const stats = await redis.hgetall(STATS_KEY)
+
+    const hits = Number(stats.hits || 0)
+    const misses = Number(stats.misses || 0)
+    const sets = Number(stats.sets || 0)
+    const deletes = Number(stats.deletes || 0)
+
+    const total = hits + misses;
+    const hitRate = total > 0 ? (hits / total) * 100 : 0;
 
     return {
-        ...cacheStats,
+        hits,
+        misses,
+        sets,
+        deletes,
         hitRate: Number(hitRate.toFixed(2))
     }
 }

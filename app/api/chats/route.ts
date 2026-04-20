@@ -2,11 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
 import { getSessionFromRequest } from "@/lib/auth";
+import { buildCacheKey, cacheGet, cacheSet } from "@/lib/cache";
+
+const CACHE_PREFIX = "cache:v1"
 
 export async function GET(req: NextRequest) {
 
     const userId = getSessionFromRequest(req)
-    if(!userId) {
+    if (!userId) {
         return NextResponse.json({
             message: "Unauthenticated"
         }, {
@@ -17,13 +20,24 @@ export async function GET(req: NextRequest) {
     const url = new URL(req.url)
     const searchChatByName = url.searchParams.get("name")?.trim()
 
+    const cacheKey = `${CACHE_PREFIX}:chat:list:${userId}:${searchChatByName || "all"}`
+
     try {
+        const cached = await cacheGet<any>(cacheKey)
+        if (cached) {
+            return NextResponse.json(
+                cached,
+                {
+                    status: 200
+                })
+        }
+
         const userExists = await prisma.user.findUnique({
             where: {
                 id: userId
             }
         })
-        if(!userExists) {
+        if (!userExists) {
             return NextResponse.json({
                 message: "user not found."
             }, {
@@ -50,7 +64,7 @@ export async function GET(req: NextRequest) {
                     status: 400
                 })
             }
-            
+
             whereClause.AND = [
                 {
                     OR: [
@@ -146,13 +160,18 @@ export async function GET(req: NextRequest) {
             }
         }) => chat._count.messages > 0).length
 
-        return NextResponse.json({
-            message: "Chats fetched successfully",
+        const response = {
             chats: fetchChatsForAUser,
             unreadCount: unreadChatsCount
-        }, {
+        }
+
+        await cacheSet(cacheKey, response, 300)
+        return NextResponse.json(
+            response,
+        {
             status: 200
         })
+
     } catch (error) {
         console.error("Error fetching chats for user:", error)
         return NextResponse.json({

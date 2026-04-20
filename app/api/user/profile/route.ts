@@ -5,6 +5,7 @@ import { updateProfileSchema } from "@/schema/profileSchema";
 import { z } from "zod";
 import { resolveSkills } from "@/lib/skills";
 import { getSessionFromRequest } from "@/lib/auth";
+import  { cacheGet, cacheSet, buildCacheKey, cacheDelete } from "@/lib/cache"
 
 export async function GET(req: NextRequest) {
 
@@ -20,9 +21,21 @@ export async function GET(req: NextRequest) {
         })
     }
 
+    const cacheKey = buildCacheKey("user", "profile", userId)
+
     console.log("GET /api/user/profile: userId", userId);
 
     try {
+        const cached = await cacheGet<any>(cacheKey)
+        if(cached) {
+            return NextResponse.json({
+                message: "User profile fetched (cache)",
+                data: cached
+            }, {
+                status: 200
+            })
+        }
+
         const userProfile = await prisma.user.findUnique({
             where: {
                 id: userId
@@ -88,18 +101,17 @@ export async function GET(req: NextRequest) {
                 sessionsCompletedAsMentee: userProfile._count.sessionsAsMentee,
             },
             skillsOffered: userProfile.skillsOffered,
-            skillsWanted: userProfile.skillsWanted,
-            hasAcceptedRequest: false,
-            chatId: null,
-            hasActiveConfirmedSession: false
+            skillsWanted: userProfile.skillsWanted
         }
 
+        await cacheSet(cacheKey, data, 600)
         return NextResponse.json({
             message: "User profile fetched successfully",
             data,
         }, {
             status: 200
         })
+
     } catch (error) {
         console.error("Error fetching user profile:", error)
         return NextResponse.json({
@@ -123,6 +135,8 @@ export async function PATCH(req: NextRequest) {
             status: 401
         })
     }
+
+    const cacheKey = buildCacheKey("user", "profile", userId)
 
     const body = await req.json()
     const parsed = updateProfileSchema.safeParse(body)
@@ -201,6 +215,8 @@ export async function PATCH(req: NextRequest) {
             }
         })
 
+        await cacheDelete(cacheKey)
+        console.log(`Cache invalidated: ${cacheKey}`)
         return NextResponse.json({
             message: "Profile updated successfully",
             data: updateProfile

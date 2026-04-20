@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
 import { getSessionFromRequest } from "@/lib/auth";
+import { cacheInvalidatePattern } from "@/lib/cache";
+
+const CACHE_PREFIX = "cache:v1";
 
 export async function PATCH(req: NextRequest,
     { params }: { params: Promise<{ chatId: string }> }
@@ -31,7 +34,7 @@ export async function PATCH(req: NextRequest,
                 id: userId
             }
         })
-        if(!userExists) {
+        if (!userExists) {
             return NextResponse.json({
                 message: "user not found"
             }, {
@@ -77,6 +80,12 @@ export async function PATCH(req: NextRequest,
                 readAt: new Date()
             },
         })
+
+        if (markAsRead.count > 0) {
+            await cacheInvalidatePattern(`cache:v1:chat:list:${chat.mentorId}`)
+            await cacheInvalidatePattern(`cache:v1:chat:list:${chat.menteeId}`)
+            await cacheInvalidatePattern(`${CACHE_PREFIX}:chat:messages:${chatId}:*`)
+        }
 
         return NextResponse.json({
             message: "Messages marked as read",
