@@ -8,7 +8,10 @@ const publicRoutes = [
     "/sign-up",
     "/home",
     "/search",
-    "/api/users"
+    "/api/users",
+    "/api/auth/register",
+    "/api/auth/login",
+    "/api/auth/refresh"
 ];
 
 function isPublicRoute(pathname: string): boolean {
