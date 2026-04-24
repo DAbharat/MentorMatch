@@ -5,7 +5,9 @@ import { updateProfileSchema } from "@/schema/profileSchema";
 import { z } from "zod";
 import { resolveSkills } from "@/lib/skills";
 import { getSessionFromRequest } from "@/lib/auth";
-import  { cacheGet, cacheSet, buildCacheKey, cacheDelete } from "@/lib/cache"
+import  { cacheGet, cacheSet, buildCacheKey, cacheDelete, cacheInvalidatePattern } from "@/lib/cache"
+
+const CACHE_PREFIX = "cache:v1";
 
 export async function GET(req: NextRequest) {
 
@@ -216,6 +218,8 @@ export async function PATCH(req: NextRequest) {
         })
 
         await cacheDelete(cacheKey)
+        await cacheInvalidatePattern(`${CACHE_PREFIX}:search:users:*`)
+
         console.log(`Cache invalidated: ${cacheKey}`)
         return NextResponse.json({
             message: "Profile updated successfully",
@@ -223,6 +227,7 @@ export async function PATCH(req: NextRequest) {
         }, {
             status: 200
         })
+        
     } catch (error) {
         console.error("Error updating profile:", error)
         return NextResponse.json({
