@@ -93,7 +93,7 @@ REDIS_MAX_RETRY=5
 
 # Application
 NEXT_PUBLIC_APP_URL=http://localhost:3000
-NEXT_PUBLIC_SOCKET_URL=http://localhost:4000
+NEXT_PUBLIC_SOCKET_URL=http://localhost:3001
 ```
 
 5. Run database migrations:
