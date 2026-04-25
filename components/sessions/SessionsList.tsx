@@ -71,6 +71,7 @@ export default function SessionsList({
 
   const [navigatingToChatId, setNavigatingToChatId] = useState<string | null>(null)
   const [loadingSessionId, setLoadingSessionId] = useState<string | null>(null)
+  const [completingSessionId, setCompletingSessionId] = useState<string | null>(null)
   const [isCleaningUp, setIsCleaningUp] = useState(false)
   const [cancelingSessionId, setCancelingSessionId] = useState<string | null>(null)
   const [showCancelDialog, setShowCancelDialog] = useState(false)
@@ -199,6 +200,29 @@ export default function SessionsList({
     } catch (error: any) {
       toast.error(error.message || "Failed to join session")
       setLoadingSessionId(null)
+    }
+  }
+
+  const handleCompleteSessionManually = async (session: Session) => {
+    if (!session.callStartedAt) return
+
+    const elapsedSeconds =
+      (new Date().getTime() - new Date(session.callStartedAt).getTime()) / 1000
+
+    if (elapsedSeconds < 600) { 
+      toast.error("Cannot mark the session as complete before 10 min")
+      return
+    }
+
+    setCompletingSessionId(session.id)
+    try {
+      await completeSession(session.id)
+      toast.success("Session completed!")
+      router.refresh()
+    } catch (error: any) {
+      toast.error(error.message || "Failed to complete session")
+    } finally {
+      setCompletingSessionId(null)
     }
   }
 
@@ -504,27 +528,43 @@ export default function SessionsList({
                         </div>
 
                         <div className="space-y-2 pt-2">
-                          <Button
-                            className="w-full bg-[#1c2023] text-[#d3d3d3] hover:bg-[#2a2f34] border border-white/10 rounded-2xl text-xs sm:text-sm py-2"
-                            onClick={() => handleNavigateToChat(session)}
-                            disabled={navigatingToChatId === session.id}
-                          >
-                            <MessageCircleMore className="mr-2 size-3.5 sm:size-4" />
-                            {navigatingToChatId === session.id
-                              ? "Opening..."
-                              : "Message"}
-                          </Button>
+                          {/* Message and Join Session buttons - side by side */}
+                          <div className="flex gap-2">
+                            <Button
+                              className="flex-1 bg-[#1c2023] text-[#d3d3d3] hover:bg-[#2a2f34] border border-white/10 rounded-2xl text-xs sm:text-sm py-2"
+                              onClick={() => handleNavigateToChat(session)}
+                              disabled={navigatingToChatId === session.id}
+                            >
+                              <MessageCircleMore className="mr-2 size-3.5 sm:size-4" />
+                              {navigatingToChatId === session.id
+                                ? "Opening..."
+                                : "Message"}
+                            </Button>
 
-                          <Button
-                            className="w-full bg-green-600 text-white hover:bg-green-700 rounded-2xl text-xs sm:text-sm py-2 flex items-center justify-center gap-2"
-                            onClick={() => handleJoinSession(session)}
-                            disabled={loadingSessionId === session.id}
-                          >
-                            <LogIn className="w-4 h-4" />
-                            {loadingSessionId === session.id
-                              ? "Joining..."
-                              : "Join Session"}
-                          </Button>
+                            <Button
+                              className="flex-1 bg-green-600 text-white hover:bg-green-700 rounded-2xl text-xs sm:text-sm py-2 flex items-center justify-center gap-2"
+                              onClick={() => handleJoinSession(session)}
+                              disabled={loadingSessionId === session.id}
+                            >
+                              <LogIn className="w-4 h-4" />
+                              {loadingSessionId === session.id
+                                ? "Joining..."
+                                : "Join Session"}
+                            </Button>
+                          </div>
+
+                          {/* Complete Session button - only for mentor */}
+                          {isMentor(session) && (
+                            <Button
+                              className="w-full bg-[#1c2023] text-[#d3d3d3] hover:bg-[#2a2f34] border border-white/10 rounded-2xl text-xs sm:text-sm py-2"
+                              onClick={() => handleCompleteSessionManually(session)}
+                              disabled={completingSessionId === session.id}
+                            >
+                              {completingSessionId === session.id
+                                ? "Completing..."
+                                : "Complete Session"}
+                            </Button>
+                          )}
                         </div>
                       </div>
                     )}
