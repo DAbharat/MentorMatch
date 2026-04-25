@@ -4,7 +4,7 @@ A modern, real-time mentorship platform that connects mentors and mentees for sk
 
 ## Overview
 
-MentorMatch is a comprehensive mentorship application designed to facilitate meaningful connections between experienced professionals (mentors) and learners (mentees). The platform provides tools for skill matching, session scheduling, real-time communication, and performance feedback to create an effective learning environment.
+MentorMatch is a comprehensive mentorship application designed to facilitate meaningful connections between experienced professionals (mentors) and learners (mentees). The platform provides tools for session scheduling, real-time communication, and performance feedback to create an effective learning environment.
 
 ## Key Features
 
@@ -319,10 +319,8 @@ npm run lint         # Run ESLint
 ### Video Call Issues
 - Check browser permissions for camera/microphone
 - Test network connectivity and firewall settings
-- Multi-language support via microphone
 - Verify WebRTC peer connection establishment
 - Monitor console for memory leak warnings
-- Run `npx prisma migrate dev` to sync schema
 
 ## Future Enhancements
 
