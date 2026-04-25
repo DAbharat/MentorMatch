@@ -322,7 +322,6 @@ npm run lint         # Run ESLint
 - Multi-language support via microphone
 - Verify WebRTC peer connection establishment
 - Monitor console for memory leak warnings
-- Run `npx prisma migrate dev` to sync schema
 
 ## Future Enhancements
 
