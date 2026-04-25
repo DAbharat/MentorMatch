@@ -57,7 +57,6 @@ MentorMatch is a comprehensive mentorship application designed to facilitate mea
 - Node.js 18+ and npm/yarn
 - Redis instance (Upstash recommended for cloud deployment)
 - PostgreSQL database
-- Clerk account for authentication
 
 ### Installation
 
@@ -125,59 +124,59 @@ The application will be available at `http://localhost:3000`.
 
 ```
 productfeed/
-├── app/                          # Next.js app directory
-│   ├── api/                      # API routes
-│   │   ├── chats/               # Chat endpoints
-│   │   ├── sessions/            # Session management
-│   │   ├── mentorship-requests/ # Mentorship request endpoints
-│   │   ├── notifications/       # Notification endpoints
-│   │   └── user/                # User endpoints
-│   ├── (auth)/                  # Authentication pages
-│   ├── (landing)/               # Landing pages
-│   ├── chats/                   # Chat UI pages
-│   ├── sessions/                # Session pages
-│   ├── profile/                 # User profile pages
-│   ├── notifications/           # Notification pages
-│   └── search/                  # Search functionality
-├── components/                   # Reusable React components
-│   ├── chat/                    # Chat related components
-│   ├── feedback/                # Feedback UI components
-│   ├── layout/                  # Layout components
-│   ├── mentorship-request/      # Mentorship request components
-│   ├── messages/                # Message components
-│   ├── notifications/           # Notification components
-│   ├── redis.ts                # Redis client with connection pooling
-│   ├── cache.ts                # Caching utility layer with stats
-│   ├── profile/                 # Profile UI components
-│   ├── sessions/                # Session related components
-│   ├── video-call/              # Video call UI components
-│   └── ui/                      # Base UI components (shadcn/Radix)
-├── lib/                         # Utility functions
-│   ├── prisma.ts               # Prisma client
-│   ├── chatSocket.ts           # Socket.io client utilities
-│   ├── session-metrics.ts      # Calculate session duration
-│   └── utils.ts                # Helper functions
-├── services/                    # Business logic services
-│   ├── session.service.ts      # Session management
-│   ├── messages.service.ts     # Message operations
-│   ├── feedback.service.ts     # Feedback management
-│   ├── notification.service.ts # Notification handling
-│   └── profile.service.ts      # User profile operations
-│   ├── mentorship-requests.service.ts # Request management
-│   └── videocall.service.ts      # Starting Video Call
-├── socket/                      # WebSocket server
-│   └── server.ts               # Socket.io server implementation
-├── prisma/                      # Database
-│   ├── schema.prisma           # Data models
-│   └── migrations/             # Database migrations
-├── hooks/                       # Custom React hooks
-└── schema/                      # Zod validation schemas
+├── app/                                        # Next.js app directory
+│   ├── api/                                    # API routes
+│   │   ├── chats/                              # Chat endpoints
+│   │   ├── sessions/                           # Session management
+│   │   ├── mentorship-requests/                # Mentorship request endpoints
+│   │   ├── notifications/                      # Notification endpoints
+│   │   └── user/                               # User endpoints
+│   ├── (auth)/                                 # Authentication pages
+│   ├── (landing)/                              # Landing pages
+│   ├── chats/                                  # Chat UI pages
+│   ├── sessions/                               # Session pages
+│   ├── profile/                                # User profile pages
+│   ├── notifications/                          # Notification pages
+│   └── search/                                 # Search functionality
+├── components/                                 # Reusable React components
+│   ├── chat/                                   # Chat related components
+│   ├── feedback/                               # Feedback UI components
+│   ├── layout/                                 # Layout components
+│   ├── mentorship-request/                     # Mentorship request components
+│   ├── messages/                               # Message components
+│   ├── notifications/                          # Notification components
+│   ├── redis.ts                                # Redis client with connection pooling
+│   ├── cache.ts                                # Caching utility layer with stats
+│   ├── profile/                                # Profile UI components
+│   ├── sessions/                               # Session related components
+│   ├── video-call/                             # Video call UI components
+│   └── ui/                                     # Base UI components (shadcn/Radix)
+├── lib/                                        # Utility functions
+│   ├── prisma.ts                               # Prisma client
+│   ├── chatSocket.ts                           # Socket.io client utilities
+│   ├── session-metrics.ts                      # Calculate session duration
+│   └── utils.ts                                # Helper functions
+├── services/                                   # Business logic services
+│   ├── session.service.ts                      # Session management
+│   ├── messages.service.ts                     # Message operations
+│   ├── feedback.service.ts                     # Feedback management
+│   ├── notification.service.ts                 # Notification handling
+│   ├── mentorship-requests.service.ts          # Request management
+│   ├── profile.service.ts                      # User profile operations
+│   └── videocall.service.ts                    # Starting Video Call
+├── socket/                                     # WebSocket server
+│   └── server.ts                               # Socket.io server implementation
+├── prisma/                                     # Database
+│   ├── schema.prisma                           # Data models
+│   └── migrations/                             # Database migrations
+├── hooks/                                      # Custom React hooks
+└── schema/                                     # Zod validation schemas
 ```
 
 ## Core Services & API Endpoints
-ustom token-based authentication system
+- Custom token-based authentication system
 - User profile creation and management
-- Secure session handling with environment-based secretsion system
+- Secure session handling with environment-based secrets
 - User profile creation and management
 - Secure session handling
 
@@ -261,24 +260,27 @@ Deployed on Render as a background worker for real-time communication.
 
 - **Memory Leak Prevention**:
   - WebRTC peer connections properly closed on unmount
-  -ustom token-based authentication and authorization
-- Secure WebSocket connections with token verification
-- SQL injection prevention via Prisma ORM
-- Environment variable abstraction for sensitive data
-- Redis connection pooling with automatic retry logic
-- Graceful Redis shutdown on process termination
+  - Redis connection pooling with automatic retry logic
+  - Graceful Redis shutdown on process termination
 
-- **Session Metrics**: Computed asynchronously to avoid blocking operations
-- **Message Indexing**: Database indexes on frequently queried fields (userId, chatId, timestamps)
-- **Real-Time Updates**: Socket.io namespaces for efficient event broadcasting
-- **Call Quality**: WebRTC provides peer-to-peer optimization with adaptive bitrate control
+- **Session Metrics**:
+  - Computed asynchronously to avoid blocking operations
 
-- **Cache Monitoring**: Health check endpoint (`/api/health/cache`) tracks hits/misses and cache efficiency
+- **Message Indexing**:
+  - Database indexes on frequently queried fields (userId, chatId, timestamps)
+
+- **Real-Time Updates**:
+  - Socket.io namespaces for efficient event broadcasting
+
+- **Call Quality**:
+  - WebRTC provides peer-to-peer optimization with adaptive bitrate control
+
+- **Cache Monitoring**:
+  - Health check endpoint (`/api/health/cache`) tracks hits/misses and cache efficiency
 
 ## Security Features
-
+- Custom token-based authentication with session validation and expiration
 - Type-safe API endpoints with Zod validation
-- Clerk authentication and authorization
 - Secure WebSocket connections with token verification
 - SQL injection prevention via Prisma ORM
 - Environment variable abstraction for sensitive data
@@ -298,7 +300,10 @@ npm run lint         # Run ESLint
 - Check CORS origins in socket/server.ts
 - Ensure environment variables are set correctly
 
-- Check `/api/health` endpoint for server status
+### Health Check / Server Status
+- Check `/api/health` endpoint for overall system status
+- Verify database, Redis, and socket health from response
+- Use it to debug if any service is down
 
 ### Database Connection
 - Verify PostgreSQL is running
@@ -314,26 +319,17 @@ npm run lint         # Run ESLint
 ### Video Call Issues
 - Check browser permissions for camera/microphone
 - Test network connectivity and firewall settings
+- Multi-language support via microphone
 - Verify WebRTC peer connection establishment
 - Monitor console for memory leak warnings
 - Run `npx prisma migrate dev` to sync schema
-
-### Video Call Issues
-- Check browser permissions for camer
-- Bull queue integration for async tasks (when needed)
-- Enhanced monitoring and observability
-- Multi-language supporta/microphone
-- Test network connectivity and firewall settings
-- Verify WebRTC peer connection establishment
 
 ## Future Enhancements
 
 - Advanced skill matching algorithms
 - AI-powered session recommendations
 - Session recordings and replay
-- Peer rating and review system
 - Mobile app development
-- Integration with calendar services
 - Gamification and achievement badges
 
 ## Contributing
