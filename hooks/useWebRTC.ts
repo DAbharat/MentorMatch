@@ -21,6 +21,19 @@ export const useWebRTC = ({
 
   const [localStream, setLocalStream] = useState<MediaStream | null>(null)
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null)
+  const [screenStream, setScreenStream] = useState<MediaStream | null>(null)
+  const [remoteVideoTrack, setRemoteVideoTrack] = useState<MediaStreamTrack | null>(null)
+
+  useEffect(() => {
+    if (remoteStream) {
+      const videoTracks = remoteStream.getVideoTracks()
+      if (videoTracks.length > 0) {
+        setRemoteVideoTrack(videoTracks[0])
+        console.log("[WebRTC] Remote video track updated:", videoTracks[0].label)
+      }
+    }
+  }, [remoteStream])
+
   const [connectionState, setConnectionState] = useState<RTCPeerConnectionState>("new")
 
   const [isMuted, setIsMuted] = useState(false)
@@ -82,7 +95,17 @@ export const useWebRTC = ({
     })
 
     pc.ontrack = (event) => {
-      setRemoteStream(event.streams[0])
+      console.log("[WebRTC] ontrack event received:", {
+        trackKind: event.track.kind,
+        trackLabel: event.track.label,
+        trackEnabled: event.track.enabled,
+        streamId: event.streams[0]?.id,
+        streamTrackCount: event.streams[0]?.getTracks().length,
+        streams: event.streams.length
+      })
+      if (event.streams && event.streams.length > 0) {
+        setRemoteStream(event.streams[0])
+      }
     }
 
     pc.onicecandidate = (event) => {
@@ -205,12 +228,17 @@ export const useWebRTC = ({
 
     const handleScreenShareStart = () => {
       setIsPeerScreenSharing(true)
-      console.log("Peer started screen sharing")
+      console.log("[WebRTC] Peer started screen sharing - forcing remote stream check")
+      // Force video track check
+      if (remoteStream) {
+        const videoTracks = remoteStream.getVideoTracks()
+        console.log("[WebRTC] Remote stream video tracks:", videoTracks.length, videoTracks.map(t => ({ label: t.label, enabled: t.enabled })))
+      }
     }
 
     const handleScreenShareStop = () => {
       setIsPeerScreenSharing(false)
-      console.log("Peer stopped screen sharing")
+      console.log("[WebRTC] Peer stopped screen sharing")
     }
 
     socket.on("webrtc:peer-joined", handlePeerJoined)
@@ -343,8 +371,12 @@ export const useWebRTC = ({
         return
       }
 
+      setScreenStream(stream)
       setIsScreenSharing(true)
       socket?.emit("webrtc:screen-share-started", { sessionId })
+
+      // Small delay to ensure track is properly set before creating offer
+      await new Promise(resolve => setTimeout(resolve, 100))
 
       if (pcRef.current) {
         try {
@@ -488,12 +520,15 @@ export const useWebRTC = ({
       }
     }
 
+    setScreenStream(null)
     isStoppingRef.current = false
   }
 
   return {
     localStream,
     remoteStream,
+    screenStream,
+    remoteVideoTrack,
     connectionState,
     isMuted,
     isCameraOff,

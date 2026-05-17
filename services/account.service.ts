@@ -8,10 +8,7 @@ export async function register(userData: {
     password: string;
 }) {
     try {
-        console.log("Creating account with data:", userData);
         const response = await axiosClient.post(`/api/auth/register`, userData);
-        console.log("Register response:", response.data)
-        console.log("AccessToken in response:", response.data.accessToken)
         return {
             ...response.data.user,
             accessToken: response.data.accessToken
@@ -29,8 +26,6 @@ export async function login(userData: {
 }) {
     try {
         const response = await axiosClient.post(`/api/auth/login`, userData)
-        console.log("Login response:", response.data)
-        console.log("AccessToken in response:", response.data.accessToken)
         return {
             ...response.data.user,
             accessToken: response.data.accessToken

@@ -46,6 +46,7 @@ export default function CallContainer(props: CallContainerProps) {
     const {
         localStream,
         remoteStream,
+        screenStream,
         connectionState,
         isPeerConnected,
         isScreenSharing,
@@ -87,6 +88,7 @@ export default function CallContainer(props: CallContainerProps) {
                 isUserMentor={props.isUserMentor}
                 localStream={localStream}
                 remoteStream={remoteStream}
+                screenStream={screenStream}
                 micEnabled={!isMuted}
                 cameraEnabled={!isCameraOff}
                 isScreenSharing={isScreenSharing}

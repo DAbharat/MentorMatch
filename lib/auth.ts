@@ -144,7 +144,7 @@ export function setAuthCookies(res: NextResponse, accessToken: string, refreshTo
         secure: true,
         sameSite: "strict",
         path: "/",
-        maxAge: 15 * 60
+        maxAge: 60 * 60  
     })
 
     res.cookies.set("refreshToken", refreshToken, {

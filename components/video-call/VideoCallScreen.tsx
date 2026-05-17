@@ -194,59 +194,58 @@ export default function VideoCallScreen({
                 </div>
             </div>
 
-            {/* Video Container */}
-            <div className="flex-1 flex flex-col md:flex-row gap-2 sm:gap-3 p-3 sm:p-4 overflow-hidden">
-                {/* Remote Video (Main) */}
-                <div className="flex-1 flex flex-col gap-2">
-                    <div
-                        className="flex-1 rounded-2xl overflow-hidden flex items-center justify-center relative"
-                        style={{
-                            backgroundColor: '#111',
-                            border: '1px solid #1f1f1f',
-                            minHeight: '300px',
-                            boxShadow: '0 0 0 1px #1f1f1f, 0 24px 64px rgba(0,0,0,0.5)',
-                        }}
-                    >
-                        {remoteStream ? (
-                            <video
-                                ref={remoteVideoRef}
-                                autoPlay
-                                playsInline
-                                className="w-full h-full object-cover"
-                            />
-                        ) : (
-                            <div className="flex flex-col items-center gap-3">
-                                <div
-                                    className="w-20 h-20 sm:w-24 sm:h-24 rounded-full flex items-center justify-center text-3xl sm:text-4xl font-semibold text-white"
-                                    style={{
-                                        background: 'linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%)',
-                                        border: '1px solid #2e2e2e',
-                                    }}
-                                >
-                                    {otherUser.name.charAt(0).toUpperCase()}
-                                </div>
-                                <div className="text-center">
-                                    <p className="text-[#888] text-sm">Waiting for</p>
-                                    <p className="text-white font-semibold">{otherUser.name}</p>
-                                </div>
-                            </div>
-                        )}
+            {/* Video Container — equal 50/50 split on both mobile (column) and desktop (row) */}
+            <div className="flex-1 flex flex-col md:flex-row gap-2 sm:gap-3 p-3 sm:p-4 overflow-hidden min-h-0">
 
-                        {/* User Label */}
-                        <div
-                            className="absolute bottom-3 left-3 px-2.5 py-1 rounded-lg text-xs text-[#aaa]"
-                            style={{ backgroundColor: 'rgba(11,9,10,0.8)', backdropFilter: 'blur(8px)', border: '1px solid #1f1f1f' }}
-                        >
-                            {otherUser.name}
+                {/* Remote Video */}
+                <div
+                    className="flex-1 rounded-2xl overflow-hidden flex items-center justify-center relative min-h-0"
+                    style={{
+                        backgroundColor: '#111',
+                        border: '1px solid #1f1f1f',
+                        boxShadow: '0 0 0 1px #1f1f1f, 0 24px 64px rgba(0,0,0,0.5)',
+                    }}
+                >
+                    {remoteStream ? (
+                        <video
+                            ref={remoteVideoRef}
+                            autoPlay
+                            playsInline
+                            className="w-full h-full object-cover"
+                        />
+                    ) : (
+                        <div className="flex flex-col items-center gap-3">
+                            <div
+                                className="w-20 h-20 sm:w-24 sm:h-24 rounded-full flex items-center justify-center text-3xl sm:text-4xl font-semibold text-white"
+                                style={{
+                                    background: 'linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%)',
+                                    border: '1px solid #2e2e2e',
+                                }}
+                            >
+                                {otherUser.name.charAt(0).toUpperCase()}
+                            </div>
+                            <div className="text-center">
+                                <p className="text-[#888] text-sm">Waiting for</p>
+                                <p className="text-white font-semibold">{otherUser.name}</p>
+                            </div>
                         </div>
+                    )}
+
+                    {/* User Label */}
+                    <div
+                        className="absolute bottom-3 left-3 px-2.5 py-1 rounded-lg text-xs text-[#aaa]"
+                        style={{ backgroundColor: 'rgba(11,9,10,0.8)', backdropFilter: 'blur(8px)', border: '1px solid #1f1f1f' }}
+                    >
+                        {otherUser.name}
                     </div>
                 </div>
 
-                {/* Local Video (Picture-in-Picture) */}
-                <div className={`rounded-2xl overflow-hidden relative border border-[#1f1f1f] flex items-center justify-center ${isMobileView ? 'h-32' : 'md:w-56 lg:w-64 h-auto'
-                    }`}
+                {/* Local Video — same flex-1 so it matches remote exactly */}
+                <div
+                    className="flex-1 rounded-2xl overflow-hidden relative flex items-center justify-center min-h-0"
                     style={{
                         backgroundColor: '#111',
+                        border: '1px solid #1f1f1f',
                         boxShadow: '0 0 0 1px #1f1f1f, 0 24px 64px rgba(0,0,0,0.5)',
                     }}
                 >
@@ -261,7 +260,7 @@ export default function VideoCallScreen({
                     ) : (
                         <div className="flex flex-col items-center gap-2 p-3">
                             <div
-                                className="w-12 h-12 rounded-full flex items-center justify-center text-lg font-semibold text-white"
+                                className="w-20 h-20 sm:w-24 sm:h-24 rounded-full flex items-center justify-center text-3xl sm:text-4xl font-semibold text-white"
                                 style={{
                                     background: 'linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%)',
                                     border: '1px solid #2e2e2e',
@@ -275,7 +274,7 @@ export default function VideoCallScreen({
 
                     {/* Local User Label */}
                     <div
-                        className="absolute bottom-2 left-2 px-2 py-0.5 rounded text-xs text-[#aaa]"
+                        className="absolute bottom-3 left-3 px-2.5 py-1 rounded-lg text-xs text-[#aaa]"
                         style={{ backgroundColor: 'rgba(11,9,10,0.8)', backdropFilter: 'blur(8px)', border: '1px solid #1f1f1f' }}
                     >
                         You ({currentUser.name.split(' ')[0]})
@@ -283,7 +282,7 @@ export default function VideoCallScreen({
 
                     {/* Mic Badge */}
                     <div
-                        className="absolute top-2 right-2 flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
+                        className="absolute top-3 right-3 flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
                         style={{
                             backgroundColor: micEnabled ? 'rgba(34, 197, 94, 0.12)' : 'rgba(239, 68, 68, 0.12)',
                             border: micEnabled ? '1px solid rgba(34, 197, 94, 0.25)' : '1px solid rgba(239, 68, 68, 0.25)',
@@ -403,4 +402,3 @@ export default function VideoCallScreen({
         </div>
     )
 }
-

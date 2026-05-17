@@ -1,7 +1,7 @@
 "use client"
 
 import { Mic, MicOff, Monitor, Phone, Video, VideoOff } from 'lucide-react';
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 
 type ShareScreenLayoutProps = {
     sessionId: string;
@@ -16,6 +16,7 @@ type ShareScreenLayoutProps = {
     isUserMentor: boolean;
     localStream: MediaStream | null;
     remoteStream: MediaStream | null;
+    screenStream: MediaStream | null;
     micEnabled: boolean;
     cameraEnabled: boolean;
     onToggleMic: () => void;
@@ -36,6 +37,7 @@ export default function ShareScreenLayout({
     isUserMentor,
     localStream,
     remoteStream,
+    screenStream,
     micEnabled,
     cameraEnabled,
     onToggleMic,
@@ -51,26 +53,59 @@ export default function ShareScreenLayout({
 
     const mainVideoRef = useRef<HTMLVideoElement>(null)
     const pipVideoRef = useRef<HTMLVideoElement>(null)
+    const [videoUpdateKey, setVideoUpdateKey] = useState(0)
 
-    const isLocalPresenter = isScreenSharing
     const currentUser = isUserMentor ? mentor : mentee
     const otherUser = isUserMentor ? mentee : mentor
+    
+    const anyonePresenting = isScreenSharing || isPeerScreenSharing
+    const isLocalPresenting = isScreenSharing
+    const isPeerPresenting = isPeerScreenSharing
+
+    useEffect(() => {
+        console.log("[ShareScreenLayout] Screen share state changed - local:", isScreenSharing, "peer:", isPeerScreenSharing)
+        setVideoUpdateKey(prev => prev + 1)
+        
+        setTimeout(() => {
+            if (mainVideoRef.current?.srcObject) {
+                mainVideoRef.current.play().catch(err => console.log("Play error:", err))
+            }
+        }, 100)
+    }, [isScreenSharing, isPeerScreenSharing])
 
     useEffect(() => {
         if (mainVideoRef.current) {
-            mainVideoRef.current.srcObject = isLocalPresenter
-                ? localStream
-                : remoteStream
+            console.log("[ShareScreenLayout] Updating main video", {
+                isLocalPresenting,
+                isPeerPresenting,
+                hasScreenStream: !!screenStream,
+                hasRemoteStream: !!remoteStream,
+                hasLocalStream: !!localStream
+            })
+            
+            const mainStream = isLocalPresenting
+                ? screenStream || localStream  
+                : remoteStream                  
+            
+            mainVideoRef.current.srcObject = mainStream
+            
+            if (mainVideoRef.current.srcObject) {
+                mainVideoRef.current.load()
+                mainVideoRef.current.play().catch(err => console.log("Play error:", err))
+            }
         }
-    }, [localStream, remoteStream, isLocalPresenter])
+    }, [localStream, remoteStream, screenStream, isLocalPresenting, isPeerScreenSharing, videoUpdateKey])
 
     useEffect(() => {
         if (pipVideoRef.current) {
-            pipVideoRef.current.srcObject = isLocalPresenter
+            const pipStream = isLocalPresenting
                 ? remoteStream
                 : localStream
+            
+            pipVideoRef.current.srcObject = pipStream
+            console.log("[ShareScreenLayout] Updating pip - showing:", isLocalPresenting ? "peer camera" : "your camera")
         }
-    }, [remoteStream, localStream, isLocalPresenter])
+    }, [remoteStream, localStream, isLocalPresenting, isPeerScreenSharing, screenStream])
 
     const getConnectionColor = () => {
         if (connectionState === "connected") return "#4ade80"
@@ -111,7 +146,7 @@ export default function ShareScreenLayout({
             {/* MAIN SCREEN */}
             <div className="flex-1 relative flex items-center justify-center bg-black">
 
-                {remoteStream || localStream ? (
+                {(isLocalPresenting && screenStream) || (!isLocalPresenting && remoteStream) || remoteStream || localStream ? (
                     <video
                         ref={mainVideoRef}
                         autoPlay
@@ -136,13 +171,17 @@ export default function ShareScreenLayout({
                 {/* PRESENTING BADGE */}
                 <div className="absolute top-4 left-4 px-3 py-2 rounded-lg text-xs font-medium bg-blue-500/20 border border-blue-500/50 text-blue-300 flex items-center gap-2">
                     <span className="text-sm">📺</span>
-                    {isLocalPresenter ? "You are presenting" : `${otherUser.name} is presenting`}
+                    {anyonePresenting ? (
+                        isLocalPresenting ? "You are presenting" : `${otherUser.name} is presenting`
+                    ) : (
+                        "No one is presenting"
+                    )}
                 </div>
 
                 {/* PiP */}
                 <div className="absolute bottom-4 right-4 w-40 sm:w-48 md:w-52 rounded-2xl overflow-hidden border border-[#1f1f1f] bg-[#111] shadow-lg">
 
-                    {cameraEnabled && (isLocalPresenter ? remoteStream : localStream) ? (
+                    {cameraEnabled && ((isLocalPresenting && remoteStream) || (!isLocalPresenting && localStream)) ? (
                         <video
                             ref={pipVideoRef}
                             autoPlay
@@ -159,7 +198,7 @@ export default function ShareScreenLayout({
                                     border: '1px solid #2e2e2e',
                                 }}
                             >
-                                {(isLocalPresenter ? otherUser.name : currentUser.name).charAt(0).toUpperCase()}
+                                {(isLocalPresenting ? otherUser.name : currentUser.name).charAt(0).toUpperCase()}
                             </div>
                         </div>
                     )}
@@ -169,7 +208,7 @@ export default function ShareScreenLayout({
                         className="absolute bottom-2 left-2 text-xs px-2 py-0.5 rounded"
                         style={{ backgroundColor: 'rgba(11,9,10,0.8)', backdropFilter: 'blur(8px)', border: '1px solid #1f1f1f' }}
                     >
-                        {isLocalPresenter ? otherUser.name : `You (${currentUser.name.split(' ')[0]})`}
+                        {isLocalPresenting ? otherUser.name : `You (${currentUser.name.split(' ')[0]})`}
                     </div>
 
                     {/* Mic badge */}

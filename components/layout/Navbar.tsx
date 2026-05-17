@@ -28,6 +28,7 @@ import {
 import axios from "axios";
 import { logout } from "@/services/account.service";
 import { useAuth } from "@/hooks/useAuth";
+import { Spinner } from "../ui/spinner";
 
 const DM_Sans_Font = DM_Sans({
     weight: ["400", "500", "700"],
@@ -49,12 +50,13 @@ export default function Navbar() {
     const isProfileActive = pathname.startsWith('/profile');
 
     useEffect(() => {
+        console.log("auth", isAuthenticated)
         if (!isAuthenticated) return;
 
         const fetchNotifications = async () => {
             try {
                 const response = await FetchAllNotifications()
-                console.log("Navbar notifications response:", response)
+                //console.log("Navbar notifications response:", response)
 
                 if (response.unreadCount !== undefined) {
                     setUnreadCount(response.unreadCount)
@@ -135,7 +137,7 @@ export default function Navbar() {
                     </div>
 
                     <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-                        {isAuthenticated ? (
+                        {isAuthenticated && !isLoading ? (
                             <>
                                 <button
                                     className={`relative p-1.5 sm:p-2 rounded-lg transition-colors ${
@@ -195,6 +197,8 @@ export default function Navbar() {
                                     </DropdownMenuContent>
                                 </DropdownMenu>
                             </>
+                        ) : isLoading ? (
+                            <Spinner />
                         ) : (
                             <Button
                                 size="sm"
@@ -232,7 +236,7 @@ export default function Navbar() {
                     </div>
 
                     <div className="flex items-center gap-3 justify-end">
-                        {isAuthenticated ? (
+                        {isAuthenticated && !isLoading ? (
                             <>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
@@ -305,6 +309,8 @@ export default function Navbar() {
                                     <TooltipContent>Profile</TooltipContent>
                                 </Tooltip>
                             </>
+                        ) : isLoading ? (
+                            <Spinner />
                         ) : (
                             <Button
                                 size="sm"

@@ -11,11 +11,7 @@ export function useAuth() {
         if (typeof window !== "undefined") {
             const stored = localStorage.getItem("userId")
             
-            if (stored) {
-                setUserId(stored)
-                setIsLoading(false)
-                return
-            }
+            if(stored) setUserId(stored)
 
             const verifySession = async () => {
                 try {
@@ -25,9 +21,13 @@ export function useAuth() {
                     if (user?.id) {
                         setUserId(user.id)
                         localStorage.setItem("userId", user.id)
+                    } else {
+                        setUserId(null)
+                        localStorage.removeItem("userId")
                     }
                 } catch (error) {
                     setUserId(null)
+                    localStorage.removeItem("userId")
                 } finally {
                     setIsLoading(false)
                 }
