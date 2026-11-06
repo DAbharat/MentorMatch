@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { getSessionFromRequest } from "@/lib/auth";
-import { buildCacheKey, cacheGet, cacheInvalidatePattern, cacheSet } from "@/lib/cache";
+import { getSessionFromRequest } from "@/lib/auth/auth";
+import { buildCacheKey, cacheGet, cacheInvalidatePattern, cacheSet } from "@/lib/redis/cache";
 
 const CACHE_PREFIX = "cache:v1"
 

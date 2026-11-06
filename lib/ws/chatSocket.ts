@@ -1,8 +1,8 @@
-import { io, Socket } from "socket.io-client";
+import { WsClient } from "./wsClient"
 
-const sockets = new Map<string, Socket>();
+const sockets = new Map<string, WsClient>();
 
-export function getChatSocket(token: string, chatId: string): Socket {
+export function getChatSocket(token: string, chatId: string): WsClient {
   const existing = sockets.get(chatId);
 
   if (existing) {
@@ -12,7 +12,7 @@ export function getChatSocket(token: string, chatId: string): Socket {
     sockets.delete(chatId);
   }
 
-  const url = process.env.NEXT_PUBLIC_SOCKET_URL;
+  const url = process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:3001";
   if (!url) {
     throw new Error("NEXT_PUBLIC_SOCKET_URL is not defined");
   }
@@ -23,15 +23,8 @@ export function getChatSocket(token: string, chatId: string): Socket {
     url
   });
 
-  const socket = io(url, {
-    transports: ["websocket", "polling"],
-    auth: { token, chatId },
-    query: { token, chatId },  // Send auth in query string for polling transport
-    withCredentials: true,
-
-    reconnection: true,
-    reconnectionAttempts: 5,
-    reconnectionDelay: 1000,
+  const socket = new WsClient(url, {
+    token, chatId
   });
 
   socket.on("connect_error", (error) => {

@@ -1,7 +1,7 @@
 import { userRegisterSchema } from "@/schema/usercreationSchema";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import prisma from "./prisma";
+import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs"
 import jwt from "jsonwebtoken"
 import { generateCSRFToken } from "./csrfToken";

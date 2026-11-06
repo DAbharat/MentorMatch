@@ -3,11 +3,11 @@ import { auth } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
 import { createSessionSchema, SessionStatus, sessionStatusSchema, updateSessionSchema } from "@/schema/sessionSchema";
 import { z } from "zod";
-import { computeSessionMetrices } from "@/lib/session-metrics";
+import { computeSessionMetrices } from "@/lib/helpers/session-metrics";
 import { stat } from "fs";
 import { createNotification } from "@/lib/notification";
 import { NotificationType } from "@prisma/client";
-import { getSessionFromRequest } from "@/lib/auth";
+import { getSessionFromRequest } from "@/lib/auth/auth";
 
 type TransitionRule = {
     from: SessionStatus[];

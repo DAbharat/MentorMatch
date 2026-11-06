@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { migrateSkills } from "@/lib/skillMigration";
+import { migrateSkills } from "@/lib/helpers/skillMigration";
 
 async function runMigration() {
     await migrateSkills()

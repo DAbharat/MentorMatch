@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react"
-import { Socket } from "socket.io-client"
-import { getChatSocket, resetChatSocket } from "@/lib/chatSocket"
+import { WsClient as Socket } from "@/lib/ws/wsClient"
+import { getChatSocket, resetChatSocket } from "@/lib/ws/chatSocket"
 
 interface UseChatSocketProps {
     token: string | undefined

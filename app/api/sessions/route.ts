@@ -5,7 +5,7 @@ import { createSessionSchema } from "@/schema/sessionSchema";
 import { z } from "zod";
 import { createNotification } from "@/lib/notification";
 import { NotificationType } from "@prisma/client";
-import { getSessionFromRequest } from "@/lib/auth";
+import { getSessionFromRequest } from "@/lib/auth/auth";
 
 export async function GET(req: NextRequest) {
 

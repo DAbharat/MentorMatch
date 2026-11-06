@@ -3,7 +3,7 @@ import { auth } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
 import { callEventSchema } from "@/schema/callEventSchema";
 import { z } from "zod";
-import { getSessionFromRequest } from "@/lib/auth";
+import { getSessionFromRequest } from "@/lib/auth/auth";
 
 export async function POST(req: NextRequest, 
 { params }: { params: Promise<{ sessionId : string }>} )  {

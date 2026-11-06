@@ -3,9 +3,9 @@ import { auth } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
 import { updateProfileSchema } from "@/schema/profileSchema";
 import { z } from "zod";
-import { resolveSkills } from "@/lib/skills";
-import { getSessionFromRequest } from "@/lib/auth";
-import  { cacheGet, cacheSet, buildCacheKey, cacheDelete, cacheInvalidatePattern } from "@/lib/cache"
+import { resolveSkills } from "@/lib/helpers/skills";
+import { getSessionFromRequest } from "@/lib/auth/auth";
+import  { cacheGet, cacheSet, buildCacheKey, cacheDelete, cacheInvalidatePattern } from "@/lib/redis/cache"
 
 const CACHE_PREFIX = "cache:v1";
 

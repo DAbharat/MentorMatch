@@ -1,4 +1,4 @@
-import prisma from "./prisma";
+import prisma from "@/lib/prisma";
 
 function normalize(skillName: string) {
     return skillName

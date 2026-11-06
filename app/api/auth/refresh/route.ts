@@ -1,4 +1,4 @@
-import { generateAccessToken, generateRefreshToken, setAuthCookies, verifyToken } from "@/lib/auth";
+import { generateAccessToken, generateRefreshToken, setAuthCookies, verifyToken } from "@/lib/auth/auth";
 import prisma from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 
