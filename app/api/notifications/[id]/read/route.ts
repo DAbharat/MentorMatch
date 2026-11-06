@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
 import { getSessionFromRequest } from "@/lib/auth/auth";
+import { invalidateUnreadNotificationCount } from "@/lib/redis/cache/notifications";
 
 export async function PATCH(request: NextRequest,
     { params } : { params : Promise<{ id: string }> }
@@ -49,6 +49,7 @@ export async function PATCH(request: NextRequest,
                 status: 404
             })
         }
+        await invalidateUnreadNotificationCount(userId)
 
         const updatedNotification = await prisma.notification.findUnique({
             where: {

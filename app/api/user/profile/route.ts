@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
 import { updateProfileSchema } from "@/schema/profileSchema";
 import { z } from "zod";
@@ -218,9 +217,7 @@ export async function PATCH(req: NextRequest) {
         })
 
         await cacheDelete(cacheKey)
-        await cacheInvalidatePattern(`${CACHE_PREFIX}:search:users:*`)
 
-        console.log(`Cache invalidated: ${cacheKey}`)
         return NextResponse.json({
             message: "Profile updated successfully",
             data: updateProfile

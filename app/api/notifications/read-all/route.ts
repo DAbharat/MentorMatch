@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
 import { getSessionFromRequest } from "@/lib/auth/auth";
+import { resetUnreadNotificationCount } from "@/lib/redis/cache/notifications";
 
 export async function PATCH(request: NextRequest) {
 
@@ -37,6 +38,7 @@ export async function PATCH(request: NextRequest) {
                 isRead: true
             }
         })
+        await resetUnreadNotificationCount(userId)
 
         return NextResponse.json({
             message: `${updateAllNotifications.count} notifications marked as read`

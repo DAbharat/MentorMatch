@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
 import { sendMessageSchema } from "@/schema/messageSchema";
 import { z } from "zod";
 import { getSessionFromRequest } from "@/lib/auth/auth";
-import { buildChatCacheKey, cacheGet, cacheInvalidatePattern, cacheSet } from "@/lib/redis/cache";
-
-const CACHE_PREFIX = "cache:v1";
+import { buildChatCacheKey, cacheGet, cacheSet } from "@/lib/redis/cache";
+import { invalidateChatOnNewMessage } from "@/lib/redis/cache/chats";
 
 export async function POST(
     req: NextRequest,
@@ -120,9 +118,11 @@ export async function POST(
         })
         console.log("message: ", createMessage)
 
-        await cacheInvalidatePattern(`${CACHE_PREFIX}:chat:list:${chatExists.mentorId}`)
-        await cacheInvalidatePattern(`${CACHE_PREFIX}:chat:list:${chatExists.menteeId}`)
-        await cacheInvalidatePattern(`${CACHE_PREFIX}:chat:messages:${chatId}:*`)
+        await invalidateChatOnNewMessage(
+            chatExists.mentorId,
+            chatExists.menteeId,
+            chatId
+        )
         
         return NextResponse.json({
             message: "Message sent successfully",
