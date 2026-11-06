@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react"
-import { Socket } from "socket.io-client"
+import { WsClient as Socket } from "@/lib/ws/wsClient"
 
 interface useWebRTCProps {
   sessionId: string

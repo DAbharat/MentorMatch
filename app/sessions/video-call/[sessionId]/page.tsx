@@ -8,7 +8,7 @@ import { toast } from 'sonner'
 import InitialScreen from '@/components/video-call/InitialScreen'
 import { Spinner } from '@/components/ui/spinner'
 import { completeSession, fetchSessionById } from '@/services/session.service'
-import { io, Socket } from 'socket.io-client'
+import { WsClient } from "@/lib/ws/wsClient"
 import { useWebRTC } from '@/hooks/useWebRTC'
 import { startVideoCall } from '@/services/videocall.service'
 import VideoCallScreen from '@/components/video-call/VideoCallScreen'
@@ -22,8 +22,8 @@ export default function VideoCallPage() {
   const { userId } = useAuth()
   const [token, setToken] = useState<string | null>(null)
 
-  const socketRef = useRef<Socket | null>(null)
-  const [socket, setSocket] = useState<Socket | null>(null)
+  const socketRef = useRef<WsClient | null>(null)
+  const [socket, setSocket] = useState<WsClient | null>(null)
   const [webrtcConfig, setWebrtcConfig] = useState<any>(null)
   const [role, setRole] = useState<"MENTOR" | "MENTEE" | null>(null)
   const socketInitializedRef = useRef(false)
@@ -78,13 +78,9 @@ export default function VideoCallPage() {
           socketRef.current.disconnect()
         }
 
-        socketRef.current = io(process.env.NEXT_PUBLIC_SOCKET_URL!, {
-          transports: ["websocket", "polling"],
-          auth: { token, sessionId },
-          withCredentials: true,
-          reconnection: true,
-          reconnectionAttempts: 5,
-          reconnectionDelay: 1000,
+        const url = process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:3001"
+        socketRef.current = new WsClient(url, {
+          token, sessionId
         })
 
         socketRef.current.on("connect", () => {

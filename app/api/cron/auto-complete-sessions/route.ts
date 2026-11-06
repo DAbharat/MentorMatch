@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
-import { computeSessionMetrices, shouldAutoCompleteSession } from "@/lib/session-metrics";
+import { computeSessionMetrices, shouldAutoCompleteSession } from "@/lib/helpers/session-metrics";
 
 export async function POST(req: NextRequest) {
     const authHeader = req.headers.get("Authorization");

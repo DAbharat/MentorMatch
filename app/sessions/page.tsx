@@ -5,7 +5,7 @@ import { toast } from "sonner"
 import SessionsList from "@/components/sessions/SessionsList"
 import { fetchAllSessions, confirmSession, cancelSession, startSession } from "@/services/session.service"
 import { fetchMyProfile } from "@/services/profile.service"
-import { io, Socket } from "socket.io-client"
+import { WsClient } from "@/lib/ws/wsClient"
 import { useAuth } from "@/hooks/useAuth"
 import { Session } from "@/types/session"
 
@@ -13,7 +13,7 @@ export default function SessionsPage() {
     const [sessions, setSessions] = useState<Session[]>([])
     const [currentUserID, setCurrentUserID] = useState<string | null>(null)
     const [loading, setLoading] = useState(true)
-    const [socket, setSocket] = useState<Socket | null>(null)
+    const [socket, setSocket] = useState<WsClient | null>(null)
     const [activeSessions, setActiveSessions] = useState<string[]>([])
 
     const { userId } = useAuth()
@@ -21,19 +21,17 @@ export default function SessionsPage() {
     useEffect(() => {
         const initSocket = async () => {
             try {
-                const newSocket = io(process.env.NEXT_PUBLIC_SOCKET_URL!, {
-                    transports: ["websocket", "polling"],
-                    withCredentials: true
-                })
-
+                const url = process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:3001"
+                const newSocket = new WsClient(url)
                 setSocket(newSocket)
+
+                return () => {
+                    newSocket.disconnect()
+                }
             } catch (error) {
                 console.error("Error initializing socket:", error)
             }
         }
-
-        initSocket()
-
     }, [])
 
     const loadSessions = async () => {
