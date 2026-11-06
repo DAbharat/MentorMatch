@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
 import { buildCacheKey, cacheGet, cacheSet } from "@/lib/redis/cache";
+
+const SEARCH_CACHE_TTL = 60 + Math.floor(Math.random() * 15);
 
 export async function GET(req: NextRequest) {
     const url = new URL(req.url);
@@ -142,7 +143,7 @@ export async function GET(req: NextRequest) {
             }
         }
 
-        await cacheSet(cachekey, response, 300)
+        await cacheSet(cachekey, response, SEARCH_CACHE_TTL)
         return NextResponse.json(
             response,
             {

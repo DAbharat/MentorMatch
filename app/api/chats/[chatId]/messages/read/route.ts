@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
 import { getSessionFromRequest } from "@/lib/auth/auth";
-import { cacheInvalidatePattern } from "@/lib/redis/cache";
-
-const CACHE_PREFIX = "cache:v1";
+import { invalidateChatOnNewMessage } from "@/lib/redis/cache/chats";
 
 export async function PATCH(req: NextRequest,
     { params }: { params: Promise<{ chatId: string }> }
@@ -82,9 +79,11 @@ export async function PATCH(req: NextRequest,
         })
 
         if (markAsRead.count > 0) {
-            await cacheInvalidatePattern(`cache:v1:chat:list:${chat.mentorId}`)
-            await cacheInvalidatePattern(`cache:v1:chat:list:${chat.menteeId}`)
-            await cacheInvalidatePattern(`${CACHE_PREFIX}:chat:messages:${chatId}:*`)
+            await invalidateChatOnNewMessage(
+                chat.mentorId,
+                chat.menteeId,
+                chatId
+            )
         }
 
         return NextResponse.json({

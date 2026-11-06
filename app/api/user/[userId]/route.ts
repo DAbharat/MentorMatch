@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getSessionFromRequest } from "@/lib/auth/auth";
-import { buildCacheKey, cacheGet, cacheInvalidatePattern, cacheSet } from "@/lib/redis/cache";
-
-const CACHE_PREFIX = "cache:v1"
+import { buildCacheKey, cacheGet, cacheSet } from "@/lib/redis/cache";
+import { invalidateChatOnNewMessage } from "@/lib/redis/cache/chats";
 
 async function getDynamicFields(
     viewerId: string | null,
@@ -57,8 +56,12 @@ async function getDynamicFields(
                     id: true
                 }
             })
-            await cacheInvalidatePattern(`${CACHE_PREFIX}:chat:list:${acceptedRequest.mentorId}`)
-            await cacheInvalidatePattern(`${CACHE_PREFIX}:chat:list:${acceptedRequest.menteeId}`)
+
+            await invalidateChatOnNewMessage(
+                acceptedRequest.mentorId,
+                acceptedRequest.menteeId,
+                chat.id
+            )
 
             chatId = chat.id
 

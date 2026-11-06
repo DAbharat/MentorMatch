@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
 import { getSessionFromRequest } from "@/lib/auth/auth";
+import { getUnreadNotificationCountCached } from "@/lib/redis/cache/notifications";
 
 export async function GET(request: NextRequest) {
     const userId = getSessionFromRequest(request)
@@ -65,12 +65,7 @@ export async function GET(request: NextRequest) {
                 }
             }),
 
-            prisma.notification.count({
-                where: {
-                    userId,
-                    isRead: false
-                }
-            })
+            getUnreadNotificationCountCached(userId)
         ])
 
         console.log("Fetched notifications count:", fetchNotifications.length, "unreadCount:", unreadCount)

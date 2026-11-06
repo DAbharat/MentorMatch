@@ -1,4 +1,6 @@
 import prisma from "@/lib/prisma";
+import { cacheDelete } from "../redis/cache";
+import { ALL_SKILLS_CACHE_KEY } from "@/lib/redis/cache/skills"
 
 function normalize(skillName: string) {
     return skillName
@@ -39,6 +41,11 @@ export async function resolveSkills(skillNames: string[]) {
             })
         )
     )
+
+    if(createdSkills.length > 0) {
+        await cacheDelete(ALL_SKILLS_CACHE_KEY)
+        console.log(`[CACHE INVALIDATION] Deleted ${ALL_SKILLS_CACHE_KEY} due to new skills creation.`)
+    }
 
     return [...existingSkills, ...createdSkills].map(skill => skill.id)
 }

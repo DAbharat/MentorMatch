@@ -1,13 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
 import { updateProfileSchema } from "@/schema/profileSchema";
 import { z } from "zod";
 import { resolveSkills } from "@/lib/helpers/skills";
 import { getSessionFromRequest } from "@/lib/auth/auth";
-import  { cacheGet, cacheSet, buildCacheKey, cacheDelete, cacheInvalidatePattern } from "@/lib/redis/cache"
-
-const CACHE_PREFIX = "cache:v1";
+import  { cacheGet, cacheSet, buildCacheKey, cacheDelete } from "@/lib/redis/cache"
 
 export async function GET(req: NextRequest) {
 
@@ -218,9 +215,7 @@ export async function PATCH(req: NextRequest) {
         })
 
         await cacheDelete(cacheKey)
-        await cacheInvalidatePattern(`${CACHE_PREFIX}:search:users:*`)
 
-        console.log(`Cache invalidated: ${cacheKey}`)
         return NextResponse.json({
             message: "Profile updated successfully",
             data: updateProfile

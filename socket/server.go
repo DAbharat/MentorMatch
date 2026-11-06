@@ -8,7 +8,6 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/gorilla/websocket"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -54,10 +53,8 @@ func (s *Server) Start() {
 	log.Printf("Go Socket Server running on http://localhost%s", addr)
 
 	server := &http.Server{
-		Addr:         addr,
-		Handler:      mux,
-		ReadTimeout:  15 * time.Second,
-		WriteTimeout: 15 * time.Second,
+		Addr:    addr,
+		Handler: mux,
 	}
 
 	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {

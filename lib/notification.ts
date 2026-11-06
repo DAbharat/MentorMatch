@@ -1,5 +1,6 @@
 import { NotificationType } from "@prisma/client";
 import prisma from "./prisma";
+import { invalidateUnreadNotificationCount } from "./redis/cache/notifications";
 
 export async function createNotification({
     userId,
@@ -29,6 +30,7 @@ export async function createNotification({
                 message
             }
         })
+        await invalidateUnreadNotificationCount(userId)
 
         console.log("Notification created successfully:", createNotification.id);
         return createNotification;
