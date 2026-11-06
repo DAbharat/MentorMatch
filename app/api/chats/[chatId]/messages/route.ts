@@ -3,8 +3,8 @@ import { auth } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
 import { sendMessageSchema } from "@/schema/messageSchema";
 import { z } from "zod";
-import { getSessionFromRequest } from "@/lib/auth";
-import { buildChatCacheKey, cacheGet, cacheInvalidatePattern, cacheSet } from "@/lib/cache";
+import { getSessionFromRequest } from "@/lib/auth/auth";
+import { buildChatCacheKey, cacheGet, cacheInvalidatePattern, cacheSet } from "@/lib/redis/cache";
 
 const CACHE_PREFIX = "cache:v1";
 

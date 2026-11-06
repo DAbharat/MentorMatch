@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
-import { buildCacheKey, cacheGet, cacheSet } from "@/lib/cache";
+import { buildCacheKey, cacheGet, cacheSet } from "@/lib/redis/cache";
 
 export async function GET(req: NextRequest) {
     const url = new URL(req.url);

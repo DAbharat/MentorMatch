@@ -7,7 +7,7 @@ import { computeSessionMetrices } from "@/lib/helpers/session-metrics";
 import { stat } from "fs";
 import { createNotification } from "@/lib/notification";
 import { NotificationType } from "@prisma/client";
-import { getSessionFromRequest } from "@/lib/auth";
+import { getSessionFromRequest } from "@/lib/auth/auth";
 
 type TransitionRule = {
     from: SessionStatus[];
