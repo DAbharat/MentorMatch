@@ -4,7 +4,9 @@ import { updateProfileSchema } from "@/schema/profileSchema";
 import { z } from "zod";
 import { resolveSkills } from "@/lib/helpers/skills";
 import { getSessionFromRequest } from "@/lib/auth/auth";
-import  { cacheGet, cacheSet, buildCacheKey, cacheDelete } from "@/lib/redis/cache"
+import  { cacheGet, cacheSet, buildCacheKey, cacheDelete, cacheInvalidatePattern } from "@/lib/redis/cache"
+
+const CACHE_PREFIX = "cache:v1";
 
 export async function GET(req: NextRequest) {
 
