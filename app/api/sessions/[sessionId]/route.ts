@@ -8,6 +8,7 @@ import { stat } from "fs";
 import { createNotification } from "@/lib/notification";
 import { NotificationType } from "@prisma/client";
 import { getSessionFromRequest } from "@/lib/auth/auth";
+import { invalidateSessionParticipants } from "@/lib/redis/cache/sessions";
 
 type TransitionRule = {
     from: SessionStatus[];
@@ -229,6 +230,7 @@ export async function PATCH(req: NextRequest,
             title: `Session ${action === "CONFIRM" ? "confirmed" : action === "START" ? "started" : "cancelled"}`,
             message: `Your session for the skill ${getSession.skill.name} scheduled at ${new Date(getSession.scheduledAt).toLocaleString()} has been ${action === "CONFIRM" ? "confirmed" : action === "START" ? "started" : "cancelled"} by the ${isMentor ? "mentor" : "mentee"}`
         })
+        await invalidateSessionParticipants(getSession.mentorId, getSession.menteeId)
 
         return NextResponse.json({
             message: `Session ${action} successful`,

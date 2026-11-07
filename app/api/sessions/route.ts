@@ -6,6 +6,7 @@ import { z } from "zod";
 import { createNotification } from "@/lib/notification";
 import { NotificationType } from "@prisma/client";
 import { getSessionFromRequest } from "@/lib/auth/auth";
+import { getCachedUserSessions, invalidateSessionParticipants, setCachedUserSessions } from "@/lib/redis/cache/sessions";
 
 export async function GET(req: NextRequest) {
 
@@ -29,6 +30,16 @@ export async function GET(req: NextRequest) {
                 message: "User not found"
             }, {
                 status: 404
+            })
+        }
+
+        const cachedSessions = await getCachedUserSessions(userId)
+        if (cachedSessions) {
+            return NextResponse.json({
+                message: "Sessions fetched successfully (cached)",
+                sessions: cachedSessions,
+            }, {
+                status: 200
             })
         }
 
@@ -77,6 +88,7 @@ export async function GET(req: NextRequest) {
                 scheduledAt: 'desc'
             }
         })
+        await setCachedUserSessions(userId, sessions)
 
         return NextResponse.json({
             message: "Sessions fetched successfully",
@@ -208,6 +220,7 @@ export async function POST(req: NextRequest) {
             title: `New Session request`,
             message: `${userExists.name} requested session for the skill ${mentorExists.skillsOffered.find(s => s.id === skillId)?.name || "Unknown Skill"} scheduled at ${new Date(scheduledAt).toLocaleString()}`
         })
+        await invalidateSessionParticipants(mentorId, menteeId)
 
         return NextResponse.json({
             message: "Session created successfully",

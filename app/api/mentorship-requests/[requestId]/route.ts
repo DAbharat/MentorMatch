@@ -7,6 +7,8 @@ import { z } from "zod";
 import { createNotification } from "@/lib/notification";
 import { NotificationType } from "@prisma/client";
 import { getSessionFromRequest } from "@/lib/auth/auth";
+import { invalidateChatOnNewMessage } from "@/lib/redis/cache/chats";
+import { invalidateRequestParticipants } from "@/lib/redis/cache/mentorship-requests";
 
 export async function PATCH(req: NextRequest,
     { params }: { params: Promise<{ requestId: string }> }
@@ -146,6 +148,17 @@ export async function PATCH(req: NextRequest,
                 chat
             }
         })
+        if(action === "ACCEPT" && result.chat) {
+            await invalidateChatOnNewMessage(
+                mentorshipRequestExists.mentorId, 
+                mentorshipRequestExists.menteeId, 
+                result.chat.id
+            )
+        }
+        await invalidateRequestParticipants(
+            mentorshipRequestExists.mentorId,
+            mentorshipRequestExists.menteeId
+        )
 
         console.log("Transaction completed successfully")
 

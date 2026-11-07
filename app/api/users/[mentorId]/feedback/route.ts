@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
 import { createFeedbackSchema } from "@/schema/createFeedbackSchema";
 import { z } from "zod";
-import { createNotification } from "@/lib/notification";
 import { NotificationType } from "@prisma/client";
 import { getSessionFromRequest } from "@/lib/auth/auth";
+import { buildCacheKey, cacheDelete } from "@/lib/redis/cache";
+import { invalidateUnreadNotificationCount } from "@/lib/redis/cache/notifications";
 
 export async function POST(req: NextRequest) {
 
@@ -40,6 +40,7 @@ export async function POST(req: NextRequest) {
     try {
         const { mentorId } = body
         const { rating, comment, sessionId } = parsed.data
+        const mentorProfileCacheKey = buildCacheKey("user", "profile", mentorId)
 
         const userExists = await prisma.user.findUnique({
             where: {
@@ -166,6 +167,8 @@ export async function POST(req: NextRequest) {
                 feedback: createFeedback,
             };
         });
+        await cacheDelete(mentorProfileCacheKey)
+        await invalidateUnreadNotificationCount(mentorId)
 
         return NextResponse.json({
             message: "Feedback submitted successfully",

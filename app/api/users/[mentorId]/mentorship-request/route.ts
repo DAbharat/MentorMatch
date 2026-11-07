@@ -6,6 +6,7 @@ import { z } from "zod";
 import { createNotification } from "@/lib/notification";
 import { NotificationType } from "@prisma/client";
 import { getSessionFromRequest } from "@/lib/auth/auth";
+import { invalidateRequestParticipants } from "@/lib/redis/cache/mentorship-requests";
 
 export async function POST(req: NextRequest,
     { params }: { params: Promise<{ mentorId: string }> }
@@ -155,6 +156,8 @@ export async function POST(req: NextRequest,
 
         console.log("Mentorship request created successfully:", createRequest.id)
         console.log("Now creating notification for mentor:", mentorId)
+
+        await invalidateRequestParticipants(mentorId, userId)
 
         try {
             const sendNotificationToMentor = await createNotification({

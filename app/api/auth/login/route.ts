@@ -1,5 +1,6 @@
 import { comparePassword, generateAccessToken, generateRefreshToken, setAuthCookies } from "@/lib/auth/auth";
 import prisma from "@/lib/prisma";
+import { isAccountLocked, recordFailedLogin, resetFailedLogin } from "@/lib/redis/auth-limiter";
 import { userLoginSchema } from "@/schema/usercreationSchema";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
@@ -38,35 +39,29 @@ export async function POST(req: NextRequest) {
             })
         }
 
-        if (userExists.lockedUntil && userExists.lockedUntil > new Date()) {
+        const isLocked = await isAccountLocked(email)
+        if(isLocked) {
             return NextResponse.json({
-                message: "Account is temporarily locked. Try again after sometime"
+                message: "Account is temporarily locked due to too many failed attempts. Try again in 15 minutes."
             }, {
-                status: 400
+                status: 429
             })
         }
 
         const isPasswordValid = await comparePassword(password, userExists.password)
 
         if (!isPasswordValid) {
-            const attempts = userExists.failedLoginAttempts + 1;
-
-            await prisma.user.update({
-                where: {
-                    id: userExists.id
-                },
-                data: {
-                    failedLoginAttempts: attempts,
-                    lockedUntil: attempts >= 5 ? new Date(Date.now() + 30 * 60 * 1000) : null
-                }
-            })
+            const attempts = await recordFailedLogin(email)
+            const remaining = Math.max(0, 5-attempts)
+            const message = remaining > 0 ? `Invalid credentials. ${remaining} attempt(s) remaining.` : "Account locked due to too many failed attempts. Try again in 15 minutes."
 
             return NextResponse.json({
-                message: "Invalid credentials."
+                message,
             }, {
                 status: 400
             })
         }
+        await resetFailedLogin(email)
 
         await prisma.user.update({
             where: {

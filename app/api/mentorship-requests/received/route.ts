@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
 import { getSessionFromRequest } from "@/lib/auth/auth";
+import { cacheGet } from "@/lib/redis/cache";
+import { getCachedRequests, setCachedRequests } from "@/lib/redis/cache/mentorship-requests";
 
 
 export async function GET(req: NextRequest) {
@@ -20,6 +22,15 @@ export async function GET(req: NextRequest) {
         const limit = Number(searchParams.get("limit")) || 10
         const cursor = searchParams.get("cursor")
         let nextCursor: string | null = null
+
+        const cached = await getCachedRequests(userId, "received")
+        if (cached) {
+            return NextResponse.json({
+                cached,
+            }, {
+                status: 200
+            });
+        }
 
         const userExists = await prisma.user.findUnique({
             where: {
@@ -88,10 +99,16 @@ export async function GET(req: NextRequest) {
             skill: req.skill
         }))
 
-        return NextResponse.json({
+        const responseData = {
             message: "Mentorship requests fetched successfully",
             data: formattedRequests,
             nextCursor
+        }
+
+        await setCachedRequests(userId, "received", responseData)
+
+        return NextResponse.json({
+            responseData
         }, {
             status: 200
         })
