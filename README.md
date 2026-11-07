@@ -30,7 +30,7 @@ MentorMatch is a comprehensive mentorship application designed to facilitate mea
 - **Tailwind CSS**: Utility-first CSS framework for responsive design
 - **shadcn/ui**: High-quality, accessible React components built on Radix UI
 - **Radix UI**: Accessible component primitives
-- **Zod**: Runtime schema validation for API endpoints
+- **Zod**: Runtime schema validations for API endpoints
 
 ### Real-Time Communication
 - **Socket.io**: Bidirectional WebSocket communication for real-time chat and notifications
