@@ -100,7 +100,6 @@ export async function POST(req: NextRequest) {
                 email: userExists.email,
                 name: userExists.name
             },
-            accessToken: accessToken
         }, {
             status: 200
         })

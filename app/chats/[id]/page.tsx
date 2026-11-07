@@ -36,39 +36,28 @@ export default function ChatRoomPage() {
     const inputRef = useRef<HTMLInputElement>(null)
     const hasMarkedAsReadRef = useRef(false)
 
-    // Refresh token and get a fresh one before socket connection
+    // Get a fresh token in memory for socket connection
     useEffect(() => {
+        if (!authLoading && !userId) {
+            router.push("/sign-in")
+            return
+        }
+
         const refreshAndSetToken = async () => {
             try {
-                // Only refresh if user is authenticated
-                const storedToken = localStorage.getItem('authToken')
-                if (!storedToken) {
-                    // User not authenticated, redirect to login
-                    router.push("/sign-in")
-                    return
-                }
-
-                // Call refresh service to ensure token is fresh
                 const newToken = await refresh()
-                
                 if (newToken) {
-                    // Store the fresh token in localStorage
-                    localStorage.setItem('authToken', newToken)
                     setToken(newToken)
-                } else {
-                    toast.error("Failed to retrieve authentication token")
                 }
             } catch (error) {
-                console.error("Failed to refresh token:", error)
-                // If refresh fails, user needs to login again
-                router.push("/sign-in")
+                console.error("Failed to refresh token for chat socket:", error)
             }
         }
 
-        if (typeof window !== 'undefined' && userId) {
+        if (userId) {
             refreshAndSetToken()
         }
-    }, [userId, router])
+    }, [userId, authLoading, router])
 
     const scrollToBottom = useCallback(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })

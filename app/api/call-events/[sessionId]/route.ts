@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
 import { callEventSchema } from "@/schema/callEventSchema";
 import { z } from "zod";
 import { getSessionFromRequest } from "@/lib/auth/auth";
+import { markUserInRoom, removeUserFromRoom } from "@/lib/redis/cache/call-presence";
 
 export async function POST(req: NextRequest, 
 { params }: { params: Promise<{ sessionId : string }>} )  {
@@ -61,6 +61,12 @@ export async function POST(req: NextRequest,
             }, {
                 status: 403
             })
+        }
+
+        if(eventType === "JOINED") {
+            await markUserInRoom(getSession.roomId, userId)
+        } else if(eventType === "LEFT" || eventType === "DISCONNECTED") {
+            await removeUserFromRoom(getSession.roomId, userId)
         }
 
         const createCallEvent = await prisma.callEvent.create({

@@ -21,15 +21,6 @@ export async function GET(req: NextRequest) {
         const menteeId = searchParams.get("menteeId")
         const status = searchParams.get("status")
 
-        const cached = await getCachedRequests(userId, "sent")
-        if (cached) {
-            return NextResponse.json({
-                cached,
-            }), {
-                status: 200
-            };
-        }
-
         if (!mentorId || !menteeId) {
             return NextResponse.json({
                 message: "mentorId and menteeId are required"
@@ -56,7 +47,6 @@ export async function GET(req: NextRequest) {
                 updatedAt: "desc"
             }
         })
-        await setCachedRequests(userId, "sent", requests)
 
         return NextResponse.json({
             message: "Mentorship requests fetched successfully",

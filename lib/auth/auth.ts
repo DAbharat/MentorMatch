@@ -86,8 +86,7 @@ export async function register(req: NextRequest): Promise<NextResponse> {
                 id: createuser.id,
                 name: createuser.name,
                 email: createuser.email
-            },
-            accessToken: accessToken
+            }
         })
 
         setAuthCookies(res, accessToken, refreshToken)
@@ -139,9 +138,11 @@ export function verifyToken(token: string, type: "access" | "refresh"): { userId
 }
 
 export function setAuthCookies(res: NextResponse, accessToken: string, refreshToken: string): void {
+    const isProduction = process.env.NODE_ENV === "production";
+
     res.cookies.set("accessToken", accessToken, {
         httpOnly: true,
-        secure: true,
+        secure: isProduction,
         sameSite: "strict",
         path: "/",
         maxAge: 60 * 60  
@@ -149,7 +150,7 @@ export function setAuthCookies(res: NextResponse, accessToken: string, refreshTo
 
     res.cookies.set("refreshToken", refreshToken, {
         httpOnly: true,
-        secure: true,
+        secure: isProduction,
         sameSite: "strict",
         path: "/",
         maxAge: 10 * 24 * 60 * 60 * 1000
@@ -159,7 +160,7 @@ export function setAuthCookies(res: NextResponse, accessToken: string, refreshTo
 
     res.cookies.set("csrfToken", csrfToken, {
         httpOnly: false,
-        secure: true,
+        secure: isProduction,
         sameSite: "strict",
         path: "/"
     })

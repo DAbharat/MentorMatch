@@ -19,7 +19,7 @@ export default function VideoCallPage() {
   const sessionId = params.sessionId
   const router = useRouter()
 
-  const { userId } = useAuth()
+  const { userId, isLoading: authLoading } = useAuth()
   const [token, setToken] = useState<string | null>(null)
 
   const socketRef = useRef<WsClient | null>(null)
@@ -28,33 +28,28 @@ export default function VideoCallPage() {
   const [role, setRole] = useState<"MENTOR" | "MENTEE" | null>(null)
   const socketInitializedRef = useRef(false)
 
-  // Refresh token and get a fresh one before socket connection
+  // Get a fresh token in memory for socket connection
   useEffect(() => {
+    if (!authLoading && !userId) {
+      router.push("/sign-in")
+      return
+    }
+
     const refreshAndSetToken = async () => {
       try {
-        const storedToken = localStorage.getItem('authToken')
-        if (!storedToken) {
-          router.push("/sign-in")
-          return
-        }
-
         const newToken = await refresh()
         if (newToken) {
-          localStorage.setItem('authToken', newToken)
           setToken(newToken)
-        } else {
-          toast.error("Failed to retrieve authentication token")
         }
       } catch (error) {
-        console.error("Failed to refresh token:", error)
-        router.push("/sign-in")
+        console.error("Failed to refresh token for video call socket:", error)
       }
     }
 
-    if (typeof window !== 'undefined' && userId) {
+    if (userId) {
       refreshAndSetToken()
     }
-  }, [userId, router])
+  }, [userId, authLoading, router])
 
   useEffect(() => {
     if (userId) {

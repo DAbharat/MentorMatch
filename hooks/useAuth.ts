@@ -8,32 +8,35 @@ export function useAuth() {
     const [isLoading, setIsLoading] = useState(true)
 
     useEffect(() => {
-        if (typeof window !== "undefined") {
-            const stored = localStorage.getItem("userId")
-            
-            if(stored) setUserId(stored)
+        let isMounted = true
 
-            const verifySession = async () => {
-                try {
-                    const response = await axiosClient.get("/api/user/profile")
-                    const user = response.data.data
-                    
+        const verifySession = async () => {
+            try {
+                const response = await axiosClient.get("/api/user/profile")
+                const user = response.data.data
+                
+                if (isMounted) {
                     if (user?.id) {
                         setUserId(user.id)
-                        localStorage.setItem("userId", user.id)
                     } else {
                         setUserId(null)
-                        localStorage.removeItem("userId")
                     }
-                } catch (error) {
+                }
+            } catch (error) {
+                if (isMounted) {
                     setUserId(null)
-                    localStorage.removeItem("userId")
-                } finally {
+                }
+            } finally {
+                if (isMounted) {
                     setIsLoading(false)
                 }
             }
+        }
 
-            verifySession()
+        verifySession()
+
+        return () => {
+            isMounted = false
         }
     }, [])
 

@@ -25,9 +25,9 @@ export async function GET(req: NextRequest) {
 
         const cached = await getCachedRequests(userId, "received")
         if (cached) {
-            return NextResponse.json({
-                cached,
-            }, {
+            return NextResponse.json(
+                cached, 
+            {
                 status: 200
             });
         }
@@ -107,9 +107,9 @@ export async function GET(req: NextRequest) {
 
         await setCachedRequests(userId, "received", responseData)
 
-        return NextResponse.json({
-            responseData
-        }, {
+        return NextResponse.json(
+            responseData, 
+        {
             status: 200
         })
     } catch (error) {

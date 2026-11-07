@@ -9,10 +9,7 @@ export async function register(userData: {
 }) {
     try {
         const response = await axiosClient.post(`/api/auth/register`, userData);
-        return {
-            ...response.data.user,
-            accessToken: response.data.accessToken
-        };
+        return response.data.user;
     } catch (error) {
         const axiosError = error as AxiosError<ApiResponse>;
         console.error("Error creating account:", axiosError.response?.data.message || axiosError.message);
@@ -26,10 +23,7 @@ export async function login(userData: {
 }) {
     try {
         const response = await axiosClient.post(`/api/auth/login`, userData)
-        return {
-            ...response.data.user,
-            accessToken: response.data.accessToken
-        }
+        return response.data.user;
     } catch (error) {
         const axiosError = error as AxiosError<ApiResponse>;
         console.error("Error logging in: ", axiosError.response?.data.message || axiosError.message)
@@ -39,8 +33,6 @@ export async function login(userData: {
 
 export async function logout() {
     try {
-        localStorage.removeItem("userId");
-        localStorage.removeItem("authToken");
         const response = await axiosClient.post(`/api/auth/logout`)
         return response.data
     } catch (error) {
