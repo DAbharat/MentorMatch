@@ -75,7 +75,7 @@ export default function VideoCallPage() {
 
         const url = process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:3001"
         socketRef.current = new WsClient(url, {
-          token, sessionId
+          token, sessionId, getToken: refresh
         })
 
         socketRef.current.on("connect", () => {
@@ -92,7 +92,7 @@ export default function VideoCallPage() {
           hasJoinedRef.current = false
 
           if (reason === "io server disconnect") {
-            socketRef.current?.connect
+            socketRef.current?.connect()
           }
         })
 

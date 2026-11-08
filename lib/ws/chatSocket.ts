@@ -1,3 +1,4 @@
+import { refresh } from "@/services/account.service";
 import { WsClient } from "./wsClient"
 
 const sockets = new Map<string, WsClient>();
@@ -24,7 +25,7 @@ export function getChatSocket(token: string, chatId: string): WsClient {
   });
 
   const socket = new WsClient(url, {
-    token, chatId
+    token, chatId, getToken: refresh
   });
 
   socket.on("connect_error", (error) => {

@@ -1,4 +1,4 @@
-import { comparePassword, generateAccessToken, generateRefreshToken, setAuthCookies } from "@/lib/auth/auth";
+import { comparePassword, generateAccessToken, generateRefreshToken, hashToken, setAuthCookies } from "@/lib/auth/auth";
 import prisma from "@/lib/prisma";
 import { isAccountLocked, recordFailedLogin, resetFailedLogin } from "@/lib/redis/auth-limiter";
 import { userLoginSchema } from "@/schema/usercreationSchema";
@@ -88,7 +88,7 @@ export async function POST(req: NextRequest) {
         await prisma.authSession.create({
             data: {
                 userId: userExists.id,
-                refreshToken,
+                refreshToken: hashToken(refreshToken),
                 expiresAt: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000)
             }
         })

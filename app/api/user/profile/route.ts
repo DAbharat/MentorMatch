@@ -5,6 +5,7 @@ import { z } from "zod";
 import { resolveSkills } from "@/lib/helpers/skills";
 import { getSessionFromRequest } from "@/lib/auth/auth";
 import  { cacheGet, cacheSet, buildCacheKey, cacheDelete, cacheInvalidatePattern } from "@/lib/redis/cache"
+import { invalidateUserRecommendations } from "@/lib/redis/cache/recommendations";
 
 const CACHE_PREFIX = "cache:v1";
 
@@ -217,6 +218,9 @@ export async function PATCH(req: NextRequest) {
         })
 
         await cacheDelete(cacheKey)
+        if(skillsWanted !== undefined) {
+            await invalidateUserRecommendations(userId)
+        }
 
         return NextResponse.json({
             message: "Profile updated successfully",

@@ -1,4 +1,4 @@
-import { generateAccessToken, generateRefreshToken, setAuthCookies, verifyToken } from "@/lib/auth/auth";
+import { generateAccessToken, generateRefreshToken, hashToken, setAuthCookies, verifyToken } from "@/lib/auth/auth";
 import prisma from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -26,12 +26,28 @@ export async function POST(req: NextRequest) {
             return unauthorizedResponse()
         }
 
+        const hashedToken = hashToken(refreshToken)
+
         const sessionExists = await prisma.authSession.findUnique({
             where: {
-                refreshToken
+                refreshToken: hashedToken
             }
         })
-        if (!sessionExists || sessionExists.userId !== decoded.userId || sessionExists.expiresAt < new Date()) {
+        if(!sessionExists) {
+            console.warn(`[SECURITY ALERT] Refresh token reuse detected for user: ${decoded.userId}. Invalidating all sessions.`)
+            await prisma.authSession.deleteMany({
+                where: {
+                    userId: decoded.userId
+                }
+            })
+            return unauthorizedResponse()
+        }
+        if (sessionExists.userId !== decoded.userId || sessionExists.expiresAt < new Date()) {
+            await prisma.authSession.delete({
+                where: {
+                    id: sessionExists.id
+                }
+            })
             return unauthorizedResponse()
         }
 
@@ -51,7 +67,7 @@ export async function POST(req: NextRequest) {
                 id: sessionExists.id
             },
             data: {
-                refreshToken: newRefreshToken,
+                refreshToken: hashToken(newRefreshToken),
                 expiresAt: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000)
             }
         })

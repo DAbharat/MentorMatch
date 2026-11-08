@@ -5,11 +5,10 @@ import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs"
 import jwt from "jsonwebtoken"
 import { generateCSRFToken } from "./csrfToken";
-
+import crypto from "crypto";
 
 const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET!
 const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET!
-
 
 export async function register(req: NextRequest): Promise<NextResponse> {
     const body = await req.json()
@@ -75,7 +74,7 @@ export async function register(req: NextRequest): Promise<NextResponse> {
         await prisma.authSession.create({
             data: {
                 userId: createuser.id,
-                refreshToken,
+                refreshToken: hashToken(refreshToken),
                 expiresAt: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000)
             }
         })
@@ -114,7 +113,7 @@ export function generateAccessToken(userId: string): string {
     return jwt.sign({
         userId
     }, ACCESS_TOKEN_SECRET, {
-        expiresIn: "1h"
+        expiresIn: "15m"
     })
 }
 
@@ -145,7 +144,7 @@ export function setAuthCookies(res: NextResponse, accessToken: string, refreshTo
         secure: isProduction,
         sameSite: "strict",
         path: "/",
-        maxAge: 60 * 60  
+        maxAge: 15 * 60  
     })
 
     res.cookies.set("refreshToken", refreshToken, {
@@ -153,7 +152,7 @@ export function setAuthCookies(res: NextResponse, accessToken: string, refreshTo
         secure: isProduction,
         sameSite: "strict",
         path: "/",
-        maxAge: 10 * 24 * 60 * 60 * 1000
+        maxAge: 10 * 24 * 60 * 60
     })
 
     const csrfToken = generateCSRFToken()
@@ -174,23 +173,17 @@ export async function comparePassword(
 }
 
 export function getSessionFromRequest(req: NextRequest): string | null {
+    const tokenFromCookie = req.cookies.get("accessToken")?.value
+    const authHeader = req.headers.get("authorization")
+    const tokenFromHeader = authHeader?.startsWith("Bearer ") ? authHeader.substring(7) : null
 
-    const accessToken = req.cookies.get("accessToken")?.value
-    const refreshToken = req.cookies.get("refreshToken")?.value
+    const accessToken = tokenFromCookie || tokenFromHeader
+    if(!accessToken) return null
 
-    if(accessToken) {
-        const decoded = verifyToken(accessToken, "access")
-        if(decoded) {
-            return decoded.userId
-        }
-    }
+    const decoded = verifyToken(accessToken, "access")
+    return decoded ? decoded.userId : null;
+}
 
-    if(refreshToken) {
-        const decoded = verifyToken(refreshToken, "refresh")
-        if(decoded) {
-            return decoded.userId
-        }
-    }
-
-    return null
+export function hashToken(token: string): string {
+    return crypto.createHash("sha256").update(token).digest("hex");
 }

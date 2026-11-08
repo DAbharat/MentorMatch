@@ -1,5 +1,6 @@
 export interface WsClientOptions {
     token?: string;
+    getToken?: () => Promise<string | null>
     chatId?: string;
     sessionId?: string;
     reconnectAttempts?: number;
@@ -10,20 +11,22 @@ type EventCallback = (...args: any[]) => void;
 
 export class WsClient {
     private ws: WebSocket | null = null;
-    private url: string;
     private options: WsClientOptions;
     private listeners: Map<string, Set<EventCallback>> = new Map();
     private reconnectCount = 0;
     private reconnectTimer: any = null;
     private shouldReconnect = true;
+    private baseUrl: string;
+    private isConnecting = false;
 
     private joinedRooms : Set<string> = new Set();
 
     public connected = false;
 
     constructor(baseUrl: string, options: WsClientOptions = {}) {
+        this.baseUrl = baseUrl;
         this.options = {
-            reconnectAttempts: 5,
+            reconnectAttempts: 20,
             reconnectDelay: 1000,
             ...options,
         }
@@ -35,8 +38,12 @@ export class WsClient {
             this.joinedRooms.add(`call_${options.sessionId}`)
         }
 
-        let wsUrl = baseUrl.replace(/^http:/, "ws:").replace(/^https:/, "wss:")
-        if (!wsUrl.endsWith("/ws")) {
+        this.connect()
+    }
+
+    private buildUrl(): string {
+        let wsUrl = this.baseUrl.replace(/^http:/, "ws:").replace(/^https:/, "wss:")
+        if(!wsUrl.endsWith("/ws")) {
             wsUrl = wsUrl.replace(/\/+$/, "") + "/ws"
         }
 
@@ -46,20 +53,32 @@ export class WsClient {
         if(this.options.sessionId) params.set("sessionId", this.options.sessionId)
 
         const query = params.toString()
-        this.url = query ? `${wsUrl}?${query}` : wsUrl
-
-        this.connect()
+        return query ? `${wsUrl}?${query}` : wsUrl
     }
 
-    public connect(): void {
-        if(this.ws && this.ws.readyState === WebSocket.OPEN || this.ws?.readyState === WebSocket.CONNECTING) {
+    public async connect(): Promise<void> {
+        if(this.isConnecting || (this.ws && (this.ws.readyState === WebSocket.OPEN || this.ws?.readyState === WebSocket.CONNECTING))) {
             return;
         }
 
+        this.isConnecting = true;
+
         try {
-            this.ws = new WebSocket(this.url)
+            if(this.options.getToken) {
+                try {
+                    const freshToken = await this.options.getToken()
+                    if(freshToken) {
+                        this.options.token = freshToken
+                    }
+                } catch (error) {
+                    console.error(`[WsClient] Failed to fetch fresh token for socket: `, error)
+                }
+            }
+            const url = this.buildUrl()
+            this.ws = new WebSocket(url)
 
             this.ws.onopen = () => {
+                this.isConnecting = false
                 this.connected = true;
                 const isReconnect = this.reconnectCount > 0;
                 this.reconnectCount = 0;
@@ -81,11 +100,13 @@ export class WsClient {
             }
 
             this.ws.onerror = (error) => {
+                this.isConnecting = false
                 this.dispatch("error", error)
                 this.dispatch("connect_error", error)
             }
 
             this.ws.onclose = (event) => {
+                this.isConnecting = false
                 this.connected = false
                 this.dispatch("disconnect", event.reason || "closed")
 
@@ -96,6 +117,7 @@ export class WsClient {
                 }
             }
         } catch (error) {
+            this.isConnecting = false;
             this.dispatch("connect_error: ", error)
         }
     }
