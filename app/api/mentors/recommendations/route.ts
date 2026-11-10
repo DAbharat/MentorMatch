@@ -19,13 +19,13 @@ export async function GET(request: NextRequest) {
         let limit = Math.min(Number(searchParams.get("limit")) || 10, 50)
         if(limit < 0) limit = 0;
 
-        const cached = getCachedRecommendations(userId, limit)
+        const cached = await getCachedRecommendations(userId, limit)
         if(cached) {
             return NextResponse.json(
-                cached
-            ), {
+                cached, 
+            {
                 status: 200
-            }
+            })
         }
 
         const mentee = await prisma.user.findUnique({
