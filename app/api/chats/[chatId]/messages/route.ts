@@ -3,8 +3,8 @@ import prisma from "@/lib/prisma";
 import { sendMessageSchema } from "@/schema/messageSchema";
 import { z } from "zod";
 import { getSessionFromRequest } from "@/lib/auth/auth";
-import { buildChatCacheKey, cacheGet, cacheSet } from "@/lib/redis/cache";
-import { invalidateChatOnNewMessage } from "@/lib/redis/cache/chats";
+import { buildChatCacheKey, cacheGet, cacheSet } from "@/redis/cache";
+import { invalidateChatOnNewMessage } from "@/redis/cache/chats";
 
 export async function POST(
     req: NextRequest,

@@ -24,6 +24,7 @@ MentorMatch/
 ├── components/           # UI Components (Organized by feature domain)
 ├── hooks/                # Custom React Hooks
 ├── lib/                  # Core singletons, infrastructure & utilities
+├── redis/                # Centralized Redis connection, rate limiting & cache modules
 ├── services/             # Client-side API integration layer
 ├── types/                # Shared TypeScript interfaces & types
 ├── schema/               # Zod validation schemas
@@ -85,15 +86,28 @@ MentorMatch/
 
 ---
 
+### 📁 `redis/` (Caching, Rate Limiting & Performance)
+* **Purpose:** Centralized Redis client, brute-force rate limiters, and domain-specific cache modules.
+* **Root Files:**
+  * `redis.ts`: `ioredis` client singleton with connection pooling, retry strategies, and TLS (`rediss://`).
+  * `cache.ts`: Generic cache get/set/delete utilities, TTL jitter, and hit/miss telemetry tracking.
+  * `auth-limiter.ts`: Login brute-force rate limiter (5 attempts per 15 min, fail-open resilience).
+* **Subfolder `redis/cache/` (Domain Cache Modules):**
+  * `analytics.ts`: Mentor analytics caching (5 min TTL) with event-driven invalidation.
+  * `recommendations.ts`: Mentor recommendations caching (10 min TTL).
+  * `sessions.ts`: Session state caching and participant invalidation.
+  * `chats.ts`: Chat message cursor pagination cache.
+  * `notifications.ts`: Unread notification count cache.
+  * `mentorship-requests.ts`: Mentorship request caches.
+  * `skills.ts`: Normalized skill lookup caches.
+  * `call-presence.ts`: Active call room presence and heartbeat tracking.
+
+---
+
 ### 📁 `lib/` (Core Infrastructure & Libraries)
 * **Purpose:** Utilities, database clients, auth validators, and third-party wrappers.
-* **Subfolders:**
+* **Subfolders & Files:**
   * `lib/auth/`: JWT token signing, verification, CSRF token generation, password hashing, and cookie helpers (`auth.ts`).
-  * `lib/redis/`:
-    * `redis.ts`: ioredis singleton with reconnect backoff and TLS support.
-    * `cache.ts`: Generic caching layer with TTL jitter and cache stats.
-    * `auth-limiter.ts`: Rate limiter for login brute-force prevention.
-    * `cache/recommendations.ts`: Cache management for mentor search results.
   * `lib/ws/`:
     * `wsClient.ts`: Resilient WebSocket client with lazy token refresh (`getToken`) and auto-reconnection.
     * `chatSocket.ts`: Chat-specific socket connection manager.
@@ -148,8 +162,8 @@ MentorMatch/
    * When an access token expires, `axiosClient` catches the `401`, calls `/api/auth/refresh`, gets new cookies, and replays the original request seamlessly.
    * `WsClient` uses `getToken: refresh` so WebSocket connections never drop after 15 minutes.
 2. **Caching Strategy:**
-   * Caching is layered on top of Redis (`lib/redis/cache.ts`).
-   * When user profile or skills are updated, the corresponding cache keys (`recommendations`, `profile`) must be explicitly invalidated.
+   * Caching is layered on top of Redis (`redis/cache.ts`).
+   * When data changes (reviews submitted, calls completed, profiles edited), corresponding domain cache modules (`redis/cache/analytics.ts`, `recommendations.ts`, `sessions.ts`) are proactively invalidated.
 3. **Adding a New Feature Checklist:**
    * 1. Add model changes in `prisma/schema.prisma` if needed.
    * 2. Define types in `types/<feature>.ts`.

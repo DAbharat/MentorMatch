@@ -1,5 +1,6 @@
 import { getSessionFromRequest } from "@/lib/auth/auth";
 import prisma from "@/lib/prisma";
+import { getCachedMentorAnalytics, setCachedMentorAnalytics } from "@/redis/cache/analytics";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -13,6 +14,15 @@ export async function GET(request: NextRequest) {
     }
 
     try {
+        const cached = await getCachedMentorAnalytics(userId)
+        if(cached) {
+            return NextResponse.json(
+                cached,
+            {
+                status: 200
+            })
+        }
+
         const now = new Date()
         const sixMonthsAgo = new Date()
         sixMonthsAgo.setMonth(now.getMonth() - 5)
@@ -219,7 +229,7 @@ export async function GET(request: NextRequest) {
             }
         }).sort((a, b) => b.completedSessions - a.completedSessions)
 
-        return NextResponse.json({
+        const payload = {
             overview: {
                 totalCompletedSessions,
                 totalActiveHours: Number((totalActiveMinutes / 60).toFixed(1)),
@@ -235,7 +245,12 @@ export async function GET(request: NextRequest) {
             monthlyTrends,
             skillsBreakdown,
             recentFeedback: allFeedback.slice(0, 10)
-        }, {
+        }
+        await setCachedMentorAnalytics(userId, payload)
+
+        return NextResponse.json(
+            payload, 
+        {
             status: 200
         })
     } catch (error) {

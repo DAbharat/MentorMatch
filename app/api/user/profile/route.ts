@@ -4,8 +4,8 @@ import { updateProfileSchema } from "@/schema/profileSchema";
 import { z } from "zod";
 import { resolveSkills } from "@/lib/helpers/skills";
 import { getSessionFromRequest } from "@/lib/auth/auth";
-import  { cacheGet, cacheSet, buildCacheKey, cacheDelete, cacheInvalidatePattern } from "@/lib/redis/cache"
-import { invalidateUserRecommendations } from "@/lib/redis/cache/recommendations";
+import  { cacheGet, cacheSet, buildCacheKey, cacheDelete, cacheInvalidatePattern } from "@/redis/cache"
+import { invalidateUserRecommendations } from "@/redis/cache/recommendations";
 
 const CACHE_PREFIX = "cache:v1";
 

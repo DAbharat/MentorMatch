@@ -6,7 +6,7 @@ import { z } from "zod";
 import { createNotification } from "@/lib/notification";
 import { NotificationType } from "@prisma/client";
 import { getSessionFromRequest } from "@/lib/auth/auth";
-import { invalidateRequestParticipants } from "@/lib/redis/cache/mentorship-requests";
+import { invalidateRequestParticipants } from "@/redis/cache/mentorship-requests";
 
 export async function POST(req: NextRequest,
     { params }: { params: Promise<{ mentorId: string }> }

@@ -1,5 +1,5 @@
-import { cacheStatsReport } from "@/lib/redis/cache";
-import { healthCheck } from "@/lib/redis/redis";
+import { cacheStatsReport } from "@/redis/cache";
+import { healthCheck } from "@/redis/redis";
 
 export async function GET() {
     const stats = await cacheStatsReport()

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
 import { getSessionFromRequest } from "@/lib/auth/auth";
-import { buildCacheKey, cacheGet, cacheSet } from "@/lib/redis/cache";
+import { buildCacheKey, cacheGet, cacheSet } from "@/redis/cache";
 
 const CACHE_PREFIX = "cache:v1"
 

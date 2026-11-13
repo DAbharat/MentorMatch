@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getSessionFromRequest } from "@/lib/auth/auth";
-import { getCachedRequests, setCachedRequests } from "@/lib/redis/cache/mentorship-requests";
+import { getCachedRequests, setCachedRequests } from "@/redis/cache/mentorship-requests";
 
 export async function GET(req: NextRequest) {
 

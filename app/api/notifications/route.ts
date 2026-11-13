@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getSessionFromRequest } from "@/lib/auth/auth";
-import { getUnreadNotificationCountCached } from "@/lib/redis/cache/notifications";
+import { getUnreadNotificationCountCached } from "@/redis/cache/notifications";
 
 export async function GET(request: NextRequest) {
     const userId = getSessionFromRequest(request)

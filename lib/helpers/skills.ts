@@ -1,6 +1,6 @@
 import prisma from "@/lib/prisma";
-import { cacheDelete } from "../redis/cache";
-import { ALL_SKILLS_CACHE_KEY } from "@/lib/redis/cache/skills"
+import { cacheDelete } from "../../redis/cache";
+import { ALL_SKILLS_CACHE_KEY } from "@/redis/cache/skills"
 
 function normalize(skillName: string) {
     return skillName

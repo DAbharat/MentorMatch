@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getSessionFromRequest } from "@/lib/auth/auth";
-import { invalidateChatOnNewMessage } from "@/lib/redis/cache/chats";
+import { invalidateChatOnNewMessage } from "@/redis/cache/chats";
 
 export async function PATCH(req: NextRequest,
     { params }: { params: Promise<{ chatId: string }> }

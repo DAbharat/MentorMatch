@@ -3,7 +3,7 @@ import prisma from "@/lib/prisma";
 import { callEventSchema } from "@/schema/callEventSchema";
 import { z } from "zod";
 import { getSessionFromRequest } from "@/lib/auth/auth";
-import { markUserInRoom, removeUserFromRoom } from "@/lib/redis/cache/call-presence";
+import { markUserInRoom, removeUserFromRoom } from "@/redis/cache/call-presence";
 
 export async function POST(req: NextRequest, 
 { params }: { params: Promise<{ sessionId : string }>} )  {

@@ -4,8 +4,9 @@ import { createFeedbackSchema } from "@/schema/createFeedbackSchema";
 import { z } from "zod";
 import { NotificationType } from "@prisma/client";
 import { getSessionFromRequest } from "@/lib/auth/auth";
-import { buildCacheKey, cacheDelete } from "@/lib/redis/cache";
-import { invalidateUnreadNotificationCount } from "@/lib/redis/cache/notifications";
+import { buildCacheKey, cacheDelete } from "@/redis/cache";
+import { invalidateUnreadNotificationCount } from "@/redis/cache/notifications";
+import { invalidateMentorAnalytics } from "@/redis/cache/analytics";
 
 export async function POST(req: NextRequest) {
 
@@ -168,6 +169,7 @@ export async function POST(req: NextRequest) {
             };
         });
         await cacheDelete(mentorProfileCacheKey)
+        await invalidateMentorAnalytics(mentorId)
         await invalidateUnreadNotificationCount(mentorId)
 
         return NextResponse.json({

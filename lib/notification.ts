@@ -1,6 +1,6 @@
 import { NotificationType } from "@prisma/client";
 import prisma from "./prisma";
-import { invalidateUnreadNotificationCount } from "./redis/cache/notifications";
+import { invalidateUnreadNotificationCount } from "../redis/cache/notifications";
 
 export async function createNotification({
     userId,

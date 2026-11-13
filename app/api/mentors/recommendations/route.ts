@@ -1,7 +1,7 @@
 import { getSessionFromRequest } from "@/lib/auth/auth";
 import { MentorCandidate, scoreMentor, SkillFeedbackStats } from "@/lib/helpers/recommendation";
 import prisma from "@/lib/prisma";
-import { getCachedRecommendations, setCachedRecommendations } from "@/lib/redis/cache/recommendations";
+import { getCachedRecommendations, setCachedRecommendations } from "@/redis/cache/recommendations";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {

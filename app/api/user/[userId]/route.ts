@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getSessionFromRequest } from "@/lib/auth/auth";
-import { buildCacheKey, cacheGet, cacheSet } from "@/lib/redis/cache";
-import { invalidateChatOnNewMessage } from "@/lib/redis/cache/chats";
+import { buildCacheKey, cacheGet, cacheSet } from "@/redis/cache";
+import { invalidateChatOnNewMessage } from "@/redis/cache/chats";
 
 async function getDynamicFields(
     viewerId: string | null,

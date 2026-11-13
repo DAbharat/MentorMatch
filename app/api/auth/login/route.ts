@@ -1,6 +1,6 @@
 import { comparePassword, generateAccessToken, generateRefreshToken, hashToken, setAuthCookies } from "@/lib/auth/auth";
 import prisma from "@/lib/prisma";
-import { isAccountLocked, recordFailedLogin, resetFailedLogin } from "@/lib/redis/auth-limiter";
+import { isAccountLocked, recordFailedLogin, resetFailedLogin } from "@/redis/auth-limiter";
 import { userLoginSchema } from "@/schema/usercreationSchema";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";

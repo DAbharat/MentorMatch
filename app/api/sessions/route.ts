@@ -6,7 +6,7 @@ import { z } from "zod";
 import { createNotification } from "@/lib/notification";
 import { NotificationType } from "@prisma/client";
 import { getSessionFromRequest } from "@/lib/auth/auth";
-import { getCachedUserSessions, invalidateSessionParticipants, setCachedUserSessions } from "@/lib/redis/cache/sessions";
+import { getCachedUserSessions, invalidateSessionParticipants, setCachedUserSessions } from "@/redis/cache/sessions";
 
 export async function GET(req: NextRequest) {
 

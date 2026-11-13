@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
 import { getSessionFromRequest } from "@/lib/auth/auth";
-import { resetUnreadNotificationCount } from "@/lib/redis/cache/notifications";
+import { resetUnreadNotificationCount } from "@/redis/cache/notifications";
 
 export async function PATCH(request: NextRequest) {
 

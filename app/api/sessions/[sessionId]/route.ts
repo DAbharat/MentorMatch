@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
-import { createSessionSchema, SessionStatus, sessionStatusSchema, updateSessionSchema } from "@/schema/sessionSchema";
+import { SessionStatus, updateSessionSchema } from "@/schema/sessionSchema";
 import { z } from "zod";
 import { computeSessionMetrices } from "@/lib/helpers/session-metrics";
-import { stat } from "fs";
 import { createNotification } from "@/lib/notification";
 import { NotificationType } from "@prisma/client";
 import { getSessionFromRequest } from "@/lib/auth/auth";
-import { invalidateSessionParticipants } from "@/lib/redis/cache/sessions";
+import { invalidateSessionParticipants } from "@/redis/cache/sessions";
+import { invalidateMentorAnalytics } from "@/redis/cache/analytics";
 
 type TransitionRule = {
     from: SessionStatus[];
@@ -231,6 +230,7 @@ export async function PATCH(req: NextRequest,
             message: `Your session for the skill ${getSession.skill.name} scheduled at ${new Date(getSession.scheduledAt).toLocaleString()} has been ${action === "CONFIRM" ? "confirmed" : action === "START" ? "started" : "cancelled"} by the ${isMentor ? "mentor" : "mentee"}`
         })
         await invalidateSessionParticipants(getSession.mentorId, getSession.menteeId)
+        await invalidateMentorAnalytics(getSession.mentorId)
 
         return NextResponse.json({
             message: `Session ${action} successful`,

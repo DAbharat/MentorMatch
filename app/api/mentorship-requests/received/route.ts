@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import prisma from "@/lib/prisma";
 import { getSessionFromRequest } from "@/lib/auth/auth";
-import { cacheGet } from "@/lib/redis/cache";
-import { getCachedRequests, setCachedRequests } from "@/lib/redis/cache/mentorship-requests";
+import { cacheGet } from "@/redis/cache";
+import { getCachedRequests, setCachedRequests } from "@/redis/cache/mentorship-requests";
 
 
 export async function GET(req: NextRequest) {

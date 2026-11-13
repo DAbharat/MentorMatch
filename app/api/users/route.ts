@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { buildCacheKey, cacheGet, cacheSet } from "@/lib/redis/cache";
+import { buildCacheKey, cacheGet, cacheSet } from "@/redis/cache";
 
 const SEARCH_CACHE_TTL = 60 + Math.floor(Math.random() * 15);
 

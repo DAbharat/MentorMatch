@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { healthCheck } from "@/lib/redis/redis";
+import { healthCheck } from "@/redis/redis";
 
 const startTime = Date.now();
 

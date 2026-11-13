@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getSessionFromRequest } from "@/lib/auth/auth";
-import { invalidateUnreadNotificationCount } from "@/lib/redis/cache/notifications";
+import { invalidateUnreadNotificationCount } from "@/redis/cache/notifications";
 
 export async function PATCH(request: NextRequest,
     { params } : { params : Promise<{ id: string }> }
