@@ -12,7 +12,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { BarChart3, CirclePlus, HandHelping, Home, MessageCircleQuestionMark, Settings, Video } from "lucide-react"
+import { BarChart3, CirclePlus, HandHelping, Home, MessageCircleQuestionMark, Settings, Sparkles, Video } from "lucide-react"
 import Link from "next/link"
 import { DM_Sans } from "next/font/google";
 import { usePathname } from "next/navigation";
@@ -31,6 +31,11 @@ export function AppSidebar() {
             title: "Home",
             url: "/",
             icon: Home
+        },
+        {
+            title: "Recommendations",
+            url: "/recommendations",
+            icon: Sparkles
         },
         {
             title: "Sessions",

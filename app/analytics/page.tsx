@@ -12,7 +12,6 @@ import RatingAndImpact from "@/components/analytics/RatingAndImpact";
 import ActivityAndSkills from "@/components/analytics/ActivityAndSkills";
 import RecentReviewsList from "@/components/analytics/RecentReviewsList";
 import { Spinner } from "@/components/ui/spinner";
-import { BarChart3 } from "lucide-react";
 
 const DM_Sans_Font = DM_Sans({
     weight: ["400", "500", "700"],
@@ -52,7 +51,7 @@ export default function AnalyticsPage() {
 
     if (authLoading || loading) {
         return (
-            <div className={`min-h-screen bg-[#0b090a] flex items-center justify-center ${DM_Sans_Font.className}`}>
+            <div className={`min-h-screen bg-[#090909] flex items-center justify-center ${DM_Sans_Font.className}`}>
                 <Spinner />
             </div>
         );
@@ -61,25 +60,27 @@ export default function AnalyticsPage() {
     if (!data) return null;
 
     return (
-        <div className={`min-h-screen bg-[#0b090a] text-white p-4 sm:p-6 lg:p-8 ${DM_Sans_Font.className}`}>
+        <div className={`min-h-screen bg-[#090909] text-[#F5F5F5] p-4 sm:p-6 lg:p-8 ${DM_Sans_Font.className}`}>
             <div className="max-w-6xl mx-auto space-y-6">
-                {/* Header */}
-                {/* <div className="flex items-center gap-3 border-b border-[#1f1f1f] pb-5">
-                    <div className="p-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400">
-                        <BarChart3 className="w-6 h-6" />
-                    </div>
+                {/* Dashboard Header */}
+                <div className="flex items-center justify-between pb-3 border-b border-[#25272A]">
                     <div>
-                        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Mentor Analytics</h1>
-                        <p className="text-xs sm:text-sm text-neutral-400 mt-0.5">
-                            Track your session performance, student reviews, and learning impact
+                        <h1 className="text-xl sm:text-2xl font-bold text-[#F5F5F5] tracking-tight">
+                            Mentor Analytics
+                        </h1>
+                        <p className="text-xs sm:text-sm text-[#9299A3] mt-0.5">
+                            Track your mentoring performance and student impact.
                         </p>
                     </div>
-                </div> */}
+                    <span className="text-xs font-medium text-[#9299A3] px-3 py-1 rounded-full bg-[#17191C] border border-[#25272A]">
+                        Overview
+                    </span>
+                </div>
 
-                {/* 1. KPIs */}
+                {/* Row 1: Four statistics cards */}
                 <AnalyticsKPIs overview={data.overview} />
 
-                {/* 2. Rating & Confidence Boost */}
+                {/* Row 2: Mentee Impact (left) & Review Breakdown (right) */}
                 <RatingAndImpact
                     averageRating={data.overview.averageRating}
                     totalReviews={data.overview.totalReviewsCount}
@@ -87,16 +88,15 @@ export default function AnalyticsPage() {
                     averageConfidenceGain={data.overview.averageConfidenceGain}
                 />
 
-                {/* 3. Monthly Activity & Skills Breakdown */}
+                {/* Row 3: Monthly Activity (left) & Top Mentored Skills (right) */}
                 <ActivityAndSkills
                     monthlyTrends={data.monthlyTrends}
                     skillsBreakdown={data.skillsBreakdown}
                 />
 
-                {/* 4. Recent Reviews */}
+                {/* Row 4: Recent Student Feedback */}
                 <RecentReviewsList reviews={data.recentFeedback} />
             </div>
         </div>
     );
 }
-

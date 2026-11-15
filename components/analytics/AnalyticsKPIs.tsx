@@ -9,28 +9,30 @@ interface AnalyticsKPIsProps {
 export default function AnalyticsKPIs({ overview }: AnalyticsKPIsProps) {
     const stats = [
         {
-            label: "Sessions Completed",
+            label: "Sessions",
             value: overview.totalCompletedSessions,
-            subtext: `${overview.upcomingSessionsCount} upcoming / confirmed`,
-            icon: <Video className="w-5 h-5 text-blue-400" />,
+            subtitle: "Completed mentoring sessions.",
+            icon: <Video className="w-5 h-5 text-[#9299A3]" />,
         },
         {
-            label: "Total Mentoring Time",
-            value: `${overview.totalActiveHours} hrs`,
-            subtext: `${overview.totalActiveMinutes} minutes active`,
-            icon: <Clock className="w-5 h-5 text-emerald-400" />,
+            label: "Mentoring time",
+            value: `${overview.totalActiveHours ?? 0}h`,
+            subtitle: "Total active mentoring time.",
+            icon: <Clock className="w-5 h-5 text-[#00D6A0]" />,
         },
         {
-            label: "Mentees Helped",
-            value: overview.uniqueMenteesCount,
-            subtext: "Unique students mentored",
-            icon: <Users className="w-5 h-5 text-purple-400" />,
+            label: "Mentees",
+            value: overview.uniqueMenteesCount ?? 0,
+            subtitle: "Unique students mentored.",
+            icon: <Users className="w-5 h-5 text-[#B78AFF]" />,
         },
         {
-            label: "Average Rating",
-            value: overview.averageRating ? `${overview.averageRating} ★` : "N/A",
-            subtext: `Based on ${overview.totalReviewsCount} reviews`,
-            icon: <Star className="w-5 h-5 text-amber-400 fill-amber-400" />,
+            label: "Average rating",
+            value: overview.averageRating ? overview.averageRating.toFixed(1) : "N/A",
+            subtitle: overview.totalReviewsCount > 0
+                ? `Based on ${overview.totalReviewsCount} review${overview.totalReviewsCount === 1 ? "" : "s"}.`
+                : "No reviews yet.",
+            icon: <Star className="w-5 h-5 text-[#FFC107] fill-[#FFC107]" />,
         },
     ];
 
@@ -39,25 +41,27 @@ export default function AnalyticsKPIs({ overview }: AnalyticsKPIsProps) {
             {stats.map((item, idx) => (
                 <div
                     key={idx}
-                    className="flex flex-col justify-between gap-3 p-5 rounded-xl bg-[#111315] border border-[#1f1f1f] hover:border-[#2a2f34] transition-all duration-200"
+                    className="flex flex-col justify-between p-5 rounded-2xl bg-[#111214] border border-[#25272A] hover:border-[#2f3236] transition-colors"
                 >
-                    <div className="flex items-center justify-between text-muted-foreground">
-                        <span className="text-xs font-semibold uppercase tracking-wider text-neutral-400">
+                    <div className="flex items-center justify-between">
+                        <span className="text-xs font-medium text-[#9299A3]">
                             {item.label}
                         </span>
-                        <div className="p-2 rounded-lg bg-white/5 border border-white/5">
+                        <div className="p-2 rounded-lg bg-[#17191C] border border-[#25272A]">
                             {item.icon}
                         </div>
                     </div>
-                    <div>
-                        <div className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+
+                    <div className="mt-4">
+                        <div className="text-2xl sm:text-3xl font-bold text-[#F5F5F5] tracking-tight">
                             {item.value}
                         </div>
-                        <p className="text-xs text-neutral-400 mt-1">{item.subtext}</p>
+                        <p className="text-xs text-[#9299A3] mt-1">
+                            {item.subtitle}
+                        </p>
                     </div>
                 </div>
             ))}
         </div>
     );
 }
-

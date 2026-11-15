@@ -1,7 +1,6 @@
 import React from "react";
 import { Star, MessageSquareQuote, ArrowRight } from "lucide-react";
 import { AnalyticsFeedback } from "@/types/analytics";
-import { Badge } from "@/components/ui/badge";
 
 interface RecentReviewsListProps {
     reviews: AnalyticsFeedback[];
@@ -10,10 +9,10 @@ interface RecentReviewsListProps {
 export default function RecentReviewsList({ reviews }: RecentReviewsListProps) {
     if (reviews.length === 0) {
         return (
-            <div className="p-8 rounded-xl bg-[#111315] border border-[#1f1f1f] text-center">
-                <MessageSquareQuote className="w-8 h-8 text-neutral-600 mx-auto mb-2" />
-                <h4 className="text-white font-medium text-sm">No reviews received yet</h4>
-                <p className="text-xs text-neutral-500 mt-1">
+            <div className="p-8 rounded-2xl bg-[#111214] border border-[#25272A] text-center">
+                <MessageSquareQuote className="w-8 h-8 text-[#9299A3] opacity-40 mx-auto mb-2" />
+                <h4 className="text-[#F5F5F5] font-medium text-sm">No reviews received yet</h4>
+                <p className="text-xs text-[#9299A3] mt-1">
                     Student feedback will show up here after completed mentoring calls.
                 </p>
             </div>
@@ -21,21 +20,21 @@ export default function RecentReviewsList({ reviews }: RecentReviewsListProps) {
     }
 
     return (
-        <div className="p-6 rounded-xl bg-[#111315] border border-[#1f1f1f]">
+        <div className="p-6 rounded-2xl bg-[#111214] border border-[#25272A]">
             <div className="flex items-center justify-between mb-5">
-                <h3 className="text-lg font-semibold text-white">Recent Student Feedback</h3>
-                <span className="text-xs text-neutral-400">Showing latest {reviews.length}</span>
+                <h3 className="text-base font-semibold text-[#F5F5F5]">Recent Student Feedback</h3>
+                <span className="text-xs text-[#9299A3]">Showing latest {reviews.length}</span>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {reviews.map((rev) => (
                     <div
                         key={rev.id}
-                        className="p-4 rounded-lg bg-neutral-900/50 border border-neutral-800 hover:border-neutral-700 transition-colors flex flex-col justify-between gap-3"
+                        className="p-4 rounded-xl bg-[#17191C] border border-[#25272A] hover:border-[#2f3236] transition-colors flex flex-col justify-between gap-3"
                     >
                         <div>
                             <div className="flex items-center justify-between gap-2 mb-2">
-                                <span className="font-semibold text-sm text-neutral-200">
+                                <span className="font-semibold text-sm text-[#F5F5F5]">
                                     {rev.mentee.name}
                                 </span>
                                 <div className="flex items-center gap-1">
@@ -44,26 +43,26 @@ export default function RecentReviewsList({ reviews }: RecentReviewsListProps) {
                                             key={i}
                                             className={`w-3.5 h-3.5 ${
                                                 i < rev.rating
-                                                    ? "fill-amber-400 text-amber-400"
-                                                    : "text-neutral-700"
+                                                    ? "fill-[#FFC107] text-[#FFC107]"
+                                                    : "text-[#292B2E]"
                                             }`}
                                         />
                                     ))}
                                 </div>
                             </div>
 
-                            <p className="text-xs text-neutral-300 italic line-clamp-3">
+                            <p className="text-xs text-[#F5F5F5] opacity-90 italic line-clamp-3 leading-relaxed">
                                 &quot;{rev.comment}&quot;
                             </p>
                         </div>
 
-                        <div className="flex items-center justify-between pt-2 border-t border-neutral-800/80 text-[11px] text-neutral-400">
-                            <Badge variant="outline" className="border-neutral-800 text-neutral-400 text-[10px]">
+                        <div className="flex items-center justify-between pt-2.5 border-t border-[#25272A] text-[11px] text-[#9299A3]">
+                            <span className="px-2 py-0.5 rounded-md bg-[#292B2E] text-[10px] text-[#9299A3]">
                                 {rev.skill.name}
-                            </Badge>
+                            </span>
 
                             {rev.confidenceBefore !== null && rev.confidenceAfter !== null && (
-                                <span className="flex items-center gap-1 text-emerald-400 font-medium">
+                                <span className="flex items-center gap-1 text-[#00D6A0] font-medium">
                                     Confidence: {rev.confidenceBefore} <ArrowRight className="w-2.5 h-2.5" /> {rev.confidenceAfter}
                                 </span>
                             )}
@@ -74,4 +73,3 @@ export default function RecentReviewsList({ reviews }: RecentReviewsListProps) {
         </div>
     );
 }
-

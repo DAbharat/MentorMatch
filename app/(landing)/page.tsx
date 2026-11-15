@@ -1054,20 +1054,35 @@ function GlobalStyles() {
 
 export default function Page() {
   return (
-    <>
+    <div style={{ position: "relative", minHeight: "100vh", background: "#0b090a", overflow: "hidden" }}>
       <GlobalStyles />
-      <main>
-        <Hero />
-        <Divider />
-        <Features />
-        <Divider />
-        <HowItWorks />
-        <Divider />
-        <ProductExperience />
-        <Divider />
-        <CTA />
-      </main>
-      <Footer />
-    </>
+      {/* Background Image Layer */}
+      <div
+        style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 0,
+          backgroundImage: "linear-gradient(to bottom, rgba(11, 9, 10, 0.72) 0%, rgba(11, 9, 10, 0.85) 50%, #0b090a 100%), url('/mmbgimg.jpg')",
+          backgroundSize: "cover",
+          backgroundPosition: "center top",
+          backgroundRepeat: "no-repeat",
+          pointerEvents: "none",
+        }}
+      />
+      <div style={{ position: "relative", zIndex: 1 }}>
+        <main>
+          <Hero />
+          <Divider />
+          <Features />
+          <Divider />
+          <HowItWorks />
+          <Divider />
+          <ProductExperience />
+          <Divider />
+          <CTA />
+        </main>
+        <Footer />
+      </div>
+    </div>
   );
 }
