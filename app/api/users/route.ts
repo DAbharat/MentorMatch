@@ -1,10 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { buildCacheKey, cacheGet, cacheSet } from "@/redis/cache";
+import { checkRateLimit } from "@/redis/rate-limit/rate-limiter";
+import { getClientIp, rateLimitExceededResponse } from "@/redis/rate-limit/utils";
 
 const SEARCH_CACHE_TTL = 60 + Math.floor(Math.random() * 15);
 
 export async function GET(req: NextRequest) {
+    const ip = getClientIp(req);
+    const rateLimitResult = await checkRateLimit("GENERAL", ip);
+    if (!rateLimitResult.success) {
+        return rateLimitExceededResponse(rateLimitResult);
+    }
+
     const url = new URL(req.url);
     const searchName = url.searchParams.get("name")?.trim()
     const searchSkill = url.searchParams.get("skill")?.trim()

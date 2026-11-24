@@ -7,6 +7,8 @@ import { getSessionFromRequest } from "@/lib/auth/auth";
 import { buildCacheKey, cacheDelete } from "@/redis/cache";
 import { invalidateUnreadNotificationCount } from "@/redis/cache/notifications";
 import { invalidateMentorAnalytics } from "@/redis/cache/analytics";
+import { checkRateLimit } from "@/redis/rate-limit/rate-limiter";
+import { rateLimitExceededResponse } from "@/redis/rate-limit/utils";
 
 export async function POST(req: NextRequest) {
 
@@ -17,6 +19,11 @@ export async function POST(req: NextRequest) {
         }, {
             status: 401
         })
+    }
+
+    const rateLimitResult = await checkRateLimit("MUTATION", userId);
+    if (!rateLimitResult.success) {
+        return rateLimitExceededResponse(rateLimitResult);
     }
 
     const body = await req.json();
