@@ -7,6 +7,7 @@ import { createNotification } from "@/lib/notification";
 import { NotificationType } from "@prisma/client";
 import { getSessionFromRequest } from "@/lib/auth/auth";
 import { getCachedUserSessions, invalidateSessionParticipants, setCachedUserSessions } from "@/redis/cache/sessions";
+import { scheduleSessionReminder } from "@/queues/session.queue";
 
 export async function GET(req: NextRequest) {
 
@@ -212,6 +213,9 @@ export async function POST(req: NextRequest) {
                 roomId: crypto.randomUUID()
             }
         })
+        if (createSession.status === "CONFIRMED") {
+            await scheduleSessionReminder(createSession.id, createSession.scheduledAt);
+        }
 
         const sendNotificationToMentor = await createNotification({
             userId: mentorId,

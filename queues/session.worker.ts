@@ -6,7 +6,7 @@ import { NotificationType } from "@prisma/client";
 import { computeSessionMetrices, shouldAutoCompleteSession } from "@/lib/helpers/session-metrics";
 import { invalidateMentorAnalytics } from "@/redis/cache/analytics";
 import { invalidateSessionParticipants } from "@/redis/cache/sessions";
-import { queueRedisConnection } from "@/redis/queue-connection";
+import { queueRedisConnection } from "@/queues/queue-connection";
 
 async function handleSessionReminder(job: Job<SessionReminderJobData>) {
     const { sessionId } = job.data;
@@ -42,27 +42,22 @@ async function handleSessionReminder(job: Job<SessionReminderJobData>) {
         return
     }
 
-    const scheduledTime = new Date(session.scheduledAt).toLocaleTimeString([], {
-        hour: "2-digit", minute: "2-digit"
-    })
-
-    await createNotification({
-        userId: session.menteeId,
-        senderId: session.mentorId,
-        mentorshipRequestId: session.mentorshipRequestId ?? undefined,
-        type: NotificationType.SESSION_REMINDER,
-        title: "Upcoming Mentoring Session",
-        message: `Your session on "${session.skill.name}" with ${session.mentor.name} starts in 15 minutes (${scheduledTime}).`
-    })
-
-    await createNotification({
-        userId: session.mentorId,
-        senderId: session.menteeId,
-        mentorshipRequestId: session.mentorshipRequestId ?? undefined,
-        type: NotificationType.SESSION_REMINDER,
-        title: "Upcoming Mentoring Session",
-        message: `Your session on "${session.skill.name}" with ${session.mentee.name} starts in 15 minutes (${scheduledTime}).`
-    })
+    await prisma.notification.createMany({
+        data: [
+            {
+                userId: session.mentorId,
+                type: "SESSION_REMINDER",
+                title: "Upcoming Mentoring Session",
+                message: `You have an upcoming session with ${session.mentee.name} starting in 15 minutes.`,
+            },
+            {
+                userId: session.menteeId,
+                type: "SESSION_REMINDER",
+                title: "Upcoming Mentoring Session",
+                message: `Your session with ${session.mentor.name} starts in 15 minutes.`,
+            },
+        ],
+    });
 
     console.log(`[Worker] Successfully sent SESSION_REMINDER notifications for session ${sessionId}`)
 }

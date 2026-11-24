@@ -1,5 +1,5 @@
 import { Queue } from "bullmq";
-import { queueRedisConnection } from "@/redis/queue-connection";
+import { queueRedisConnection } from "@/queues/queue-connection";
 
 export const SESSION_QUEUE_NAME = "session-tasks";
 
@@ -60,14 +60,14 @@ export async function scheduleSessionReminder(sessionId: string, scheduledAt: Da
     } as SessionReminderJobData,
     {
         delay,
-        jobId
+        jobId: `session-reminder-${sessionId}`
     })
 
     console.log(`[BullMQ] Scheduled session reminder for session: ${sessionId} in ${Math.round(delay / 60000)} minutes.`)
 }
 
 export async function cancelSessionReminder(sessionId: string) {
-    const jobId = `reminder-${sessionId}`;
+    const jobId = `session-reminder-${sessionId}`;
     try {
         const job = await sessionQueue.getJob(jobId)
         if(job) {

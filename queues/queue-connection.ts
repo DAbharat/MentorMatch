@@ -1,4 +1,5 @@
 import { ConnectionOptions } from "bullmq";
+import 'dotenv/config';
 
 const redisUrl = process.env.REDIS_URL;
 if (!redisUrl) {
