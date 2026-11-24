@@ -7,6 +7,9 @@ import { createNotification } from "@/lib/notification";
 import { NotificationType } from "@prisma/client";
 import { getSessionFromRequest } from "@/lib/auth/auth";
 import { getCachedUserSessions, invalidateSessionParticipants, setCachedUserSessions } from "@/redis/cache/sessions";
+import { scheduleSessionReminder } from "@/queues/session.queue";
+import { checkRateLimit } from "@/redis/rate-limit/rate-limiter";
+import { getClientIp, rateLimitExceededResponse } from "@/redis/rate-limit/utils";
 
 export async function GET(req: NextRequest) {
 
@@ -117,6 +120,11 @@ export async function POST(req: NextRequest) {
         })
     }
 
+    const rateLimitResult = await checkRateLimit("MUTATION", userId);
+    if (!rateLimitResult.success) {
+        return rateLimitExceededResponse(rateLimitResult);
+    }
+
     const body = await req.json();
     const parsed = createSessionSchema.safeParse(body)
 
@@ -212,6 +220,9 @@ export async function POST(req: NextRequest) {
                 roomId: crypto.randomUUID()
             }
         })
+        if (createSession.status === "CONFIRMED") {
+            await scheduleSessionReminder(createSession.id, createSession.scheduledAt);
+        }
 
         const sendNotificationToMentor = await createNotification({
             userId: mentorId,

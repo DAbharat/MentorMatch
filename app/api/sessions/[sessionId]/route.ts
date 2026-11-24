@@ -8,6 +8,7 @@ import { NotificationType } from "@prisma/client";
 import { getSessionFromRequest } from "@/lib/auth/auth";
 import { invalidateSessionParticipants } from "@/redis/cache/sessions";
 import { invalidateMentorAnalytics } from "@/redis/cache/analytics";
+import { cancelSessionReminder, scheduleSessionReminder } from "@/queues/session.queue";
 
 type TransitionRule = {
     from: SessionStatus[];
@@ -219,6 +220,11 @@ export async function PATCH(req: NextRequest,
             },
             data
         })
+        if(action === "CONFIRM") {
+            await scheduleSessionReminder(updateSession.id, updateSession.scheduledAt)
+        } else if(action === "CANCEL") {
+            await cancelSessionReminder(sessionId)
+        }
 
         const sendNotification = await createNotification({
             userId: isMentor ? getSession.menteeId : getSession.mentorId,

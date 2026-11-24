@@ -2,6 +2,8 @@ import { getSessionFromRequest } from "@/lib/auth/auth";
 import { MentorCandidate, scoreMentor, SkillFeedbackStats } from "@/lib/helpers/recommendation";
 import prisma from "@/lib/prisma";
 import { getCachedRecommendations, setCachedRecommendations } from "@/redis/cache/recommendations";
+import { checkRateLimit } from "@/redis/rate-limit/rate-limiter";
+import { addRateLimitHeaders, getClientIp, rateLimitExceededResponse } from "@/redis/rate-limit/utils";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -12,6 +14,11 @@ export async function GET(request: NextRequest) {
         }, {
             status: 401
         })
+    }
+
+    const rateLimitResult = await checkRateLimit("RECOMMENDATION", userId || getClientIp(request));
+    if (!rateLimitResult.success) {
+        return rateLimitExceededResponse(rateLimitResult);
     }
 
     try {

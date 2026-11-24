@@ -1,11 +1,19 @@
 import { comparePassword, generateAccessToken, generateRefreshToken, hashToken, setAuthCookies } from "@/lib/auth/auth";
 import prisma from "@/lib/prisma";
 import { isAccountLocked, recordFailedLogin, resetFailedLogin } from "@/redis/auth-limiter";
+import { checkRateLimit } from "@/redis/rate-limit/rate-limiter";
+import { getClientIp, rateLimitExceededResponse } from "@/redis/rate-limit/utils";
 import { userLoginSchema } from "@/schema/usercreationSchema";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 export async function POST(req: NextRequest) {
+    const ip = getClientIp(req);
+    const rateLimitResult = await checkRateLimit("AUTH", ip);
+    if (!rateLimitResult.success) {
+        return rateLimitExceededResponse(rateLimitResult);
+    }
+
     const body = await req.json()
     const parsed = userLoginSchema.safeParse(body)
 
