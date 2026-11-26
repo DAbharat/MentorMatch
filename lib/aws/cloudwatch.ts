@@ -2,13 +2,13 @@ import "dotenv/config";
 import {
   CloudWatchLogsClient, CreateLogGroupCommand, CreateLogStreamCommand, PutLogEventsCommand } from "@aws-sdk/client-cloudwatch-logs";
 
-const region = process.env.AWS_REGION || "ap-southeast-2";
+const region = process.env.APP_AWS_REGION || "ap-southeast-2";
 
 export const cloudWatchClient = new CloudWatchLogsClient({
     region,
-    credentials: process.env.AWS_ACCESS_KEY && process.env.AWS_SECRET_ACCESS_KEY ? {
-        accessKeyId: process.env.AWS_ACCESS_KEY,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+    credentials: process.env.APP_AWS_ACCESS_KEY && process.env.APP_AWS_SECRET_ACCESS_KEY ? {
+        accessKeyId: process.env.APP_AWS_ACCESS_KEY,
+        secretAccessKey: process.env.APP_AWS_SECRET_ACCESS_KEY
     } : undefined
 })
 
