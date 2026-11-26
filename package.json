@@ -10,9 +10,14 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "worker": "tsx queues/run-worker.ts"
+    "worker": "tsx queues/run-worker.ts",
+    "test": "node benchmark/runner.js",
+    "test:deployed": "node benchmark/runner.js deployed"
   },
   "dependencies": {
+    "@aws-sdk/client-cloudwatch-logs": "^3.1177.0",
+    "@aws-sdk/client-scheduler": "^3.1178.0",
+    "@aws-sdk/client-sqs": "^3.1177.0",
     "@clerk/nextjs": "^6.36.5",
     "@prisma/adapter-pg": "^7.3.0",
     "@prisma/client": "^7.3.0",
@@ -27,6 +32,7 @@
     "framer-motion": "^12.38.0",
     "ioredis": "^5.10.1",
     "jsonwebtoken": "^9.0.3",
+    "k6": "^0.0.0",
     "lucide-react": "^0.562.0",
     "next": "16.1.1",
     "next-themes": "^0.4.6",

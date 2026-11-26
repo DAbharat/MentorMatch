@@ -7,7 +7,7 @@ import { createNotification } from "@/lib/notification";
 import { NotificationType } from "@prisma/client";
 import { getSessionFromRequest } from "@/lib/auth/auth";
 import { getCachedUserSessions, invalidateSessionParticipants, setCachedUserSessions } from "@/redis/cache/sessions";
-import { scheduleSessionReminder } from "@/queues/session.queue";
+import { scheduleSessionReminder } from "@/queues/sqs.producer";
 import { checkRateLimit } from "@/redis/rate-limit/rate-limiter";
 import { getClientIp, rateLimitExceededResponse } from "@/redis/rate-limit/utils";
 

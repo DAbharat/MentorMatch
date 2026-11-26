@@ -1,37 +1,34 @@
-import { setupRecurringAutoCompleteJob } from "./session.queue"
-import { createSessionWorker } from "./session.worker"
+import { logToCloudWatch } from "@/lib/aws/cloudwatch"
+import { startSQSWorker, stopSQSWorker } from "./sqs.worker"
 
 async function bootstrap() {
-    console.log("[Worker Process] Initializing Session Worker...")
-
-    const worker = createSessionWorker()
-
-    try {
-        await setupRecurringAutoCompleteJob()
-        console.log("[Worker Process] Auto-complete recurring job scheduler registered.")
-    } catch (error) {
-        console.error("[Worker Process] Failed to register recurring job scheduler: ", error)
-    }
+    console.log("==========================================")
+    console.log("[Worker Process] Bootstrapping SQS Worker...")
+    console.log("==========================================")
 
     const shutdown = async (signal: string) => {
-        console.log(`\n [Worker Process] Received ${signal}. Gracefullt shutting down worker...`)
-        try {
-            await worker.close()
-            console.log("[Worker Process] Worker closed successfully. Exiting.")
+        console.log(`\n[Worker Process] Received ${signal}. Shutting down worker gracefully...`)
+        await logToCloudWatch(`[Worker Process] Received ${signal}. Worker shutting down.`, "WARN")
+
+        stopSQSWorker();
+
+        setTimeout(() => {
+            console.log("[Worker Process] Shutdown complete. GoodBye!")
             process.exit(0)
-        } catch (error) {
-            console.error("[Worker Process] Error during worker shutdown: ", error)
-            process.exit(1)
-        }
+        }, 3000)
     }
 
-    process.on("SIGINT", () => shutdown("SIGINT"))
-    process.on("SIGTERM", () => shutdown("SIGTERM"))
+    process.on("SIGINT", () => shutdown("SIGINT"));
+    process.on("SIGTERM", () => shutdown("SIGTERM"));
 
-    console.log("[Worker process] Worker is actively listening for jobs.")
+    await startSQSWorker();
 }
 
-bootstrap().catch((error) => {
+bootstrap().catch(async(error) => {
     console.error("[Worker Process] Fatal error starting worker: ", error)
-    process.exit(1)
+    await logToCloudWatch("[Worker Process] Fatal startup error", "ERROR", {
+        error: error.message,
+        stack: error.stack
+    })
+    process.exit(1);
 })
