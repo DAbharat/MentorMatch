@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-cloudwatch-logs": "^3.1177.0",
+    "@aws-sdk/client-scheduler": "^3.1178.0",
     "@aws-sdk/client-sqs": "^3.1177.0",
     "@clerk/nextjs": "^6.36.5",
     "@prisma/adapter-pg": "^7.3.0",

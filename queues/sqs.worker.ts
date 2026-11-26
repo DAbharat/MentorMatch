@@ -140,29 +140,6 @@ export async function handlleAutoCompleteCheck() {
     }
 }
 
-export async function sweepUpcomingSessionReminder() {
-    const now = new Date();
-    const windowStart = new Date(now.getTime() + 14 * 60 * 1000);
-    const windowEnd = new Date(now.getTime() + 16 * 60 * 1000);
-
-    const upcomingSessions = await prisma.session.findMany({
-        where: {
-            status: "CONFIRMED",
-            scheduledAt: {
-                gte: windowStart,
-                lte: windowEnd
-            }
-        },
-        select: {
-            id: true
-        }
-    })
-
-    for(const session of upcomingSessions) {
-        await handleSessionReminder(session.id)
-    }
-}
-
 async function processMessage(message: Message) {
     if(!message.Body) return;
 
@@ -200,14 +177,6 @@ export async function startSQSWorker() {
             console.error("[Worker] Auto-complete error: ", error.message)
         }
     }, 2 * 60 * 1000)
-
-    const reminderSweepInterval = setInterval(async() => {
-        try {
-            await sweepUpcomingSessionReminder()
-        } catch (error: any) {
-            console.error("[Worker] Reminder sweep error: ", error.message)
-        }
-    }, 60 * 1000)
 
     while(isRunning) {
         try {
@@ -248,7 +217,6 @@ export async function startSQSWorker() {
     }
 
     clearInterval(autoCompleteInterval)
-    clearInterval(reminderSweepInterval)
     console.log("[Worker Process] Worker loop terminated cleanly.")
 }
 

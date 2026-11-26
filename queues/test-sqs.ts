@@ -1,5 +1,5 @@
 import { SQS_QUEUE_URL, sqsClient } from "@/lib/aws/sqs";
-import { sendSQSMessage } from "@/queues/sqs.producer";
+import { scheduleSessionReminder, sendSQSMessage } from "@/queues/sqs.producer";
 import { SendMessageCommand } from "@aws-sdk/client-sqs";
 
 async function test() {
@@ -32,4 +32,15 @@ async function testDLQ() {
   console.log("Watch your worker terminal over the next ~90 seconds...");
 }
 
-testDLQ();
+//testDLQ();
+
+async function testScheduler() {
+  const fakeSessionTime = new Date(Date.now() + 16 * 60 * 1000);
+  const fakeSessionId = "test-scheduler-123";
+
+  console.log(`Creating EventBridge schedule to fire in ~1 minute...`);
+  await scheduleSessionReminder(fakeSessionId, fakeSessionTime);
+  console.log("Done! Check AWS Console -> EventBridge -> Schedules, and watch your worker terminal in ~60 seconds!");
+}
+
+testScheduler();

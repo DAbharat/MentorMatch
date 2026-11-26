@@ -1,6 +1,8 @@
 import { logToCloudWatch } from "@/lib/aws/cloudwatch";
 import { SQS_QUEUE_URL, sqsClient } from "@/lib/aws/sqs";
 import { SendMessageCommand } from "@aws-sdk/client-sqs";
+import { CreateScheduleCommand, UpdateScheduleCommand, DeleteScheduleCommand, FlexibleTimeWindowMode, ActionAfterCompletion } from "@aws-sdk/client-scheduler";
+import { AWS_SCHEDULER_ARN, AWS_SQS_QUEUE_ARN, formatEventBridgeAtExpression, schedulerClient } from "@/lib/aws/scheduler";
 
 export type SessionTaskType = "compute-session-metrics" | "send-session-reminder" | "check-auto-complete-sessions";
 
@@ -64,21 +66,67 @@ export async function queueComputeSessionMetrics(sessionId: string): Promise<str
 }
 
 export async function scheduleSessionReminder(sessionId: string, scheduledAt: Date): Promise<void> {
-    const reminderTime = new Date(scheduledAt).getTime() - 15 * 60 * 1000;
-    const delayMs = reminderTime - Date.now();
-    const delaySeconds = Math.floor(delayMs / 1000);
-
-    if(delaySeconds >= 0 && delaySeconds <= 900) {
-        await sendSQSMessage<SessionReminderJobData>("send-session-reminder", { sessionId }, delaySeconds)
-        console.log(`[SQS] Reminder scheduled in SQS with ${delaySeconds}s delay for session: ${sessionId}.`)
-    } else if(delaySeconds < 0) {
+    const reminderTime = new Date(new Date(scheduledAt).getTime() - 15 * 60 * 1000);
+    if(reminderTime.getTime() <= Date.now()) {
         await sendSQSMessage<SessionReminderJobData>("send-session-reminder", { sessionId }, 0)
-        console.log(`[SQS] Session: ${sessionId} begins soon. Reminder sent immediately.`)
-    } else {
-        console.log(`[SQS] Session: ${sessionId} is scheduled ${Math.round(delaySeconds / 60)} mins in the future. Worker sweeper will trigger reminder.`)
+        console.log(`[SQS] Session: ${sessionId} begins in <= 15 mins. Reminder sent immediately.`)
+        return
     }
+
+    if(!AWS_SQS_QUEUE_ARN || !AWS_SCHEDULER_ARN) {
+        throw new Error("[Scheduler] Missing AWS_SQS_ARN or AWS_SCHEDULER_ARN in .env")
+    }
+
+    const scheduleName = `session-reminder-${sessionId}`;
+    const sqsMessageBody: SessionQueueMessage<SessionReminderJobData> = {
+        task: "send-session-reminder",
+        payload: { sessionId },
+        timestamp: Date.now()
+    }
+
+    const scheduleConfig = {
+        Name: scheduleName,
+        ScheduleExpression: formatEventBridgeAtExpression(reminderTime),
+        ScheduleExpressionTimezone: "UTC",
+        FlexibleTimeWindow: {
+            Mode: FlexibleTimeWindowMode.OFF
+        },
+        ActionAfterCompletion: ActionAfterCompletion.DELETE,
+        Target: {
+            Arn: AWS_SQS_QUEUE_ARN,
+            RoleArn: AWS_SCHEDULER_ARN,
+            Input: JSON.stringify(sqsMessageBody)
+        }
+    }
+
+    try {
+        await schedulerClient.send(new CreateScheduleCommand(scheduleConfig))
+    } catch (error: any) {
+        if(error.name === "ConflictException") {
+            await schedulerClient.send(new UpdateScheduleCommand(scheduleConfig))
+        } else {
+            throw error;
+        }
+    }
+
+    await logToCloudWatch(`[Scheduler] Reminder scheduled for ${reminderTime.toISOString()}`, "INFO", {
+        sessionId, scheduleName
+    })
 }
 
 export async function cancelSessionReminder(sessionId: string): Promise<void> {
-    console.log(`[SQS] Session: ${sessionId} cancelled/updated. Worker will ignore any pending reminders.`)
+    const scheduleName = `session-reminder-${sessionId}`;
+
+    try {
+        await schedulerClient.send(new DeleteScheduleCommand({ Name: scheduleName }))
+        await logToCloudWatch(`[Scheduler] Cancelled reminder schedule: ${scheduleName}`, "INFO", {
+            sessionId
+        })
+    } catch (error: any) {
+        if(error.name === "ResourceNotFoundException") {
+            console.log(`[Scheduler] No active schedule found for session: ${sessionId} (already fired or none existed).`)
+        } else {
+            console.error(`[Scheduler] Failed to cancel schedule for ${sessionId}: `, error.message)
+        }
+    }
 }
