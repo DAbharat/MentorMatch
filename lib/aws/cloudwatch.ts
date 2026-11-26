@@ -12,7 +12,7 @@ export const cloudWatchClient = new CloudWatchLogsClient({
     } : undefined
 })
 
-export const LOG_GROUP_NAME = process.env.CLOUDWATCH_LOG_GROUP || "/mentormatch/app";
+export const LOG_GROUP_NAME = process.env.APP_AWS_CLOUDWATCH_LOG_GROUP || "/mentormatch/app";
 export const LOG_STREAM_NAME = `worker-${process.env.NODE_ENV || "development"}`;
 
 let isLogStreamInitialized = false;

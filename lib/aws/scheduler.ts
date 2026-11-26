@@ -11,8 +11,8 @@ export const schedulerClient = new SchedulerClient({
     } : undefined
 })
 
-export const AWS_SQS_QUEUE_ARN = process.env.AWS_SQS_QUEUE_ARN;
-export const AWS_SCHEDULER_ARN = process.env.AWS_SCHEDULER_ARN;
+export const AWS_SQS_QUEUE_ARN = process.env.APP_AWS_SQS_QUEUE_ARN;
+export const AWS_SCHEDULER_ARN = process.env.APP_AWS_SCHEDULER_ARN;
 
 export function formatEventBridgeAtExpression(date: Date): string {
     const isoWithoutMs = date.toISOString().split(".")[0];
