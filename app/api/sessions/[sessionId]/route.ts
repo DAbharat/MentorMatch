@@ -8,7 +8,7 @@ import { NotificationType } from "@prisma/client";
 import { getSessionFromRequest } from "@/lib/auth/auth";
 import { invalidateSessionParticipants } from "@/redis/cache/sessions";
 import { invalidateMentorAnalytics } from "@/redis/cache/analytics";
-import { cancelSessionReminder, scheduleSessionReminder } from "@/queues/session.queue";
+import { cancelSessionReminder, scheduleSessionReminder } from "@/queues/sqs.producer";
 
 type TransitionRule = {
     from: SessionStatus[];
