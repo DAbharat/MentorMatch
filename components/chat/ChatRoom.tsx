@@ -1,198 +1,305 @@
-"use client"
+"use client";
 
-import React from 'react'
-import { Video, ArrowLeft } from 'lucide-react'
-import SenderCard from '@/components/messages/SenderCard'
-import ReceiverCard from '@/components/messages/ReceiverCard'
-import { Button } from '@/components/ui/button'
-import { Separator } from '@/components/ui/separator'
-import Link from 'next/link'
+import { useEffect, useLayoutEffect, useRef } from "react";
+import Link from "next/link";
+import { ArrowLeft, CalendarDays } from "lucide-react";
+import SenderCard from "@/components/messages/SenderCard";
+import ReceiverCard from "@/components/messages/ReceiverCard";
 
 type Message = {
-    id: string;
-    content: string;
-    createdAt: string;
-    senderId: string;
-    sender?: {
-        id: string;
-        name: string;
-    };
-    category?: string;
-    isRead?: boolean;
-    isDelivered?: boolean;
-}
+  id: string;
+  content: string;
+  createdAt: string;
+  senderId: string;
+  sender?: { id: string; name: string };
+  category?: string;
+  isRead?: boolean;
+  isDelivered?: boolean;
+};
 
 type ChatRoomProps = {
-    roomName: string;
-    lastSeen: string;
-    messages: Message[];
-    currentUserId: string;
-    otherUserId: string;
-    onVideoCall?: () => void;
-    onBack?: () => void;
+  roomName: string;
+  topicName?: string;
+  messages: Message[];
+  currentUserId: string;
+  otherUserId: string;
+  isLoading: boolean;
+  error: string | null;
+  onRetry: () => void;
+  hasMore: boolean;
+  isLoadingMore: boolean;
+  loadMoreError: string | null;
+  onLoadMore: () => Promise<void>;
+  isTyping: boolean;
+  onBack: () => void;
+};
+
+function formatDate(dateString: string) {
+  const date = new Date(dateString);
+  if (Number.isNaN(date.getTime())) return "Earlier";
+
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  if (date.toDateString() === today.toDateString()) return "Today";
+  if (date.toDateString() === yesterday.toDateString()) return "Yesterday";
+
+  return date.toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: date.getFullYear() === today.getFullYear() ? undefined : "numeric",
+  });
 }
 
 export default function ChatRoom({
-    roomName,
-    lastSeen,
-    messages = [],
-    currentUserId,
-    otherUserId,
-    onVideoCall,
-    onBack
+  roomName,
+  topicName,
+  messages,
+  currentUserId,
+  otherUserId,
+  isLoading,
+  error,
+  onRetry,
+  hasMore,
+  isLoadingMore,
+  loadMoreError,
+  onLoadMore,
+  isTyping,
+  onBack,
 }: ChatRoomProps) {
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const previousScrollRef = useRef<{ height: number; top: number } | null>(null);
+  const skipAutoScrollRef = useRef(false);
 
-    // Format date for separator
-    const formatDate = (dateString: string) => {
-        const date = new Date(dateString);
-        const today = new Date();
-        const yesterday = new Date(today);
-        yesterday.setDate(yesterday.getDate() - 1);
+  const groupedMessages = messages.reduce(
+    (groups, message) => {
+      const date = formatDate(message.createdAt);
+      groups[date] ??= [];
+      groups[date].push(message);
+      return groups;
+    },
+    {} as Record<string, Message[]>
+  );
 
-        if (date.toDateString() === today.toDateString()) return 'Today';
-        if (date.toDateString() === yesterday.toDateString()) return 'Yesterday';
+  const initials =
+    roomName
+      .trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((part) => part[0] ?? "")
+      .join("")
+      .toUpperCase() || "?";
 
-        return date.toLocaleDateString('en-US', {
-            month: 'numeric',
-            day: 'numeric',
-            year: 'numeric'
-        });
-    };
+  useLayoutEffect(() => {
+    const container = messagesContainerRef.current;
+    if (isLoadingMore || !container || !previousScrollRef.current) return;
 
-    // Group messages by date
-    const groupedMessages = messages.reduce((acc, message) => {
-        const date = formatDate(message.createdAt);
-        if (!acc[date]) {
-            acc[date] = [];
-        }
-        acc[date].push(message);
-        return acc;
-    }, {} as Record<string, Message[]>);
+    const { height, top } = previousScrollRef.current;
+    container.scrollTop = top + container.scrollHeight - height;
+    previousScrollRef.current = null;
+  }, [isLoadingMore, messages]);
 
-    // Generate initials from room name
-    const initials = roomName
-        .split(' ')
-        .map(w => w[0])
-        .slice(0, 2)
-        .join('')
-        .toUpperCase();
+  useEffect(() => {
+    if (isLoadingMore) {
+      skipAutoScrollRef.current = true;
+      return;
+    }
+    if (skipAutoScrollRef.current) {
+      skipAutoScrollRef.current = false;
+      return;
+    }
+    if (!isLoading && messages.length > 0) {
+      const container = messagesContainerRef.current;
+      const behavior = window.matchMedia("(prefers-reduced-motion: reduce)")
+        .matches
+        ? "auto"
+        : "smooth";
+      container?.scrollTo({ top: container.scrollHeight, behavior });
+    }
+  }, [isLoading, isLoadingMore, messages]);
 
-        return (
-        <div className="flex flex-col h-full w-full bg-[#0b090a] overflow-hidden">
-            {/* Header */}
-            <div className="flex items-center justify-between px-3 sm:px-5 py-2.5 sm:py-3 border-b border-[#1e1c1e] bg-[#0b090a] shrink-0">
-                {/* Left: Back button */}
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="shrink-0 rounded-lg sm:rounded-xl h-8 w-8 sm:h-9 sm:w-9 hover:bg-[#1a1a2e] transition-colors"
-                    onClick={onBack}
+  const handleLoadMore = async () => {
+    const container = messagesContainerRef.current;
+    if (container) {
+      previousScrollRef.current = {
+        height: container.scrollHeight,
+        top: container.scrollTop,
+      };
+    }
+    await onLoadMore();
+  };
+
+  return (
+    <section
+      aria-label={`Conversation with ${roomName}`}
+      className="flex min-h-0 flex-1 flex-col bg-[#090a08]"
+    >
+      <header className="shrink-0 border-b border-[#1e2419]">
+        <div className="px-4 sm:px-6">
+          <div className="mx-auto flex min-h-[4.25rem] w-full max-w-3xl items-center gap-3">
+            <button
+              type="button"
+              onClick={onBack}
+              aria-label="Back to conversations"
+              className="inline-flex h-11 shrink-0 items-center gap-2 rounded-lg px-2 text-sm font-medium text-[#c7cabf] transition-colors hover:bg-[#161b12] hover:text-[#f2f0e8] active:bg-[#1b2116] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8fa654]"
+            >
+              <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+              <span className="hidden sm:inline">Messages</span>
+            </button>
+
+            <span
+              aria-hidden="true"
+              className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#1b2116] text-xs font-semibold text-[#b7cc7e]"
+            >
+              {initials}
+            </span>
+
+            <div className="min-w-0 flex-1">
+              <h1 className="truncate text-sm font-semibold text-[#f2f0e8] sm:text-base">
+                <Link
+                  href={`/profile/${otherUserId}`}
+                  className="rounded-sm transition-colors hover:text-[#cde099] active:text-[#b7cc7e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8fa654]"
                 >
-                    <ArrowLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" style={{ color: '#b0aec0' }} />
-                </Button>
-
-                {/* Center: Avatar + Room info */}
-                <div className="flex items-center gap-2 sm:gap-3 justify-center flex-1">
-                    <div
-                        className="w-8 h-8 sm:w-9 sm:h-9 bg-[#d3d3d3] rounded-full sm:rounded-xl flex items-center justify-center shrink-0"
-                        
-                    >
-                        <span className="text-[10px] sm:text-xs font-semibold text-black tracking-wide">
-                            {initials}
-                        </span>
-                    </div>
-                    <div className="flex flex-col min-w-0">
-                        {otherUserId ? (
-                            <Link 
-                                href={`/profile/${otherUserId}`}
-                                className="font-semibold text-xs sm:text-sm leading-tight truncate transition-colors"
-                                style={{ color: '#e2e0f0' }}
-                            >
-                                {roomName}
-                            </Link>
-                        ) : (
-                            <h2
-                                className="font-semibold text-xs sm:text-sm leading-tight truncate"
-                                style={{ color: '#e2e0f0' }}
-                            >
-                                {roomName}
-                            </h2>
-                        )}
-                        <p
-                            className="text-[10px] sm:text-xs leading-tight truncate mt-0.5"
-                            style={{ color: '#6b6880' }}
-                        >
-                            {lastSeen}
-                        </p>
-                    </div>
-                </div>
-
-                {/* Right: Video call button */}
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="shrink-0 rounded-lg sm:rounded-xl h-8 w-8 sm:h-9 sm:w-9 hover:bg-[#1a1a2e] transition-colors"
-                    onClick={onVideoCall}
-                >
-                    <Video className="w-3.5 h-3.5 sm:w-4 sm:h-4" style={{ color: '#b0aec0' }} />
-                </Button>
+                  {roomName}
+                </Link>
+              </h1>
+              <p className="truncate text-xs text-[#a8ab9e]">
+                {topicName || "Mentorship conversation"}
+              </p>
             </div>
 
-            {/* Messages area */}
-            <div className="flex-1 overflow-y-auto overflow-x-hidden px-3 sm:px-4 py-3 sm:py-4 space-y-3 sm:space-y-4">
-                {Object.entries(groupedMessages).length === 0 ? (
-                    <div className="flex items-center justify-center h-full">
-                        <p className="text-xs sm:text-sm" style={{ color: '#6b6880' }}>No messages yet</p>
-                    </div>
-                ) : (
-                    Object.entries(groupedMessages).map(([date, dateMessages]) => (
-                        <div key={date} className="space-y-2.5 sm:space-y-3">
-                            {/* Date separator */}
-                            <div className="flex items-center justify-center gap-2 sm:gap-3 my-4 sm:my-6">
-                                <Separator className="flex-1" style={{ backgroundColor: '#1e1c2e' }} />
-                                <span
-                                    className="text-[10px] sm:text-xs font-medium px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full whitespace-nowrap"
-                                    style={{
-                                        color: '#9d9ab0',
-                                        background: '#1a1828',
-                                        border: '1px solid #2a2740',
-                                    }}
-                                >
-                                    {date}
-                                </span>
-                                <Separator className="flex-1" style={{ backgroundColor: '#1e1c2e' }} />
-                            </div>
-
-                            {/* Messages for this date */}
-                            <div className="space-y-2 sm:space-y-3">
-                                {dateMessages.map((message) => {
-                                    const isSender = message.sender?.id === currentUserId;
-
-                                    return isSender ? (
-                                        <SenderCard
-                                            key={message.id}
-                                            id={message.id}
-                                            content={message.content}
-                                            createdAt={message.createdAt}
-                                            isRead={message.isRead}
-                                            isDelivered={message.isDelivered}
-                                        />
-                                    ) : (
-                                        <ReceiverCard
-                                            key={message.id}
-                                            id={message.id}
-                                            content={message.content}
-                                            sender={message.sender!}
-                                            createdAt={message.createdAt}
-                                            category={message.category}
-                                        />
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    ))
-                )}
-            </div>
+            <Link
+              href="/sessions"
+              className="inline-flex h-11 shrink-0 items-center gap-2 rounded-lg px-2.5 text-xs font-medium text-[#c7cabf] transition-colors hover:bg-[#161b12] hover:text-[#f2f0e8] active:bg-[#1b2116] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8fa654] sm:px-3"
+            >
+              <CalendarDays className="h-4 w-4" aria-hidden="true" />
+              <span>Sessions</span>
+            </Link>
+          </div>
         </div>
-    )
+      </header>
+
+      <div
+        ref={messagesContainerRef}
+        role="region"
+        aria-label="Conversation messages"
+        tabIndex={0}
+        className="min-h-0 flex-1 overflow-y-auto px-4 py-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#8fa654]/50 sm:px-6 sm:py-5"
+      >
+        <div className="mx-auto flex min-h-full w-full max-w-3xl flex-col">
+          {isLoading ? (
+            <div
+              role="status"
+              className="flex flex-1 items-center justify-center text-sm text-[#a8ab9e]"
+            >
+              Loading messages...
+            </div>
+          ) : error ? (
+            <div
+              role="alert"
+              className="flex flex-1 flex-col items-center justify-center gap-3 text-center"
+            >
+              <p className="text-sm font-medium text-[#f2f0e8]">
+                Couldn&apos;t load this conversation.
+              </p>
+              <p className="max-w-sm text-sm text-[#a8ab9e]">{error}</p>
+              <button
+                type="button"
+                onClick={onRetry}
+                className="min-h-11 rounded-lg px-4 text-sm font-medium text-[#b7cc7e] underline decoration-[#4d5c33] underline-offset-4 hover:text-[#cde099] active:text-[#f2f0e8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8fa654]"
+              >
+                Try again
+              </button>
+            </div>
+          ) : messages.length === 0 ? (
+            <div className="flex flex-1 flex-col items-center justify-center gap-2 py-12 text-center">
+              <p className="text-base font-medium text-[#f2f0e8]">
+                Start the conversation
+              </p>
+              <p className="max-w-sm text-sm text-[#a8ab9e]">
+                Send {roomName} a message about {topicName || "your mentorship"}.
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="mt-auto">
+                {hasMore && (
+                  <div className="mb-4 flex flex-col items-center gap-1">
+                    {loadMoreError && (
+                      <p role="alert" className="text-xs text-[#f4b8bc]">
+                        {loadMoreError}
+                      </p>
+                    )}
+                    <button
+                      type="button"
+                      onClick={handleLoadMore}
+                      disabled={isLoadingMore}
+                      className="min-h-11 rounded-lg px-3 text-xs font-medium text-[#b7cc7e] underline decoration-[#4d5c33] underline-offset-4 hover:text-[#cde099] active:text-[#f2f0e8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8fa654] disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {isLoadingMore
+                        ? "Loading earlier messages..."
+                        : loadMoreError
+                          ? "Try again"
+                          : "Load earlier messages"}
+                    </button>
+                  </div>
+                )}
+
+                {Object.entries(groupedMessages).map(([date, dateMessages]) => (
+                  <div key={date}>
+                    <div className="flex items-center gap-3 py-5">
+                      <span
+                        aria-hidden="true"
+                        className="h-px flex-1 bg-[#1e2419]"
+                      />
+                      <p className="text-[11px] font-medium text-[#8a8f80]">
+                        {date}
+                      </p>
+                      <span
+                        aria-hidden="true"
+                        className="h-px flex-1 bg-[#1e2419]"
+                      />
+                    </div>
+                    <ol
+                      aria-label={`Messages from ${date}`}
+                      className="space-y-2"
+                    >
+                      {dateMessages.map((message) => (
+                        <li key={message.id}>
+                          {message.senderId === currentUserId ? (
+                            <SenderCard
+                              content={message.content}
+                              createdAt={message.createdAt}
+                              isRead={message.isRead}
+                              isDelivered={message.isDelivered}
+                            />
+                          ) : (
+                            <ReceiverCard
+                              content={message.content}
+                              createdAt={message.createdAt}
+                              category={message.category}
+                            />
+                          )}
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                ))}
+                {isTyping && (
+                  <p
+                    role="status"
+                    aria-live="polite"
+                    className="mt-3 text-xs text-[#a8ab9e]"
+                  >
+                    {roomName} is typing...
+                  </p>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </section>
+  );
 }

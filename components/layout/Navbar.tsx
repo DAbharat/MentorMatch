@@ -131,9 +131,9 @@ export default function Navbar() {
             aria-label="MentorMatch home"
             className="group hidden shrink-0 cursor-pointer items-center gap-2.5 rounded-lg py-1 pr-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8fa654]/50 sm:flex"
           >
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#3a4530] bg-[#161b12] text-xs font-bold tracking-wider text-[#b7cc7e] transition-colors group-hover:border-[#8fa654]">
+            {/* <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#3a4530] bg-[#161b12] text-xs font-bold tracking-wider text-[#b7cc7e] transition-colors group-hover:border-[#8fa654]">
               MM
-            </span>
+            </span> */}
             <span className="whitespace-nowrap text-sm font-semibold tracking-tight text-[#f2f0e8] md:text-base">
               MentorMatch
             </span>
@@ -156,15 +156,20 @@ export default function Navbar() {
                         aria-label={`${label}${badgeCount > 0 ? `, ${badgeCount} unread` : ""}`}
                         aria-current={isActive ? "page" : undefined}
                         onClick={onOpen}
-                        className={`relative flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8fa654]/50 ${
-                          isActive
-                            ? "border-[#8fa654] bg-[#1b2116] text-[#b7cc7e]"
-                            : "border-transparent text-[#9a9e91] hover:border-[#2a3322] hover:bg-[#161b12] hover:text-[#f2f0e8]"
-                        }`}
+                        className={`relative flex h-11 min-w-11 cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-transparent px-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8fa654]/50 ${isActive
+                          ? "bg-[#1b2116] text-[#b7cc7e]"
+                          : "text-[#9a9e91] hover:bg-[#161b12] hover:text-[#f2f0e8]"
+                          }`}
                       >
-                        <Icon className="w-4 h-4 sm:w-[18px] sm:h-[18px]" />
+                        <Icon
+                          aria-hidden="true"
+                          className="h-4 w-4 shrink-0 sm:h-[18px] sm:w-[18px]"
+                        />
                         {badgeCount > 0 && (
-                          <span aria-hidden="true" className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full border border-[#11140e] bg-[#8fa654] px-1 text-[10px] font-semibold tabular-nums text-[#0b0d08]">
+                          <span
+                            aria-hidden="true"
+                            className="text-[10px] font-semibold leading-none tabular-nums text-[#b7cc7e]"
+                          >
                             {badgeCount}
                           </span>
                         )}
@@ -184,11 +189,10 @@ export default function Navbar() {
                   <button
                     type="button"
                     aria-label="Account menu"
-                    className={`flex h-11 w-11 cursor-pointer items-center justify-center gap-2 rounded-xl border px-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8fa654]/50 md:w-auto md:px-3 ${
-                      isProfileActive
-                        ? "border-[#8fa654] bg-[#1b2116] text-[#b7cc7e]"
-                        : "border-transparent text-[#c7cabf] hover:border-[#2a3322] hover:bg-[#161b12] hover:text-[#f2f0e8]"
-                    }`}
+                    className={`flex h-11 w-11 cursor-pointer items-center justify-center gap-2 rounded-xl border px-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8fa654]/50 md:w-auto md:px-3 ${isProfileActive
+                      ? "border-[#8fa654] bg-[#1b2116] text-[#b7cc7e]"
+                      : "border-transparent text-[#c7cabf] hover:border-[#2a3322] hover:bg-[#161b12] hover:text-[#f2f0e8]"
+                      }`}
                   >
                     <User2 className="w-4 h-4" />
                     <span className="hidden text-sm font-medium md:inline">Account</span>

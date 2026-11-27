@@ -140,29 +140,33 @@ export default function ProfileHeader({
 
   return (
     <div
-      className={`w-full max-w-4xl mx-auto px-4 sm:px-6 pt-8 sm:pt-12 ${DM_Sans_Font.className}`}
+      className={`w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 sm:pt-10 ${DM_Sans_Font.className}`}
     >
-      <header className="flex flex-col sm:flex-row sm:items-start justify-between gap-6">
-        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5 min-w-0">
-          {/* Avatar */}
-          <div className="w-18 h-18 sm:w-20 sm:h-20 shrink-0 rounded-full bg-[#161b12] border border-[#3a4530] flex items-center justify-center text-[#b7cc7e] text-2xl font-semibold">
-            {initial}
-          </div>
+      <header className="rounded-2xl border border-[#242a1e] bg-[#11140e] p-5 sm:p-7">
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between sm:gap-8">
+          <div className="flex min-w-0 flex-1 flex-col gap-4">
+            <div className="flex min-w-0 items-start gap-4">
+              <div
+                aria-hidden="true"
+                className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-[#3a4530] bg-[#161b12] text-xl font-semibold text-[#b7cc7e] sm:h-20 sm:w-20 sm:text-2xl"
+              >
+                {initial}
+              </div>
 
-          {/* Identity & bio */}
-          <div className="text-center sm:text-left min-w-0">
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#f2f0e8] break-words">
-              {name}
-            </h1>
-
-            <p className="mt-1 text-xs sm:text-sm text-[#8a8f80]">
-              Member since {memberSince}
-            </p>
+              <div className="min-w-0 pt-1">
+                <h1 className="break-words text-2xl font-bold tracking-tight text-[#f2f0e8] sm:text-3xl">
+                  {name}
+                </h1>
+                <p className="mt-1 text-sm text-[#a8ab9e]">
+                  Member since {memberSince}
+                </p>
+              </div>
+            </div>
 
             {(bio || isOwner) && (
               <p
-                className={`mt-3 text-sm sm:text-base leading-relaxed max-w-xl ${
-                  bio ? "text-[#c7cabf]" : "text-[#787d6f]"
+                className={`max-w-3xl text-sm leading-relaxed sm:text-base ${
+                  bio ? "text-[#c7cabf]" : "text-[#8a8f80]"
                 }`}
               >
                 {bio ||
@@ -170,65 +174,64 @@ export default function ProfileHeader({
               </p>
             )}
           </div>
-        </div>
 
-        {/* Actions */}
-        <div className="flex flex-wrap items-center justify-center sm:justify-end gap-2.5 shrink-0 sm:pt-1">
-          {isOwner ? (
-            userId && (
-              <Button
-                type="button"
-                onClick={openEditSheet}
-                className="h-11 px-4 rounded-xl bg-[#11140e] border border-[#283022] text-[#f2f0e8] hover:bg-[#161b12] hover:border-[#3c4832] font-medium text-sm transition-colors cursor-pointer"
-              >
-                <Pencil className="w-4 h-4 text-[#b7cc7e]" aria-hidden="true" />
-                Edit profile
-              </Button>
-            )
-          ) : userId && hasAcceptedRequest && chatId ? (
-            <>
-              <Button
-                type="button"
-                onClick={() => router.push(`/chats/${chatId}`)}
-                className="h-11 px-4 rounded-xl bg-[#11140e] border border-[#283022] text-[#f2f0e8] hover:bg-[#161b12] hover:border-[#3c4832] font-medium text-sm transition-colors cursor-pointer"
-              >
-                <MessageCircleMore
-                  className="w-4 h-4 text-[#b7cc7e]"
-                  aria-hidden="true"
-                />
-                Message
-              </Button>
+          <div className="flex shrink-0 flex-wrap gap-2 sm:justify-end sm:pt-1">
+            {isOwner ? (
+              userId && (
+                <Button
+                  type="button"
+                  onClick={openEditSheet}
+                  className="h-11 w-full cursor-pointer rounded-xl border border-[#283022] bg-[#0d0f0b] px-4 text-sm font-medium text-[#f2f0e8] transition-colors hover:border-[#3c4832] hover:bg-[#161b12] sm:w-auto"
+                >
+                  <Pencil className="h-4 w-4 text-[#b7cc7e]" aria-hidden="true" />
+                  Edit profile
+                </Button>
+              )
+            ) : userId && hasAcceptedRequest && chatId ? (
+              <>
+                <Button
+                  type="button"
+                  onClick={() => router.push(`/chats/${chatId}`)}
+                  className="h-11 cursor-pointer rounded-xl border border-[#283022] bg-[#0d0f0b] px-4 text-sm font-medium text-[#f2f0e8] transition-colors hover:border-[#3c4832] hover:bg-[#161b12]"
+                >
+                  <MessageCircleMore
+                    className="h-4 w-4 text-[#b7cc7e]"
+                    aria-hidden="true"
+                  />
+                  Message
+                </Button>
+                <Button
+                  type="button"
+                  onClick={() =>
+                    userId ? setOpen(true) : router.push("/sign-in")
+                  }
+                  disabled={hasActiveConfirmedSession}
+                  title={
+                    hasActiveConfirmedSession
+                      ? "You have an active confirmed session. Wait until it completes to send another request."
+                      : "Send a new mentorship request"
+                  }
+                  className="h-11 cursor-pointer rounded-xl bg-[#8fa654] px-4 text-sm font-semibold text-[#0b0d08] transition-colors hover:bg-[#9eb660] active:bg-[#7f9449] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <Send className="h-4 w-4" aria-hidden="true" />
+                  Send request
+                </Button>
+              </>
+            ) : (
+              !isOwner && (
               <Button
                 type="button"
                 onClick={() =>
                   userId ? setOpen(true) : router.push("/sign-in")
                 }
-                disabled={hasActiveConfirmedSession}
-                title={
-                  hasActiveConfirmedSession
-                    ? "You have an active confirmed session. Wait until it completes to send another request."
-                    : "Send a new mentorship request"
-                }
-                className="h-11 px-4 rounded-xl bg-[#8fa654] hover:bg-[#9eb660] active:bg-[#7f9449] text-[#0b0d08] font-semibold text-sm transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                className="h-11 cursor-pointer rounded-xl bg-[#8fa654] px-4 text-sm font-semibold text-[#0b0d08] transition-colors hover:bg-[#9eb660] active:bg-[#7f9449]"
               >
                 <Send className="w-4 h-4" aria-hidden="true" />
                 Send request
               </Button>
-            </>
-          ) : (
-            !isOwner && (
-              <Button
-                type="button"
-                onClick={() =>
-                  userId ? setOpen(true) : router.push("/sign-in")
-                }
-                className="h-11 px-4 rounded-xl bg-[#8fa654] hover:bg-[#9eb660] active:bg-[#7f9449] text-[#0b0d08] font-semibold text-sm transition-colors cursor-pointer"
-              >
-                <Send className="w-4 h-4" aria-hidden="true" />
-                Send request
-              </Button>
-            )
-          )}
+              )
+            )}
+          </div>
         </div>
       </header>
 

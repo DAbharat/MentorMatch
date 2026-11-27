@@ -1,115 +1,142 @@
-"use client"
+"use client";
 
-import { useEffect, useState, useCallback } from "react"
-import axios, { AxiosError } from "axios"
-import { ApiResponse } from "@/types/ApiResponse"
-import { fetchAllMessage } from "@/services/messages.service"
+import { useCallback, useEffect, useRef, useState } from "react";
+import { fetchAllMessage } from "@/services/messages.service";
 
-type Message = {
-    id: string
-    chatId: string
-    senderId: string
-    content: string
-    createdAt: string
-    isDelivered: boolean
-    isRead: boolean
-    readAt: string | null
-    sender: {
-        id: string
-        name: string
-    }
-}
+export type ChatMessage = {
+  id: string;
+  chatId: string;
+  senderId: string;
+  content: string;
+  createdAt: string;
+  isDelivered: boolean;
+  isRead: boolean;
+  readAt: string | null;
+  sender: {
+    id: string;
+    name: string;
+  };
+};
 
 type MessagesResponse = {
-    data: Message[]
-    pagination: {
-        nextCursor: string | null
-        limit: number
-    }
-}
+  data: ChatMessage[];
+  pagination: {
+    nextCursor: string | null;
+    limit: number;
+  };
+};
 
 export function useChatMessages(chatId: string) {
-    const [messages, setMessages] = useState<Message[]>([])
-    const [nextCursor, setNextCursor] = useState<string | null>(null)
-    const [isLoading, setIsLoading] = useState(true)
-    const [isLoadingMore, setIsLoadingMore] = useState(false)
+  const activeChatIdRef = useRef(chatId);
+  activeChatIdRef.current = chatId;
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messagesChatId, setMessagesChatId] = useState("");
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [loadMoreError, setLoadMoreError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
 
-    const fetchMessages = async (cursor?: string) => {
-        try {
-            const result = await fetchAllMessage(chatId, 20, cursor)
-            return result as MessagesResponse
-        } catch (error) {
-            const axiosError = error as AxiosError<ApiResponse>
-            throw new Error(
-                axiosError.response?.data.message || "Failed to fetch messages"
-            )
-        }
+  const fetchMessages = useCallback(
+    async (cursor?: string) =>
+      (await fetchAllMessage(chatId, 20, cursor)) as MessagesResponse,
+    [chatId]
+  );
+
+  useEffect(() => {
+    let mounted = true;
+
+    if (!chatId) {
+      setMessagesChatId("");
+      setIsLoading(false);
+      return;
     }
 
+    setMessages([]);
+    setMessagesChatId("");
+    setNextCursor(null);
+    setError(null);
+    setLoadMoreError(null);
+    setIsLoadingMore(false);
+    setIsLoading(true);
 
-    useEffect(() => {
-        let mounted = true
+    void fetchMessages()
+      .then((result) => {
+        if (!mounted) return;
+        setMessages([...result.data].reverse());
+        setMessagesChatId(chatId);
+        setNextCursor(result.pagination.nextCursor);
+      })
+      .catch((err: unknown) => {
+        if (!mounted) return;
+        console.error("Failed to fetch chat messages:", err);
+        setMessagesChatId(chatId);
+        setError(
+          err instanceof Error ? err.message : "Failed to load messages."
+        );
+      })
+      .finally(() => {
+        if (mounted) setIsLoading(false);
+      });
 
-        if (!chatId) {
-            setIsLoading(false)
-            return
-        }
+    return () => {
+      mounted = false;
+    };
+  }, [chatId, fetchMessages, retryCount]);
 
-        setMessages([])
-        setNextCursor(null)
-        setIsLoading(true)
+  const loadMore = useCallback(async () => {
+    if (messagesChatId !== chatId || !nextCursor || isLoadingMore) return;
 
-            ; (async () => {
-                try {
-                    const result = await fetchMessages()
-                    if (!mounted) return
+    const requestedChatId = chatId;
+    setIsLoadingMore(true);
+    setLoadMoreError(null);
 
-                    setMessages(result.data.reverse())
-                    setNextCursor(result.pagination.nextCursor)
-                } catch (err) {
-                    console.error(err)
-                } finally {
-                    mounted && setIsLoading(false)
-                }
-            })()
-
-        return () => {
-            mounted = false
-        }
-    }, [chatId])
-
-    const loadMore = useCallback(async () => {
-        if (!nextCursor || isLoadingMore) return
-
-        try {
-            setIsLoadingMore(true)
-            const result = await fetchMessages(nextCursor)
-
-            setMessages(prev => [
-                ...result.data.reverse(),
-                ...prev,
-            ])
-
-            setNextCursor(result.pagination.nextCursor)
-        } catch (err) {
-            console.error(err)
-        } finally {
-            setIsLoadingMore(false)
-        }
-    }, [nextCursor, isLoadingMore])
-
-    const appendMessage = useCallback((message: Message) => {
-        setMessages(prev =>
-            prev.some(m => m.id === message.id) ? prev : [...prev, message]
-        )
-    }, [])
-
-    return {
-        messages,
-        isLoading,
-        isLoadingMore,
-        hasMore: Boolean(nextCursor),
-        loadMore,
-        appendMessage,
+    try {
+      const result = await fetchMessages(nextCursor);
+      if (activeChatIdRef.current !== requestedChatId) return;
+      const olderMessages = [...result.data].reverse();
+      setMessages((current) => [
+        ...olderMessages.filter(
+          (message) => !current.some((item) => item.id === message.id)
+        ),
+        ...current,
+      ]);
+      setNextCursor(result.pagination.nextCursor);
+    } catch (err: unknown) {
+      if (activeChatIdRef.current !== requestedChatId) return;
+      console.error("Failed to load earlier chat messages:", err);
+      setLoadMoreError(
+        err instanceof Error ? err.message : "Failed to load earlier messages."
+      );
+    } finally {
+      if (activeChatIdRef.current === requestedChatId) {
+        setIsLoadingMore(false);
+      }
     }
+  }, [chatId, fetchMessages, isLoadingMore, messagesChatId, nextCursor]);
+
+  const retry = useCallback(() => {
+    setRetryCount((count) => count + 1);
+  }, []);
+
+  const appendMessage = useCallback((message: ChatMessage) => {
+    setMessages((current) =>
+      current.some((item) => item.id === message.id)
+        ? current
+        : [...current, message]
+    );
+  }, []);
+
+  return {
+    messages: messagesChatId === chatId ? messages : [],
+    isLoading: isLoading || messagesChatId !== chatId,
+    isLoadingMore: messagesChatId === chatId && isLoadingMore,
+    hasMore: messagesChatId === chatId && Boolean(nextCursor),
+    error: messagesChatId === chatId ? error : null,
+    loadMoreError: messagesChatId === chatId ? loadMoreError : null,
+    loadMore,
+    retry,
+    appendMessage,
+  };
 }

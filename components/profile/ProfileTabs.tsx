@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState, type KeyboardEvent } from "react";
 import ProfileStats from "@/components/profile/ProfileStats";
 import ProfileSkills from "@/components/profile/ProfileSkills";
 import ProfileFeedback from "@/components/profile/ProfileFeedback";
@@ -54,56 +54,95 @@ export default function ProfileTabs({
   isOwner = false,
 }: ProfileTabsProps) {
   const [activeTab, setActiveTab] = useState<Tab>("Skills");
+  const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
+
+  const handleTabKeyDown = (
+    event: KeyboardEvent<HTMLButtonElement>,
+    currentIndex: number
+  ) => {
+    let nextIndex: number;
+
+    switch (event.key) {
+      case "ArrowRight":
+        nextIndex = (currentIndex + 1) % TABS.length;
+        break;
+      case "ArrowLeft":
+        nextIndex = (currentIndex - 1 + TABS.length) % TABS.length;
+        break;
+      case "Home":
+        nextIndex = 0;
+        break;
+      case "End":
+        nextIndex = TABS.length - 1;
+        break;
+      default:
+        return;
+    }
+
+    event.preventDefault();
+    setActiveTab(TABS[nextIndex]);
+    tabRefs.current[nextIndex]?.focus();
+  };
 
   return (
     <section
-      className={`w-full max-w-4xl mx-auto px-4 sm:px-6 mt-8 pb-16 ${DM_Sans_Font.className}`}
+      className={`w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 pb-12 ${DM_Sans_Font.className}`}
     >
-      {/* Clean underline tab navigation */}
       <div
         role="tablist"
         aria-label="Profile sections"
-        className="flex items-center gap-6 sm:gap-8 border-b border-[#1e2419]"
+        className="flex items-center gap-2 border-b border-[#242a1e]"
       >
-        {TABS.map((tab) => {
+        {TABS.map((tab, index) => {
           const isActive = activeTab === tab;
           const count =
             tab === "Feedback" && feedbacks.length > 0
               ? feedbacks.length
               : null;
+          const tabId = `profile-tab-${tab.toLowerCase()}`;
 
           return (
             <button
               key={tab}
+              ref={(element) => {
+                tabRefs.current[index] = element;
+              }}
               type="button"
               role="tab"
+              id={tabId}
+              aria-controls={`profile-panel-${tab.toLowerCase()}`}
               aria-selected={isActive}
+              tabIndex={isActive ? 0 : -1}
               onClick={() => setActiveTab(tab)}
-              className={`relative py-3 text-sm font-medium transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8fa654]/50 rounded-t-sm ${
+              onKeyDown={(event) => handleTabKeyDown(event, index)}
+              className={`relative flex min-h-11 items-center gap-1.5 rounded-none border-b-2 px-3 text-sm transition-colors motion-reduce:transition-none cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#8fa654]/50 ${
                 isActive
-                  ? "text-[#f2f0e8]"
-                  : "text-[#8a8f80] hover:text-[#c7cabf]"
+                  ? "border-[#8fa654] font-semibold text-[#f2f0e8]"
+                  : "border-transparent font-medium text-[#9a9e91] hover:text-[#f2f0e8]"
               }`}
             >
               <span>{tab}</span>
               {count !== null && (
-                <span className="ml-1.5 text-xs text-[#9eb660] tabular-nums">
+                <span
+                  className={`text-xs tabular-nums ${
+                    isActive ? "text-[#b7cc7e]" : "text-[#9a9e91]"
+                  }`}
+                >
                   {count}
                 </span>
-              )}
-              {isActive && (
-                <span
-                  aria-hidden="true"
-                  className="absolute inset-x-0 bottom-0 h-0.5 bg-[#8fa654]"
-                />
               )}
             </button>
           );
         })}
       </div>
 
-      {/* Tab content directly on canvas */}
-      <div className="mt-8">
+      <div
+        role="tabpanel"
+        id={`profile-panel-${activeTab.toLowerCase()}`}
+        aria-labelledby={`profile-tab-${activeTab.toLowerCase()}`}
+        tabIndex={0}
+        className="mt-7 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-[#8fa654]/50"
+      >
         {activeTab === "Skills" && (
           <ProfileSkills
             skillsOffered={skillsOffered}
