@@ -1,80 +1,73 @@
-import React, { useState } from 'react'
-import { Card } from '../ui/card';
-import { DM_Sans } from 'next/font/google';
-import { Button } from '../retroui/Button';
-import { useRouter } from 'next/navigation';
-import { toast } from 'sonner';
-import { BellPlus } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
+"use client";
+
+import React from "react";
+import { Card } from "../ui/card";
+import { DM_Sans } from "next/font/google";
+import { ArrowUpRight, Star } from "lucide-react";
 
 const DM_Sans_Font = DM_Sans({
-    weight: ["400", "500", "700"],
-    subsets: ["latin"],
-})
+  weight: ["400", "500", "600", "700"],
+  subsets: ["latin"],
+});
 
 type ProfileCardProps = {
-    skillsOffered: string[];
-    name: string;
-    rating: number;
-    id: string;
-    completedSessions: number;
-    onClick?: () => void;
-}
+  skillsOffered: string[];
+  name: string;
+  rating: number;
+  id: string;
+  completedSessions: number;
+  onClick?: () => void;
+};
 
-export default function ProfileCard(
-    { skillsOffered, name, rating, id, completedSessions, onClick }: ProfileCardProps
-) {
-    const skillsList = skillsOffered.join(", ");
-    const { userId, isLoading } = useAuth()
-    const router = useRouter()
-    const[open, setOpen] = useState(false)
+export default function ProfileCard({
+  skillsOffered,
+  name,
+  rating,
+  completedSessions,
+  onClick,
+}: ProfileCardProps) {
+  const skillsList = skillsOffered.join(", ");
 
-    if (isLoading) { return null }
+  return (
+    <Card
+      className={`bg-[#11140e] border-[#242a1e] hover:border-[#3c4832] transition-colors px-4 py-4 max-w-4xl w-full mx-auto rounded-2xl shadow-none ${DM_Sans_Font.className} cursor-pointer group`}
+      onClick={onClick}
+    >
+      <div className="flex items-center gap-3.5">
+        <div className="shrink-0">
+          <div className="w-11 h-11 rounded-full bg-[#161b12] border border-[#3a4530] flex items-center justify-center text-[#b7cc7e] text-base font-semibold">
+            {name.charAt(0).toUpperCase()}
+          </div>
+        </div>
 
-    const isOwner = userId === id
+        <div className="flex-1 min-w-0">
+          <h3 className="text-base sm:text-lg font-semibold text-[#f2f0e8] group-hover:text-[#b7cc7e] transition-colors leading-tight truncate">
+            {name}
+          </h3>
+          <p className="text-[#a8ab9e] text-xs sm:text-sm mt-0.5 truncate">
+            <span className="font-medium text-[#c7cabf]">Skills:</span>{" "}
+            {skillsList || "None listed"}
+          </p>
+          <div className="flex items-center gap-2.5 mt-1 text-xs text-[#a8ab9e] tabular-nums">
+            <span className="inline-flex items-center gap-1 whitespace-nowrap">
+              <Star
+                className="w-3.5 h-3.5 fill-amber-400 text-amber-400"
+                aria-hidden="true"
+              />
+              {rating.toFixed(1)} / 5.0
+            </span>
+            <span className="text-[#3a4530]">·</span>
+            <span className="whitespace-nowrap">
+              {completedSessions} sessions
+            </span>
+          </div>
+        </div>
 
-    return (
-        <Card className={`bg-[#111315] border-[#1f1f1f] px-4 py-4 max-w-4xl w-full mx-auto ${DM_Sans_Font.className} cursor-pointer`} onClick={onClick}>
-            <div className="flex items-center gap-3">
-                {/* Avatar */}
-                <div className="shrink-0">
-                    <div className="w-11 h-11 sm:w-13 sm:h-13 rounded-full bg-[#d3d3d3] flex items-center justify-center text-black text-base sm:text-lg font-semibold shadow-md">
-                        {name.charAt(0).toUpperCase()}
-                    </div>
-                </div>
-
-                {/* Name + meta */}
-                <div className="flex-1 min-w-0 overflow-hidden">
-                    <h1 className="text-base sm:text-lg font-semibold hover:underline text-[#d3d3d3] leading-tight truncate">{name}</h1>
-                    <p className="text-muted-foreground text-xs sm:text-sm mt-0.5 truncate">
-                        <span className="font-medium">Skills:</span> {skillsList || "None listed"}
-                    </p>
-                    <div className="flex items-center gap-2 mt-0.5">
-                        <p className="text-muted-foreground text-xs sm:text-sm whitespace-nowrap">
-                            <span className="font-medium">Rating:</span> {rating.toFixed(1)}/5.0
-                        </p>
-                        <span className="text-muted-foreground opacity-40 text-xs">·</span>
-                        <p className="text-muted-foreground text-xs sm:text-sm whitespace-nowrap">
-                            <span className="font-medium">Sessions:</span> {completedSessions}
-                        </p>
-                    </div>
-                </div>
-
-                {/* Bell icon */}
-                {!isOwner && (
-                    <BellPlus
-                        className='shrink-0 cursor-pointer text-[#d3d3d3] w-4 h-4 sm:w-5 sm:h-5 ml-1'
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            if (userId) {
-                                setOpen(true);
-                            } else {
-                                router.push("/sign-in");
-                            }
-                        }}
-                    />
-                )}
-            </div>
-        </Card>
-    )
+        <ArrowUpRight
+          className="shrink-0 w-4 h-4 text-[#8e9484] group-hover:text-[#b7cc7e] transition-colors"
+          aria-hidden="true"
+        />
+      </div>
+    </Card>
+  );
 }

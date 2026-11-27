@@ -1,67 +1,91 @@
+"use client";
+
 import React from "react";
-import { Video, Clock, Users, Star } from "lucide-react";
 import { MentorAnalyticsOverview } from "@/types/analytics";
 
 interface AnalyticsKPIsProps {
-    overview: MentorAnalyticsOverview;
+  overview: MentorAnalyticsOverview;
 }
 
 export default function AnalyticsKPIs({ overview }: AnalyticsKPIsProps) {
-    const stats = [
-        {
-            label: "Sessions",
-            value: overview.totalCompletedSessions,
-            subtitle: "Completed mentoring sessions.",
-            icon: <Video className="w-5 h-5 text-[#9299A3]" />,
-        },
-        {
-            label: "Mentoring time",
-            value: `${overview.totalActiveHours ?? 0}h`,
-            subtitle: "Total active mentoring time.",
-            icon: <Clock className="w-5 h-5 text-[#00D6A0]" />,
-        },
-        {
-            label: "Mentees",
-            value: overview.uniqueMenteesCount ?? 0,
-            subtitle: "Unique students mentored.",
-            icon: <Users className="w-5 h-5 text-[#B78AFF]" />,
-        },
-        {
-            label: "Average rating",
-            value: overview.averageRating ? overview.averageRating.toFixed(1) : "N/A",
-            subtitle: overview.totalReviewsCount > 0
-                ? `Based on ${overview.totalReviewsCount} review${overview.totalReviewsCount === 1 ? "" : "s"}.`
-                : "No reviews yet.",
-            icon: <Star className="w-5 h-5 text-[#FFC107] fill-[#FFC107]" />,
-        },
-    ];
+  const avgMinutesPerSession =
+    overview.totalCompletedSessions > 0 && overview.totalActiveMinutes > 0
+      ? Math.round(overview.totalActiveMinutes / overview.totalCompletedSessions)
+      : null;
 
-    return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {stats.map((item, idx) => (
-                <div
-                    key={idx}
-                    className="flex flex-col justify-between p-5 rounded-2xl bg-[#111214] border border-[#25272A] hover:border-[#2f3236] transition-colors"
-                >
-                    <div className="flex items-center justify-between">
-                        <span className="text-xs font-medium text-[#9299A3]">
-                            {item.label}
-                        </span>
-                        <div className="p-2 rounded-lg bg-[#17191C] border border-[#25272A]">
-                            {item.icon}
-                        </div>
-                    </div>
+  const totalScheduled =
+    overview.totalCompletedSessions + overview.cancelledSessionsCount;
+  const completionRate =
+    totalScheduled > 0
+      ? Math.round((overview.totalCompletedSessions / totalScheduled) * 100)
+      : null;
 
-                    <div className="mt-4">
-                        <div className="text-2xl sm:text-3xl font-bold text-[#F5F5F5] tracking-tight">
-                            {item.value}
-                        </div>
-                        <p className="text-xs text-[#9299A3] mt-1">
-                            {item.subtitle}
-                        </p>
-                    </div>
-                </div>
-            ))}
+  const metrics = [
+    {
+      label: "Completed sessions",
+      value: String(overview.totalCompletedSessions),
+      sub: `${overview.upcomingSessionsCount} upcoming · ${overview.cancelledSessionsCount} cancelled`,
+    },
+    {
+      label: "Active mentoring time",
+      value: `${overview.totalActiveHours ?? 0}h`,
+      sub:
+        avgMinutesPerSession !== null
+          ? `${overview.totalActiveMinutes}m total · avg ${avgMinutesPerSession}m / call`
+          : `${overview.totalActiveMinutes ?? 0}m recorded`,
+    },
+    {
+      label: "Unique mentees",
+      value: String(overview.uniqueMenteesCount ?? 0),
+      sub:
+        completionRate !== null
+          ? `${completionRate}% session completion`
+          : "No finished sessions yet",
+    },
+    {
+      label: "Average rating",
+      value:
+        overview.averageRating !== null
+          ? overview.averageRating.toFixed(1)
+          : "--",
+      suffix: overview.averageRating !== null ? "/ 5.0" : undefined,
+      sub:
+        overview.totalReviewsCount > 0
+          ? `Across ${overview.totalReviewsCount} review${
+              overview.totalReviewsCount === 1 ? "" : "s"
+            }`
+          : "No reviews submitted yet",
+    },
+  ];
+
+  return (
+    <section
+      aria-label="Key mentoring metrics"
+      className="bg-[#11140e] border border-[#242a1e] rounded-2xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-[#242a1e]"
+    >
+      {metrics.map((metric, idx) => (
+        <div
+          key={metric.label}
+          className={`p-5 sm:p-6 ${
+            idx >= 2 ? "sm:border-t lg:border-t-0 sm:border-[#242a1e]" : ""
+          }`}
+        >
+          <p className="text-xs font-medium text-[#a8ab9e]">{metric.label}</p>
+          <div className="mt-2 flex items-baseline gap-1.5">
+            <p className="text-2xl sm:text-3xl font-bold text-[#f2f0e8] tracking-tight tabular-nums">
+              {metric.value}
+            </p>
+            {metric.suffix && (
+              <span className="text-xs font-medium text-[#8a8f80]">
+                {metric.suffix}
+              </span>
+            )}
+          </div>
+          <p className="mt-1.5 text-xs text-[#8a8f80] tabular-nums">
+            {metric.sub}
+          </p>
         </div>
-    );
+      ))}
+    </section>
+  );
 }

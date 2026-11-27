@@ -1,168 +1,119 @@
-"use client"
+"use client";
 
-import React from 'react'
-import { DM_Sans } from 'next/font/google'
-import { Star, CalendarCheck, MessageSquare } from 'lucide-react'
+import React from "react";
+import { DM_Sans } from "next/font/google";
+import { Star } from "lucide-react";
 
 const DM_Sans_Font = DM_Sans({
-  weight: ["400", "500", "700"],
+  weight: ["400", "500", "600", "700"],
   subsets: ["latin"],
-})
+});
 
 type ProfileStatsProps = {
   stats: {
-    sessionsCompletedAsMentor: number
-    sessionsCompletedAsMentee: number
-    averageRating: number | null
-    ratingCount: number
-  }
-}
-
-function StatCard({
-  icon,
-  label,
-  children,
-}: {
-  icon: React.ReactNode
-  label: string
-  children: React.ReactNode
-}) {
-  return (
-    <div className="flex flex-col justify-between gap-3 px-6 py-5 rounded-lg bg-[#111315] border border-[#1f1f1f] hover:border-[#2a2f34] hover:scale-[1.02] transition-all duration-200 h-full">
-      <div className="flex items-center gap-2.5 text-muted-foreground">
-        {icon}
-        <span className="text-xs font-semibold uppercase tracking-wide">
-          {label}
-        </span>
-      </div>
-      {children}
-    </div>
-  )
-}
+    sessionsCompletedAsMentor: number;
+    sessionsCompletedAsMentee: number;
+    averageRating: number | null;
+    ratingCount: number;
+  };
+};
 
 export default function ProfileStats({ stats }: ProfileStatsProps) {
   if (!stats) {
     return (
-      <div className={`px-6 py-8 rounded-lg text-center ${DM_Sans_Font.className}`}>
-        <p className="text-sm text-muted-foreground">
-          No stats available for this user
-        </p>
-      </div>
-    )
+      <p className={`text-sm text-[#8a8f80] py-4 ${DM_Sans_Font.className}`}>
+        No stats available for this user.
+      </p>
+    );
   }
 
   const hasStats =
     stats.sessionsCompletedAsMentor > 0 ||
     stats.sessionsCompletedAsMentee > 0 ||
-    stats.ratingCount > 0
+    stats.ratingCount > 0;
 
   if (!hasStats) {
     return (
-      <div className={`px-6 py-8 rounded-lg text-center ${DM_Sans_Font.className}`}>
-        <p className="text-sm text-muted-foreground">
-          No activity yet
+      <div className={`py-4 ${DM_Sans_Font.className}`}>
+        <p className="text-sm font-medium text-[#f2f0e8]">
+          No completed sessions yet
+        </p>
+        <p className="text-sm text-[#8a8f80] mt-1">
+          Session counts and peer ratings will appear here once a session finishes.
         </p>
       </div>
-    )
+    );
   }
 
   const totalSessions =
-    stats.sessionsCompletedAsMentor + stats.sessionsCompletedAsMentee
+    stats.sessionsCompletedAsMentor + stats.sessionsCompletedAsMentee;
 
-  const rating = stats.averageRating ?? 0
-  const fullStars = Math.floor(rating)
-  const hasHalf = rating - fullStars >= 0.5
+  const rating = stats.averageRating ?? 0;
+  const fullStars = Math.floor(rating);
+  const hasHalf = rating - fullStars >= 0.5;
 
   return (
     <div
-      className={`
-        w-full max-w-5xl mx-auto
-        grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3
-        gap-5 px-4
-        ${DM_Sans_Font.className}
-      `}
+      className={`w-full grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-[#1e2419] border-y border-[#1e2419] ${DM_Sans_Font.className}`}
     >
-
       {/* Sessions */}
-      <StatCard icon={<CalendarCheck size={16} />} label="Sessions">
-        <div className="space-y-3">
-          <div>
-            <p className="text-3xl font-bold text-[#d3d3d3]">
-              {totalSessions}
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">
-              Total Sessions
-            </p>
-          </div>
-
-          <div className="space-y-2 pt-3 border-t border-[#1f1f1f]">
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-muted-foreground font-medium">
-                As Mentor
-              </span>
-              <span className="text-sm font-semibold text-[#d3d3d3]">
-                {stats.sessionsCompletedAsMentor}
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-muted-foreground font-medium">
-                As Mentee
-              </span>
-              <span className="text-sm font-semibold text-[#d3d3d3]">
-                {stats.sessionsCompletedAsMentee}
-              </span>
-            </div>
-          </div>
-        </div>
-      </StatCard>
-
-      {/* Total Ratings */}
-      <StatCard icon={<MessageSquare size={16} />} label="Total Ratings">
-        <div>
-          <p className="text-3xl font-bold text-[#d3d3d3]">
-            {stats.ratingCount}
-          </p>
-          <p className="text-xs text-muted-foreground mt-1">
-            Ratings Received
-          </p>
-        </div>
-      </StatCard>
+      <div className="py-5 sm:pr-6">
+        <p className="text-sm text-[#8a8f80]">Sessions completed</p>
+        <p className="mt-2 text-3xl font-bold tracking-tight text-[#f2f0e8] tabular-nums">
+          {totalSessions}
+        </p>
+        <p className="mt-2 text-xs text-[#a8ab9e] tabular-nums">
+          {stats.sessionsCompletedAsMentor} as mentor ·{" "}
+          {stats.sessionsCompletedAsMentee} as mentee
+        </p>
+      </div>
 
       {/* Average Rating */}
-      <StatCard icon={<Star size={16} />} label="Avg Rating">
+      <div className="py-5 sm:px-6">
+        <p className="text-sm text-[#8a8f80]">Average rating</p>
         {stats.averageRating !== null ? (
-          <div className="space-y-3">
-            <div className="flex items-baseline gap-1">
-              <p className="text-3xl font-bold text-[#d3d3d3]">
+          <>
+            <div className="mt-2 flex items-baseline gap-1.5">
+              <p className="text-3xl font-bold tracking-tight text-[#f2f0e8] tabular-nums">
                 {stats.averageRating.toFixed(1)}
               </p>
-              <span className="text-xs text-muted-foreground">/ 5.0</span>
+              <span className="text-sm text-[#8a8f80]">/ 5.0</span>
             </div>
-
-            <div className="flex gap-1">
+            <div
+              className="mt-2.5 flex gap-1"
+              aria-label={`${stats.averageRating.toFixed(1)} out of 5 stars`}
+            >
               {Array.from({ length: 5 }).map((_, i) => (
                 <Star
                   key={i}
                   size={14}
+                  aria-hidden="true"
                   className={
                     i < fullStars
-                      ? "text-[#d3d3d3] fill-[#d3d3d3]"
+                      ? "fill-amber-400 text-amber-400"
                       : i === fullStars && hasHalf
-                      ? "text-[#d3d3d3] fill-[#d3d3d3] opacity-50"
-                      : "text-[#2a2f34]"
+                      ? "fill-amber-400/50 text-amber-400"
+                      : "text-[#2a3322]"
                   }
                 />
               ))}
             </div>
-          </div>
+          </>
         ) : (
-          <p className="text-sm text-muted-foreground font-medium">
-            No ratings yet
-          </p>
+          <p className="mt-2 text-sm text-[#8a8f80]">No ratings yet</p>
         )}
-      </StatCard>
+      </div>
 
+      {/* Total Ratings */}
+      <div className="py-5 sm:pl-6">
+        <p className="text-sm text-[#8a8f80]">Peer reviews</p>
+        <p className="mt-2 text-3xl font-bold tracking-tight text-[#f2f0e8] tabular-nums">
+          {stats.ratingCount}
+        </p>
+        <p className="mt-2 text-xs text-[#a8ab9e]">
+          Feedback submitted after sessions
+        </p>
+      </div>
     </div>
-  )
+  );
 }
