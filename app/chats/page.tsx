@@ -1,159 +1,159 @@
-"use client"
+"use client";
 
-import ChatCard from '@/components/chat/ChatCard';
-import React, { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation';
-import { fetchAllChatsForAUser } from '@/services/messages.service';
-import { useAuth } from '@/hooks/useAuth';
-import { Spinner } from '@/components/ui/spinner';
-import { DM_Sans } from "next/font/google"
-import { Search } from 'lucide-react'
+import ChatCard, {
+  getChatPeer,
+  type ChatSummary,
+} from "@/components/chat/ChatCard";
+import { useAuth } from "@/hooks/useAuth";
+import { fetchAllChatsForAUser } from "@/services/messages.service";
+import { LoaderCircle, Search, X } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { DM_Sans } from "next/font/google";
 
-const DM_Sans_Font = DM_Sans({
-    weight: ["400", "500", "700"],
-    subsets: ["latin"],
-})
-
-type Chat = {
-    id: string;
-    mentor: {
-        id: string;
-        name: string;
-    }
-    mentee: {
-        id: string;
-        name: string;
-    }
-    messages: {
-        id: string;
-        content: string;
-        senderId: string;
-        createdAt: string;
-        sender: {
-            id: string;
-            name: string;
-        }
-    }[]
-    _count: {
-        messages: number;
-    }
-}
+const dmSans = DM_Sans({
+  weight: ["400", "500", "600", "700"],
+  subsets: ["latin"],
+});
 
 export default function ChatPage() {
-    const [chats, setChats] = useState<Chat[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [searchInput, setSearchInput] = useState("");
-    const [searchQuery, setSearchQuery] = useState("");
-    const router = useRouter();
-    const { userId, isLoading: authLoading } = useAuth();
+  const [chats, setChats] = useState<ChatSummary[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [searchInput, setSearchInput] = useState("");
+  const { userId, isLoading: authLoading } = useAuth();
 
-    useEffect(() => {
-        const fetchChats = async () => {
-            try {
-                setLoading(true);
-                const response = await fetchAllChatsForAUser();
-                setChats(response.chats || []);
-            } catch (error) {
-                console.error("Failed to fetch chats:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchChats();
-    }, []);
-
-    const handleSubmit = () => {
-        setSearchQuery(searchInput);
-    };
-
-    // Filter chats based on search query
-    const filteredChats = chats.filter((chat) => {
-        if (!searchQuery.trim()) return true;
-        
-        const query = searchQuery.toLowerCase();
-        const mentorName = chat.mentor.name.toLowerCase();
-        const menteeName = chat.mentee.name.toLowerCase();
-        
-        return mentorName.includes(query) || menteeName.includes(query);
-    });
-
-    if (loading || authLoading) {
-        return (
-            <div className="flex items-center justify-center min-h-screen">
-                <Spinner />
-            </div>
-        );
+  const loadChats = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetchAllChatsForAUser();
+      setChats(response.chats || []);
+    } catch (err: unknown) {
+      console.error("Failed to fetch chats:", err);
+      setError(
+        err instanceof Error ? err.message : "Couldn't load conversations."
+      );
+    } finally {
+      setLoading(false);
     }
+  }, []);
 
+  useEffect(() => {
+    if (authLoading) return;
     if (!userId) {
-        return (
-            <div className="flex items-center justify-center min-h-screen">
-                <p className="text-muted-foreground">Unauthorized</p>
-            </div>
-        );
+      setLoading(false);
+      return;
     }
+    void loadChats();
+  }, [authLoading, loadChats, userId]);
 
-    return (
-        <div className={`${DM_Sans_Font.className} container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 max-w-2xl`}>
-            {/* <h1 className="text-2xl font-bold mb-6">Messages</h1> */}
-            
-            {/* Search Bar */}
-            <div className="relative mb-4 sm:mb-6">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                <input
-                    type="text"
-                    className="w-full h-11 sm:h-12 pl-11 pr-5 bg-transparent border border-[#1f1f1f] rounded-full text-[#d3d3d3] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm sm:text-base"
-                    value={searchInput}
-                    onChange={(e) => setSearchInput(e.target.value)}
-                    onKeyDown={(e) => {
-                        if (e.key === "Enter" && !e.shiftKey) {
-                            e.preventDefault()
-                            handleSubmit()
-                        }
-                    }}
-                    placeholder="Search chats by name..."
-                />
-            </div>
+  const query = searchInput.trim().toLowerCase();
+  const filteredChats = userId
+    ? chats.filter((chat) => {
+        const peer = getChatPeer(chat, userId);
+        return (
+          peer.name.toLowerCase().includes(query) ||
+          (chat.skill?.name.toLowerCase().includes(query) ?? false)
+        );
+      })
+    : [];
 
-            {filteredChats.length === 0 ? (
-                <div className="flex items-center justify-center py-16 sm:py-20">
-                    <p className="text-muted-foreground text-sm sm:text-base">
-                        {searchQuery ? "No chats match your search" : "No chats yet"}
-                    </p>
-                </div>
-            ) : (
-                <div className="space-y-2 sm:space-y-3">
-                    {filteredChats.map((chat) => {
-                        const lastMessage = chat.messages[0];
-                        if (!lastMessage) return null;
+  return (
+    <main className={`${dmSans.className} mx-auto min-h-[calc(100dvh-3.5rem)] w-full max-w-3xl px-4 py-8 sm:px-6 md:min-h-[calc(100dvh-4rem)] md:py-10`}>
+      <header className="mb-7 border-b border-[#242a1e] pb-5">
+        <h1 className="text-2xl font-semibold tracking-tight text-[#f2f0e8]">
+          Messages
+        </h1>
+        <p className="mt-1 text-sm text-[#a8ab9e]">
+          Conversations with your mentorship peers.
+        </p>
+      </header>
 
-                        // Determine the other user in the chat
-                        const otherUser = chat.mentor.id === userId 
-                            ? chat.mentee 
-                            : chat.mentor;
-
-                        // Check if the last message was sent by the current user
-                        const isYourMessage = lastMessage.sender.id === userId;
-
-                        // Only show unread count if the message is from the other user
-                        const displayUnreadCount = !isYourMessage ? chat._count.messages : 0;
-
-                        return (
-                            <ChatCard
-                                key={chat.id}
-                                id={chat.id}
-                                content={lastMessage.content}
-                                sender={otherUser}
-                                createdAt={lastMessage.createdAt}
-                                isYourMessage={isYourMessage}
-                                unreadCount={displayUnreadCount}
-                                onClick={() => router.push(`/chats/${chat.id}`)}
-                            />
-                        );
-                    })}
-                </div>
-            )}
+      <div className="mb-5">
+        <label
+          htmlFor="conversation-search"
+          className="mb-2 block text-sm font-medium text-[#c7cabf]"
+        >
+          Find a conversation
+        </label>
+        <div className="relative">
+          <Search
+            aria-hidden="true"
+            className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#a8ab9e]"
+          />
+          <input
+            id="conversation-search"
+            type="search"
+            value={searchInput}
+            onChange={(event) => setSearchInput(event.target.value)}
+            placeholder="Name or skill"
+            className="h-12 w-full rounded-lg border border-[#59694a] bg-[#11140e] pl-10 pr-11 text-sm text-[#f2f0e8] placeholder:text-[#a8ab9e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8fa654]"
+          />
+          {searchInput && (
+            <button
+              type="button"
+              onClick={() => setSearchInput("")}
+              aria-label="Clear conversation search"
+              className="absolute right-1 top-1 grid h-10 w-10 place-items-center rounded-md text-[#a8ab9e] transition-colors hover:bg-[#1b2116] hover:text-[#f2f0e8] active:bg-[#242a1e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#8fa654]"
+            >
+              <X className="h-4 w-4" aria-hidden="true" />
+            </button>
+          )}
         </div>
-    );
+      </div>
+
+      {authLoading || loading ? (
+        <div
+          role="status"
+          className="flex min-h-48 items-center justify-center gap-3 text-sm text-[#a8ab9e]"
+        >
+          <LoaderCircle
+            className="h-4 w-4 animate-spin motion-reduce:animate-none"
+            aria-hidden="true"
+          />
+          Loading conversations...
+        </div>
+      ) : !userId ? (
+        <p className="py-12 text-center text-sm text-[#a8ab9e]">
+          Sign in to view your conversations.
+        </p>
+      ) : error ? (
+        <div
+          role="alert"
+          className="flex min-h-48 flex-col items-center justify-center gap-3 text-center"
+        >
+          <p className="text-sm font-medium text-[#f2f0e8]">
+            Couldn&apos;t load conversations.
+          </p>
+          <p className="max-w-md text-sm text-[#a8ab9e]">{error}</p>
+          <button
+            type="button"
+            onClick={() => void loadChats()}
+            className="min-h-11 rounded-lg px-4 text-sm font-medium text-[#b7cc7e] underline decoration-[#4d5c33] underline-offset-4 hover:text-[#cde099] active:text-[#f2f0e8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8fa654]"
+          >
+            Try again
+          </button>
+        </div>
+      ) : filteredChats.length === 0 ? (
+        <p className="py-12 text-center text-sm text-[#a8ab9e]">
+          {query
+            ? `No conversations match "${searchInput.trim()}".`
+            : "No conversations yet."}
+        </p>
+      ) : (
+        <nav
+          aria-label="Conversations"
+          className="divide-y divide-[#242a1e] border-y border-[#242a1e]"
+        >
+          {filteredChats.map((chat) => (
+            <ChatCard
+              key={chat.id}
+              chat={chat}
+              currentUserId={userId}
+            />
+          ))}
+        </nav>
+      )}
+    </main>
+  );
 }

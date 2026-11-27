@@ -61,7 +61,11 @@ export default function SearchPage({
       {/* Content Section */}
       <div className="p-8">
         {data.length === 0 ? (
-          <p className="text-gray-500">No results found</p>
+          <p className="text-sm text-[#8a8f80]">
+            {params.name || params.skill
+              ? "No mentors match that search. Try another name or skill."
+              : "Search mentors by name or skill to find someone to learn from."}
+          </p>
         ) : (
           <div className="space-y-4">
             {data.map((user, index) => (

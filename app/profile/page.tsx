@@ -1,186 +1,222 @@
-"use client"
+"use client";
 
-import React, { useEffect, useState } from 'react'
-import { useAuth } from '@/hooks/useAuth'
-import { toast } from 'sonner';
-import { Spinner } from '@/components/ui/spinner';
-import { Button } from '@/components/retroui/Button';
-import ProfileHeader from '@/components/profile/ProfileHeader';
-import ProfileFeedback from '@/components/profile/ProfileFeedback';
-import ProfileStats from '@/components/profile/ProfileStats';
-import ProfileTabs from '@/components/profile/ProfileTabs';
-import { ApiResponse } from '@/types/ApiResponse';
-import { redirect, useRouter } from 'next/navigation';
-import { Profile } from '@/types/profile';
-import { fetchMyProfile } from '@/services/profile.service';
-import { Skeleton } from '@/components/ui/skeleton';
-import { fetchFeedbacks } from '@/services/feedback.service';
+import React, { useCallback, useEffect, useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
+import { AlertCircle } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import ProfileHeader from "@/components/profile/ProfileHeader";
+import ProfileTabs from "@/components/profile/ProfileTabs";
+import { Profile } from "@/types/profile";
+import { fetchMyProfile } from "@/services/profile.service";
+import { fetchFeedbacks } from "@/services/feedback.service";
 
+const MAX_RETRIES = 5;
+const RETRY_DELAYS = [500, 1000, 2000, 4000, 8000]; // ms
 
-const MAX_RETRIES = 5
-const RETRY_DELAYS = [500, 1000, 2000, 4000, 8000] // ms
+function ProfileSkeleton() {
+  return (
+    <div className="min-h-screen bg-[#090a08] pt-8 sm:pt-12">
+      <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 space-y-8">
+        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5">
+          <Skeleton className="w-20 h-20 rounded-full bg-[#161b12]" />
+          <div className="flex-1 space-y-3 w-full">
+            <Skeleton className="h-7 w-44 bg-[#1b2116]" />
+            <Skeleton className="h-4 w-28 bg-[#161b12]" />
+            <Skeleton className="h-4 w-full max-w-md bg-[#161b12]" />
+          </div>
+        </div>
+
+        <div className="flex gap-8 border-b border-[#1e2419] pb-3">
+          <Skeleton className="h-5 w-14 bg-[#161b12]" />
+          <Skeleton className="h-5 w-14 bg-[#161b12]" />
+          <Skeleton className="h-5 w-20 bg-[#161b12]" />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+          <div className="space-y-3">
+            <Skeleton className="h-5 w-32 bg-[#161b12]" />
+            <div className="flex gap-2">
+              <Skeleton className="h-8 w-20 rounded-lg bg-[#161b12]" />
+              <Skeleton className="h-8 w-24 rounded-lg bg-[#161b12]" />
+              <Skeleton className="h-8 w-16 rounded-lg bg-[#161b12]" />
+            </div>
+          </div>
+          <div className="space-y-3">
+            <Skeleton className="h-5 w-32 bg-[#161b12]" />
+            <div className="flex gap-2">
+              <Skeleton className="h-8 w-24 rounded-lg bg-[#161b12]" />
+              <Skeleton className="h-8 w-20 rounded-lg bg-[#161b12]" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function ProfilePage() {
-    const router = useRouter();
-    const { userId, isLoading: authLoading } = useAuth();
+  const router = useRouter();
+  const { userId, isLoading: authLoading } = useAuth();
 
-    const [profile, setProfile] = useState<Profile | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const [feedbacks, setFeedbacks] = useState([]);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [feedbacks, setFeedbacks] = useState([]);
 
-    useEffect(() => {
-        if (authLoading) {
-            console.log("ProfilePage: User data not loaded yet.");
-            return;
+  const refreshProfile = useCallback(async () => {
+    try {
+      const fullProfile = await fetchMyProfile();
+      if (fullProfile) {
+        setProfile(fullProfile);
+      }
+    } catch (err) {
+      console.error("ProfilePage: Error refreshing profile:", err);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (authLoading) return;
+
+    if (!userId) {
+      toast.error("You must be signed in to view your profile");
+      router.replace("/sign-in");
+    }
+  }, [authLoading, userId, router]);
+
+  useEffect(() => {
+    if (authLoading || !userId) return;
+
+    let cancelled = false;
+
+    const fetchUserWithRetry = async (retryCount = 0) => {
+      try {
+        const fullProfile = await fetchMyProfile();
+        if (cancelled) return;
+
+        if (fullProfile) {
+          setProfile(fullProfile);
+          setLoading(false);
+          setError(null);
+          return;
         }
 
-        if (!userId) {
-            console.log("ProfilePage: User not signed in. Redirecting to /sign-in.");
-            toast.error("You must be signed in to view your profile");
-            router.replace("/sign-in");
+        if (retryCount < MAX_RETRIES) {
+          setTimeout(() => {
+            if (!cancelled) fetchUserWithRetry(retryCount + 1);
+          }, RETRY_DELAYS[retryCount]);
         } else {
-            console.log("ProfilePage: User is signed in.");
+          setError(
+            "Failed to load your profile. Please try again or sign up again."
+          );
+          setLoading(false);
+
+          toast.error("Profile setup timeout. Redirecting to sign-up...");
+          setTimeout(() => {
+            router.replace("/sign-up");
+          }, 3000);
         }
-    }, [authLoading, userId, router]);
+      } catch (err: unknown) {
+        if (cancelled) return;
+        const message =
+          err instanceof Error
+            ? err.message
+            : "An error occurred while loading your profile.";
 
-    useEffect(() => {
-        console.log("ProfilePage: Attempting to load profile.");
-        if (authLoading || !userId) return;
+        if (retryCount < MAX_RETRIES) {
+          setTimeout(() => {
+            if (!cancelled) fetchUserWithRetry(retryCount + 1);
+          }, RETRY_DELAYS[retryCount]);
+        } else {
+          setError(message);
+          setLoading(false);
 
-        const fetchUserWithRetry = async (retryCount = 0) => {
-            try {
-                const fullProfile = await fetchMyProfile();
-
-                if (fullProfile) {
-                    console.log("ProfilePage: Profile loaded successfully.", fullProfile);
-                    setProfile(fullProfile);
-                    setLoading(false);
-                    setError(null);
-                    return;
-                }
-
-                if (retryCount < MAX_RETRIES) {
-                    console.log(`ProfilePage: Profile not found. Retry ${retryCount + 1}/${MAX_RETRIES} after ${RETRY_DELAYS[retryCount]}ms`);
-                    setTimeout(() => {
-                        fetchUserWithRetry(retryCount + 1);
-                    }, RETRY_DELAYS[retryCount]);
-
-                } else {
-                    console.error("ProfilePage: Max retries exceeded. Profile not found in database.");
-
-                    setError("Failed to load your profile. The webhook may not have processed your account yet. Please try again or sign up again.");
-                    setLoading(false);
-
-                    toast.error("Profile setup timeout. Redirecting to sign-up...");
-                    setTimeout(() => {
-                        router.replace("/sign-up");
-                    }, 3000);
-                }
-            } catch (err: any) {
-                console.error("ProfilePage: Error fetching profile (attempt " + (retryCount + 1) + "):", err.message);
-                
-                if (retryCount < MAX_RETRIES) {
-                    console.log(`ProfilePage: Retrying after ${RETRY_DELAYS[retryCount]}ms...`);
-                    setTimeout(() => {
-                        fetchUserWithRetry(retryCount + 1);
-                    }, RETRY_DELAYS[retryCount]);
-                    
-                } else {
-                    setError(err.message || "An error occurred while loading your profile.");
-                    setLoading(false);
-
-                    toast.error(err.message || "An error occurred. Redirecting to sign-in...");
-                    setTimeout(() => {
-                        router.replace("/sign-in");
-                    }, 3000);
-                }
-            }
-        };
-
-        fetchUserWithRetry();
-    }, [authLoading, userId, router]);
-
-    useEffect(() => {
-        const loadFeedbacks = async () => {
-            if (!profile) return;
-
-            try {
-                const data = await fetchFeedbacks(profile.id);
-                setFeedbacks(data.fetchFeedback || []);
-            } catch (error) {
-                console.error("Error fetching feedbacks:", error);
-                setFeedbacks([]);
-            }
+          toast.error(
+            message || "An error occurred. Redirecting to sign-in..."
+          );
+          setTimeout(() => {
+            router.replace("/sign-in");
+          }, 3000);
         }
-        loadFeedbacks();
-    }, [profile])
+      }
+    };
 
-    if (authLoading || loading) {
-        console.log("ProfilePage: Loading skeleton displayed.");
-        return (
-            <div className="flex items-center justify-center min-h-screen bg-[#0b090a]">
-                <div className="flex flex-col items-center gap-4 p-6">
-                    <Skeleton className="h-12 w-12 rounded-full" />
-                    <div className="space-y-2 text-center">
-                        <Skeleton className="h-4 w-64" />
-                        <Skeleton className="h-4 w-48" />
-                    </div>
-                    <p className="text-sm text-gray-400 mt-4">Setting up your account...</p>
-                </div>
-            </div>
-        )
-    }
+    fetchUserWithRetry();
 
-    if (error) {
-        console.error("ProfilePage: Error occurred:", error);
-        return (
-            <div className="flex items-center justify-center min-h-screen bg-[#0b090a]">
-                <div className="max-w-md w-full p-6 text-center">
-                    <p className="text-red-500 mb-4">{error}</p>
-                    <Button
-                        onClick={() => router.push("/sign-up")}
-                        className="w-full bg-[#d3d3d3] hover:bg-[#bcbcbc] text-black font-semibold rounded-full"
-                    >
-                        Back to Sign Up
-                    </Button>
-                </div>
-            </div>
-        );
-    }
+    return () => {
+      cancelled = true;
+    };
+  }, [authLoading, userId, router]);
 
-    if (!profile) {
-        console.error("ProfilePage: Profile is null.");
-        toast.error("Profile not found.");
-        return (
-            <div className="flex items-center justify-center min-h-screen bg-[#0b090a]">
-                <p className="text-center text-red-500">Profile not found.</p>
-            </div>
-        );
-    }
+  useEffect(() => {
+    const loadFeedbacks = async () => {
+      if (!profile) return;
 
-    // console.log("ProfilePage: Rendering profile page.", profile);
+      try {
+        const data = await fetchFeedbacks(profile.id);
+        setFeedbacks(data.fetchFeedback || []);
+      } catch (err) {
+        console.error("Error fetching feedbacks:", err);
+        setFeedbacks([]);
+      }
+    };
+    loadFeedbacks();
+  }, [profile]);
 
+  if (authLoading || loading) {
+    return <ProfileSkeleton />;
+  }
+
+  if (error) {
     return (
-        <div className='bg-[#0b090a]'>
-            <div>
-                <ProfileHeader
-                    id={profile.id}
-                    name={profile.name}
-                    bio={profile.bio || ""}
-                    createdAt={profile.createdAt}
-                    skillsOffered={profile.skillsOffered}
-                    skillsWanted={profile.skillsWanted}
-                />
-            </div>
-            <div>
-                <ProfileTabs
-                    stats={profile.stats}
-                    skillsOffered={profile.skillsOffered}
-                    skillsWanted={profile.skillsWanted}
-                    feedbacks={feedbacks}
-                />
-            </div>
+      <div className="flex items-center justify-center min-h-screen bg-[#090a08] px-4">
+        <div className="max-w-md w-full space-y-4">
+          <div className="rounded-xl border border-[#61282d] bg-[#231214] p-4 flex items-start gap-2.5 text-left">
+            <AlertCircle
+              className="w-4 h-4 text-[#eb7b83] shrink-0 mt-0.5"
+              aria-hidden="true"
+            />
+            <p className="text-sm text-[#f4b8bc]">{error}</p>
+          </div>
+          <Button
+            onClick={() => router.push("/sign-up")}
+            className="w-full h-11 bg-[#8fa654] hover:bg-[#9eb660] active:bg-[#7f9449] text-[#0b0d08] font-semibold rounded-xl cursor-pointer"
+          >
+            Back to sign up
+          </Button>
         </div>
+      </div>
     );
+  }
+
+  if (!profile) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-[#090a08] px-4">
+        <p className="text-sm text-[#f4b8bc]">Profile not found.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-[#090a08] text-[#f2f0e8] selection:bg-[#8fa654]/30 selection:text-[#f2f0e8]">
+      <ProfileHeader
+        id={profile.id}
+        name={profile.name}
+        bio={profile.bio || ""}
+        createdAt={profile.createdAt}
+        skillsOffered={profile.skillsOffered}
+        skillsWanted={profile.skillsWanted}
+        onProfileUpdated={refreshProfile}
+      />
+      <ProfileTabs
+        stats={profile.stats}
+        skillsOffered={profile.skillsOffered}
+        skillsWanted={profile.skillsWanted}
+        feedbacks={feedbacks}
+        isOwner
+      />
+    </div>
+  );
 }

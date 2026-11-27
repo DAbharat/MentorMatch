@@ -11,8 +11,11 @@ export function RootLayoutClient({
   children: React.ReactNode;
 }>) {
   const pathname = usePathname();
-  const isLandingPage = pathname === "/";
-  const showNavbarAndSidebar = !isLandingPage;
+  const isStandalonePage =
+    pathname === "/" ||
+    pathname.startsWith("/sign-in") ||
+    pathname.startsWith("/sign-up");
+  const showNavbarAndSidebar = !isStandalonePage;
 
   return (
     <SidebarProvider>
@@ -22,7 +25,7 @@ export function RootLayoutClient({
         <main
           className={`flex-1 ${
             showNavbarAndSidebar ? "pt-14 md:pt-16" : ""
-          } bg-[#0b090a]`}
+          } bg-[#090a08]`}
         >
           {children}
         </main>

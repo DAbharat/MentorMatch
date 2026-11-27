@@ -1,99 +1,120 @@
-"use client"
+"use client";
 
-import React from 'react'
-import { Card } from '../ui/card'
-import { Badge } from '../ui/badge'
-import { Bookmark } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import Link from "next/link";
 
-type ChatCardProps = {
+export type ChatSummary = {
+  id: string;
+  createdAt: string;
+  mentor: { id: string; name: string };
+  mentee: { id: string; name: string };
+  skill?: { id: string; name: string } | null;
+  messages: {
     id: string;
     content: string;
-    sender: {
-        id: string;
-        name: string;
-    }
+    senderId: string;
     createdAt: string;
-    unreadCount?: number;
-    isYourMessage?: boolean;
-    isPinned?: boolean;
-    onClick: () => void;
+    sender: { id: string; name: string };
+  }[];
+  _count: { messages: number };
+};
+
+export function getChatPeer(chat: ChatSummary, currentUserId: string) {
+  return chat.mentor.id === currentUserId ? chat.mentee : chat.mentor;
 }
 
-export default function ChatCard(
-    { id, content, sender, createdAt, unreadCount = 0, isYourMessage = false, isPinned = false, onClick }: ChatCardProps
-) {
-    const formatRelativeTime = (dateString: string) => {
-        const now = new Date();
-        const date = new Date(dateString);
-        const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+type ChatCardProps = {
+  chat: ChatSummary;
+  currentUserId: string;
+};
 
-        if (diffInSeconds < 60) return 'now';
-        if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m`;
-        if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h`;
-        if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d`;
-        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    };
+function formatRelativeTime(dateString: string) {
+  const date = new Date(dateString);
+  if (Number.isNaN(date.getTime())) return "";
 
-    // Truncate message preview
-    const truncateMessage = (text: string, maxLength: number = 35) => {
-        if (text.length <= maxLength) return text;
-        return text.slice(0, maxLength) + '...';
-    };
+  const diffInSeconds = Math.max(
+    0,
+    Math.floor((Date.now() - date.getTime()) / 1000)
+  );
 
-    return (
-        <Card
-            className="bg-[#111315] cursor-pointer hover:bg-[#16181b] transition-colors p-4 border shadow-none border-[#1f1f1f]"
-            onClick={onClick}
-        >
-            <div className="flex items-center gap-3">
-                {/* Avatar */}
-                <div className="shrink-0">
-                    <div className="w-11 h-11 rounded-full bg-[#d3d3d3] flex items-center justify-center text-black text-base font-semibold shadow-sm overflow-hidden">
-                        {sender.name.split(' ').map(n => n.charAt(0).toUpperCase()).join('').slice(0, 2)}
-                    </div>
-                </div>
+  if (diffInSeconds < 60) return "now";
+  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m`;
+  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h`;
+  if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d`;
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
 
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                    {/* Name + time row */}
-                    <div className="flex items-baseline justify-between gap-2">
-                        <h3 className="font-semibold text-sm text-[#e2e0f0] truncate">
-                            {sender.name}
-                        </h3>
-                        <span className="text-[11px] text-[#6b6880] shrink-0 tabular-nums">
-                            {formatRelativeTime(createdAt)}
-                        </span>
-                    </div>
+export default function ChatCard({
+  chat,
+  currentUserId,
+}: ChatCardProps) {
+  const peer = getChatPeer(chat, currentUserId);
+  const lastMessage = chat.messages[0];
+  const timestamp = lastMessage?.createdAt || chat.createdAt;
+  const initials =
+    peer.name
+      .trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((part) => part[0] ?? "")
+      .join("")
+      .toUpperCase() || "?";
+  const unreadCount = chat._count.messages;
 
-                    {/* Message + badge row */}
-                    <div className="flex items-center justify-between gap-2 mt-1">
-                        <p className="text-xs text-[#6b6880] truncate">
-                            {isYourMessage && (
-                                <span className="text-muted-foreground font-semibold">You: </span>
-                            )}
-                            {truncateMessage(content)}
-                        </p>
+  return (
+    <Link
+      href={`/chats/${chat.id}`}
+      className="group flex min-h-20 w-full items-center gap-3 px-4 py-3 transition-colors hover:bg-[#11140e] active:bg-[#161b12] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#8fa654]"
+    >
+      <span
+        aria-hidden="true"
+        className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#161b12] text-sm font-semibold text-[#b7cc7e]"
+      >
+        {initials}
+      </span>
 
-                        <div className="flex items-center gap-1.5 shrink-0">
-                            {unreadCount > 0 && (
-                                <Badge
-                                    variant="default"
-                                    className="rounded-full h-5 min-w-5 px-1.5 text-xs flex items-center justify-center"
-                                >
-                                    {unreadCount}
-                                </Badge>
-                            )}
+      <span className="min-w-0 flex-1">
+        <span className="flex min-w-0 items-center justify-between gap-2">
+          <span className="flex min-w-0 items-baseline gap-2">
+            <span
+              className="truncate text-sm font-semibold text-[#c7cabf] group-hover:text-[#f2f0e8]"
+            >
+              {peer.name}
+            </span>
+            {chat.skill?.name && (
+              <span className="max-w-24 truncate text-[11px] text-[#8a8f80]">
+                {chat.skill.name}
+              </span>
+            )}
+          </span>
+          <time
+            dateTime={timestamp}
+            className="shrink-0 text-[11px] tabular-nums text-[#8a8f80]"
+          >
+            {formatRelativeTime(timestamp)}
+          </time>
+        </span>
 
-                            {isPinned && (
-                                <div className="text-[#a78bfa]">
-                                    <Bookmark className="w-3.5 h-3.5 fill-current" />
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </Card>
-    )
+        <span className="mt-1 flex min-w-0 items-center justify-between gap-3">
+          <span className="truncate text-xs text-[#a8ab9e]">
+            {lastMessage ? (
+              <>
+                {lastMessage.senderId === currentUserId && (
+                  <span className="font-medium text-[#c7cabf]">You: </span>
+                )}
+                {lastMessage.content}
+              </>
+            ) : (
+              <span className="text-[#8a8f80]">Start a conversation</span>
+            )}
+          </span>
+          {unreadCount > 0 && (
+            <span className="grid h-5 min-w-5 shrink-0 place-items-center rounded-full bg-[#8fa654] px-1.5 text-[11px] font-semibold tabular-nums text-[#0b0d08]">
+              <span className="sr-only">Unread messages: </span>
+              {unreadCount}
+            </span>
+          )}
+        </span>
+      </span>
+    </Link>
+  );
 }

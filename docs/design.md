@@ -1,132 +1,164 @@
 # MentorMatch Design System & Color Guide
 
-This document defines the visual identity, exact color codes, typography, and styling patterns used across MentorMatch. Follow these rules whenever creating new UI elements to maintain a cohesive, polished dark aesthetic without guesswork.
+This document defines the **Deep Olive Studio** visual identity, exact hex/rgba color tokens, typography, borders, and component patterns used in MentorMatch (established across [AuthShell.tsx](file:///d:/CodeFiles/MentorMatch/components/auth/AuthShell.tsx), [sign-in/page.tsx](file:///d:/CodeFiles/MentorMatch/app/(auth)/sign-in/page.tsx), and [sign-up/page.tsx](file:///d:/CodeFiles/MentorMatch/app/(auth)/sign-up/page.tsx)). Use these exact values whenever building or updating screens so colors stay consistent without guesswork.
 
 ---
 
-## 1. Design Philosophy: Retro-Modern Dark
+## 1. Design Philosophy: Deep Olive Studio (Black & Olive)
 
-MentorMatch combines a deep, distraction-free ultra-dark canvas with subtle retro-inspired borders, tactile cards, and sharp semantic accent colors (amber for ratings, emerald for growth, electric blue for actions).
+MentorMatch pairs an obsidian-black canvas (`#090a08`) with olive-charcoal elevated surfaces (`#11140e`), olive-tinted hairline borders, warm bone typography (`#f2f0e8`), and moss-olive primary actions (`#8fa654`). Depth comes from subtle tonal layering and soft dark ambient shadows rather than glowing halos or bright chrome.
 
 ---
 
 ## 2. Color Palette Reference
 
 ### Base Surfaces & Backgrounds
-Always use these exact hex values for layers and depth:
 
-| Element | Hex Code | Tailwind Class / CSS | Usage |
+| Element | Hex / Value | Tailwind Class / CSS | Usage |
 | :--- | :--- | :--- | :--- |
-| **Canvas / Page Background** | `#0b090a` | `bg-[#0b090a]` | Root page background for all authenticated views. |
-| **Card Surface** | `#111315` | `bg-[#111315]` | Primary container for stats, forms, session items, and widgets. |
-| **Nested Item Background** | `#181d24` / `#1a1a1a` | `bg-neutral-900/60` | Sub-cards, list items, and table rows inside a primary card. |
-| **Hover Surface** | `#1a1d20` | `hover:bg-[#1a1d20]` | Clickable cards and row highlights. |
+| **Obsidian Canvas** | `#090a08` | `bg-[#090a08]` | Root page background. |
+| **Top Radial Atmosphere** | `rgba(143,166,84,0.10)` | `bg-[radial-gradient(ellipse_65%_50%_at_25%_0%,rgba(143,166,84,0.10),transparent_70%)]` | Subtle ambient olive wash at the top edge of standalone pages. |
+| **Primary Card Surface** | `#11140e` | `bg-[#11140e]` | Primary containers, auth panels, and form cards. |
+| **Input Field Surface** | `#0d0f0b` | `bg-[#0d0f0b]` | Recessed text/password inputs and autofill inset surface. |
+| **Track / Tab Well** | `#0b0d09` | `bg-[#0b0d09]` | Segmented switcher track (`Sign in` / `Create account`). |
+| **Elevated Olive Tile** | `#161b12` | `bg-[#161b12]` | Brand emblem (`MM`) and workflow highlight icon badges. |
+| **Active Tab Surface** | `#1b2116` | `bg-[#1b2116]` | Selected tab or active segmented control pill. |
+| **Legacy App Shell (Existing Views)** | `#0b090a` / `#111315` / `#1a1d20` | `bg-[#0b090a]` / `bg-[#111315]` / `hover:bg-[#1a1d20]` | Older authenticated dashboard surfaces prior to Black & Olive migration. |
 
 ---
 
-### Borders & Dividers
-Borders define structure in dark mode without overwhelming the eye:
+### Primary Olive Accents & Interactive States
+
+| Role | Hex / Value | Tailwind Class | Usage |
+| :--- | :--- | :--- | :--- |
+| **Primary CTA Fill (Moss Olive)** | `#8fa654` | `bg-[#8fa654]` | Primary submit buttons and active indicator borders. |
+| **Primary CTA Hover** | `#9eb660` | `hover:bg-[#9eb660]` | Hover state for primary olive buttons; also used for input caret & highlight icons. |
+| **Primary CTA Active** | `#7f9449` | `active:bg-[#7f9449]` | Pressed state for primary olive buttons. |
+| **Primary CTA Text** | `#0b0d08` | `text-[#0b0d08]` | High-contrast obsidian ink on `#8fa654` olive buttons. |
+| **Olive Accent Text / Met Check** | `#b7cc7e` | `text-[#b7cc7e]` | Inline action links, brand emblem text, and satisfied password checks. |
+| **Olive Link Hover** | `#cde099` | `hover:text-[#cde099]` | Hover text and underline color for inline olive links. |
+| **Olive Link Underline (Rest)** | `#4d5c33` | `decoration-[#4d5c33]` | Subtle resting underline for inline links. |
+| **Met Requirement Pill Fill** | `rgba(143,166,84,0.20)` | `bg-[#8fa654]/20` | Filled check circle when a validation rule passes. |
+| **Text Selection** | `rgba(143,166,84,0.30)` | `selection:bg-[#8fa654]/30 selection:text-[#f2f0e8]` | Root text selection highlight. |
+| **Input Focus Ring** | `rgba(143,166,84,0.25)` | `focus-visible:ring-2 focus-visible:ring-[#8fa654]/25` | Focus ring on form inputs paired with `focus-visible:border-[#8fa654]`. |
+| **Control Focus Ring** | `rgba(143,166,84,0.50)` | `focus-visible:ring-2 focus-visible:ring-[#8fa654]/50` | Focus ring on header links, icon buttons, and toggles. |
+
+---
+
+### Borders & Dividers (Olive-Tinted Hairlines)
 
 | Border Role | Hex Code | Tailwind Class | Usage |
 | :--- | :--- | :--- | :--- |
-| **Default Card Border** | `#1f1f1f` | `border-[#1f1f1f]` | The standard border for cards, sidebars, and panels. |
-| **Interactive Hover Border**| `#2a2f34` | `hover:border-[#2a2f34]` | Applied on cards with hover animations. |
-| **Inner Divider / Separator** | `#2a2a2a` | `border-neutral-800` | Thin lines separating sections within a card. |
-| **Subtle Focus Ring** | `#3b82f6` | `ring-1 ring-blue-500` | Active form inputs and focus states. |
+| **Section / Card Divider** | `#1e2419` | `border-[#1e2419]` | Thin horizontal separators between lists or card footers. |
+| **Tab Track Border** | `#1f251a` | `border-[#1f251a]` | Outer border around segmented tab wells. |
+| **Primary Card Border** | `#242a1e` | `border-[#242a1e]` | Default border for `#11140e` cards and form panels. |
+| **Input Default Border** | `#283022` | `border-[#283022]` | Resting border on `#0d0f0b` inputs. |
+| **Icon Tile Border** | `#2a3322` | `border-[#2a3322]` | Border on `#161b12` icon containers. |
+| **Unmet Check Circle** | `#31382a` | `border-[#31382a]` | Neutral border for unsatisfied validation circles. |
+| **Active Tab Border** | `#323d28` | `border-[#323d28]` | Border on `#1b2116` active tab pills. |
+| **Brand Emblem Border** | `#3a4530` | `border-[#3a4530]` | Resting border on the `MM` brand emblem (`hover:border-[#8fa654]`). |
+| **Input Hover Border** | `#3c4832` | `hover:border-[#3c4832]` | Subtle border lift when hovering inputs. |
+| **Focus Border** | `#8fa654` | `focus-visible:border-[#8fa654]` | Active border on focused inputs. |
 
 ---
 
-### Typography & Text Colors
+### Text & Ink Hierarchy (Warm Bone & Olive-Neutral)
 
-#### Font Family
-* **Primary Font:** `DM_Sans` from `next/font/google`
-* **Import pattern:**
-  ```typescript
-  import { DM_Sans } from "next/font/google";
-
-  const DM_Sans_Font = DM_Sans({
-    weight: ["400", "500", "700"],
-    subsets: ["latin"],
-  });
-  ```
-
-#### Text Hierarchy
-| Hierarchy Level | Tailwind Class | Visual Appearance | Example Usage |
+| Hierarchy Role | Hex Code | Tailwind Class | Usage |
 | :--- | :--- | :--- | :--- |
-| **Page Title** | `text-2xl sm:text-3xl font-bold text-white tracking-tight` | Crisp white, bold | "Mentor Analytics", "Sessions" |
-| **Section Heading** | `text-lg font-semibold text-white` | White, semi-bold | "Review Breakdown", "Upcoming Calls" |
-| **Stat Label** | `text-xs font-semibold uppercase tracking-wider text-neutral-400` | Uppercase, muted | "SESSIONS COMPLETED", "TOTAL HOURS" |
-| **Primary Body** | `text-sm text-neutral-200` | Light gray | General text, form descriptions |
-| **Secondary / Subtext**| `text-xs text-neutral-400` | Mid gray | Review comments, timestamps, helper text |
-| **Muted Details** | `text-[11px] text-neutral-500` | Dark gray | Small footer labels, metadata |
+| **Primary Ink (Warm Bone)** | `#f2f0e8` | `text-[#f2f0e8]` | Headings, primary labels, active tabs, and input text. |
+| **Body / Field Label Ink** | `#c7cabf` | `text-[#c7cabf]` | Form labels and feature highlight copy. |
+| **Secondary Copy** | `#a8ab9e` | `text-[#a8ab9e]` | Subtitles, lead paragraphs, and footer prompt text. |
+| **Inactive Tab Ink** | `#9a9e91` | `text-[#9a9e91]` | Unselected tab items. |
+| **Interactive Icon Ink** | `#8e9484` | `text-[#8e9484]` | Password eye toggle at rest (`hover:text-[#f2f0e8]`). |
+| **Unmet Hint Text** | `#8a8f80` | `text-[#8a8f80]` | Unmet password criteria text. |
+| **Placeholder & Footer Muted** | `#787d6f` | `placeholder:text-[#787d6f] text-[#787d6f]` | Input placeholders and bottom copyright metadata (maintains ≥4.5:1 on `#0d0f0b`). |
 
 ---
 
-### Semantic Accents & Status Colors
+### Semantic & Status Colors
 
-Use these standardized accent colors for specific contexts:
-
-| Domain | Accent Color | Tailwind Classes | Example Usage |
-| :--- | :--- | :--- | :--- |
-| **Ratings & Stars** | Amber (`#f59e0b`) | `fill-amber-400 text-amber-400` | Star ratings, feedback scores, review summaries. |
-| **Growth & Success**| Emerald (`#10b981`) | `text-emerald-400 bg-emerald-500/10 border-emerald-500/20` | Mentee confidence boost (`+2.3`), completed sessions. |
-| **Primary Actions** | Blue (`#3b82f6`) | `bg-blue-500 text-white hover:bg-blue-600 text-blue-400` | Main buttons, "Start Call", active tabs, analytics icons. |
-| **Skills & Topics** | Purple (`#a855f7`) | `text-purple-400 border-neutral-700 bg-neutral-800` | Skill badges (React, Go, Python), category chips. |
-| **Danger & Destructive**| Rose / Red (`#ef4444`) | `text-red-400 bg-red-500/10 border-red-500/20 hover:bg-red-500` | "End Call", "Cancel Session", logout dialogs. |
-| **Live / In Progress**| Cyan / Blue | `text-cyan-400 animate-pulse` | Ongoing WebRTC call badge, live room presence. |
+| Domain | Hex / Classes | Usage |
+| :--- | :--- | :--- |
+| **Inline Error Surface** | Background `#231214`, Border `#61282d`, Text `#f4b8bc`, Icon `#eb7b83` | Dark-native inline error alerts (`AuthErrorAlert`). Avoid light `bg-red-50` banners. |
+| **Ratings & Stars** | `#f59e0b` (`fill-amber-400 text-amber-400`) | Star ratings, feedback scores, review summaries. |
+| **Growth & Success** | `#10b981` (`text-emerald-400 bg-emerald-500/10 border-emerald-500/20`) | Mentee confidence boost, completed session indicators. |
+| **Live / In Progress** | `text-cyan-400 animate-pulse` | Ongoing WebRTC call badges and live presence. |
 
 ---
 
-## 3. Reusable Component Patterns
+## 3. Typography & Hierarchy
 
-### A. The Standard Stat / KPI Card
+* **Primary Font:** `DM_Sans` from `next/font/google` (`weight: ["400", "500", "600", "700"]`, `subsets: ["latin"]`).
+
+| Hierarchy Level | Tailwind Class | Example Usage |
+| :--- | :--- | :--- |
+| **Display / Hero Headline** | `text-3xl sm:text-4xl lg:text-[2.6rem] font-bold tracking-[-0.03em] leading-[1.1] text-[#f2f0e8]` | Auth split-column headline. |
+| **Form / Card Title** | `text-xl sm:text-2xl font-semibold tracking-tight text-[#f2f0e8]` | "Welcome back", "Create your account". |
+| **Lead / Body Copy** | `text-base text-[#a8ab9e] leading-relaxed` | Split-column summary copy. |
+| **Field Label** | `text-xs font-medium text-[#c7cabf]` | Input labels (`Email address`, `Password`). |
+| **Helper / Requirement Item** | `text-xs text-[#8a8f80]` (met: `text-[#b7cc7e]`) | Password criteria, inline footer links. |
+| **Muted Footer Metadata** | `text-xs text-[#787d6f]` | Copyright and tagline strip. |
+
+---
+
+## 4. Layout, Shapes & Elevation
+
+* **Corner Radii:** `rounded-2xl` (`16px`) for primary containers; `rounded-xl` (`12px`) for inputs, primary buttons, tab tracks, and alerts; `rounded-lg` (`8px`) for active tabs and the `MM` brand emblem; `rounded-md` (`6px`) for icon tiles.
+* **Elevation:** Surfaces stay flat at rest and separate via `#242a1e` 1px borders; primary floating panels use a soft ambient shadow: `shadow-[0_24px_64px_-24px_rgba(0,0,0,0.85)]`. Avoid hard offset shadows (`4px 4px 0`) or neon perimeter glows.
+* **Viewport Density (Standard vs. Compact):**
+  * **Standard forms** (e.g. `/sign-in`): `p-6 sm:p-8` card padding, `space-y-4`, `h-11` (`44px`) inputs and submit button.
+  * **Multi-field forms** (e.g. `/sign-up`): compact rhythm (`p-5 sm:p-6` card padding, `py-3.5 sm:py-4` shell padding, `space-y-3`, `h-10` (`40px`) inputs and submit button) so the full page fits inside standard laptop viewports without vertical scrolling.
+* **Browser Autofill Override:** Apply the `.auth-input` class from [globals.css](file:///d:/CodeFiles/MentorMatch/app/globals.css#L127-L135) on dark-surface inputs so browser autofill preserves `#0d0f0b` background and `#f2f0e8` text instead of flashing white/blue.
+
+---
+
+## 5. Reusable Component Patterns
+
+### A. Primary Olive Action Button
 ```tsx
-<div className="flex flex-col justify-between gap-3 p-5 rounded-xl bg-[#111315] border border-[#1f1f1f] hover:border-[#2a2f34] transition-all duration-200">
-  <div className="flex items-center justify-between text-muted-foreground">
-    <span className="text-xs font-semibold uppercase tracking-wider text-neutral-400">
-      Sessions Completed
-    </span>
-    <div className="p-2 rounded-lg bg-white/5 border border-white/5">
-      <Video className="w-5 h-5 text-blue-400" />
-    </div>
-  </div>
-  <div>
-    <div className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-      24
-    </div>
-    <p className="text-xs text-neutral-400 mt-1">2 upcoming this week</p>
-  </div>
-</div>
-```
-
-### B. Standard Skill Badge
-```tsx
-<Badge variant="outline" className="border-neutral-700 bg-neutral-800 text-neutral-200 text-xs px-2.5 py-0.5">
-  TypeScript
-</Badge>
-```
-
-### C. Retro UI Button (`@/components/retroui/Button`)
-```tsx
-import { Button } from "@/components/retroui/Button";
-
 <Button
-  size="sm"
-  className="bg-blue-500 text-white hover:bg-blue-600 transition-colors"
-  onClick={handleAction}
+  type="submit"
+  className="w-full h-11 rounded-xl bg-[#8fa654] hover:bg-[#9eb660] active:bg-[#7f9449] text-[#0b0d08] font-semibold text-sm shadow-sm transition-colors cursor-pointer disabled:opacity-50"
 >
-  Confirm Session
+  Sign in
 </Button>
 ```
 
+### B. Olive-Tinted Dark Input
+```tsx
+<Input
+  className="auth-input h-11 rounded-xl bg-[#0d0f0b] border-[#283022] text-[#f2f0e8] placeholder:text-[#787d6f] caret-[#9eb660] hover:border-[#3c4832] focus-visible:border-[#8fa654] focus-visible:ring-2 focus-visible:ring-[#8fa654]/25 transition-colors text-sm"
+/>
+```
+
+### C. Dark-Native Error Alert
+```tsx
+<Alert
+  variant="destructive"
+  className="rounded-xl border-[#61282d] bg-[#231214] text-[#f4b8bc]"
+>
+  <AlertCircle className="h-4 w-4 text-[#eb7b83]" />
+  <AlertDescription className="text-xs sm:text-sm text-[#f4b8bc]">
+    {error}
+  </AlertDescription>
+</Alert>
+```
+
+### D. Card Container
+```tsx
+<section className="bg-[#11140e] border border-[#242a1e] rounded-2xl p-6 sm:p-8 shadow-[0_24px_64px_-24px_rgba(0,0,0,0.85)]">
+  {children}
+</section>
+```
+
 ---
 
-## 4. UI Checklist for New Screens
+## 6. UI Guardrails & Checklist
 
-* [ ] Background is set to `bg-[#0b090a]`.
-* [ ] Container cards use `bg-[#111315] border border-[#1f1f1f] rounded-xl`.
-* [ ] Typography imports `DM_Sans` and applies `DM_Sans_Font.className`.
-* [ ] Star ratings always use `fill-amber-400 text-amber-400`.
-* [ ] No raw black (`#000000`) or harsh pure white backgrounds (`#ffffff`) for cards.
-* [ ] Loading states use either `<Spinner />` (`@/components/ui/spinner`) or `<Skeleton className="bg-neutral-800" />`.
-
+* **Do** use `#090a08` canvas, `#11140e` card surfaces, `#0d0f0b` input wells, and `#242a1e` / `#283022` olive-tinted borders.
+* **Do** keep primary CTA buttons `#8fa654` (`#9eb660` hover) with `#0b0d08` text—do not use `#d3d3d3` or `#3b82f6` on new Black & Olive surfaces.
+* **Do** include `.auth-input` on dark inputs so Chrome/Edge autofill stays dark.
+* **Do** use `bg-[#231214] border-[#61282d] text-[#f4b8bc]` for error alerts instead of light-mode `bg-red-50` boxes.
+* **Don't** use raw `#000000` or harsh `#ffffff` card backgrounds, gradient text, eyebrow kickers above headings, or low-contrast `text-gray-600` labels on dark backgrounds.
+* **Don't** render `Navbar` or `AppSidebar` on standalone auth routes (`/sign-in`, `/sign-up`).
