@@ -170,7 +170,7 @@ function Sidebar({
       <div
         data-slot="sidebar"
         className={cn(
-          "bg-[#090a08] text-[#f2f0e8] flex h-full w-(--sidebar-width) flex-col",
+          "bg-sidebar text-sidebar-foreground flex h-full w-(--sidebar-width) flex-col",
           className
         )}
         {...props}
@@ -187,7 +187,7 @@ function Sidebar({
           data-sidebar="sidebar"
           data-slot="sidebar"
           data-mobile="true"
-          className="bg-[#090a08] text-[#f2f0e8] border-r border-[#1e2419] w-(--sidebar-width) p-0 [&>button]:hidden"
+          className="bg-sidebar text-sidebar-foreground border-sidebar-border w-(--sidebar-width) border-r p-0 [&>button]:right-3 [&>button]:top-2 [&>button]:h-11 [&>button]:w-11 [&>button]:cursor-pointer [&>button]:rounded-xl [&>button]:border [&>button]:border-[#2a3322] [&>button]:p-3 [&>button]:text-[#a8ab9e] [&>button]:opacity-100 [&>button]:hover:bg-[#161b12] [&>button]:hover:text-[#f2f0e8] [&>button]:focus-visible:outline-none [&>button]:focus-visible:ring-2 [&>button]:focus-visible:ring-[#8fa654]/50"
           style={
             {
               "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
@@ -236,7 +236,7 @@ function Sidebar({
           // Adjust the padding for floating and inset variants.
           variant === "floating" || variant === "inset"
             ? "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4))+2px)]"
-            : "group-data-[collapsible=icon]:w-(--sidebar-width-icon) group-data-[side=left]:border-r group-data-[side=right]:border-l border-[#1e2419]",
+            : "group-data-[collapsible=icon]:w-(--sidebar-width-icon) group-data-[side=left]:border-r group-data-[side=right]:border-l border-sidebar-border",
           className
         )}
         {...props}
@@ -244,7 +244,7 @@ function Sidebar({
         <div
           data-sidebar="sidebar"
           data-slot="sidebar-inner"
-          className="bg-[#090a08] text-[#f2f0e8] group-data-[variant=floating]:border-[#242a1e] flex h-full w-full flex-col group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:shadow-sm"
+          className="bg-sidebar text-sidebar-foreground group-data-[variant=floating]:border-sidebar-border flex h-full w-full flex-col group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:shadow-sm"
         >
           {children}
         </div>
@@ -258,7 +258,7 @@ function SidebarTrigger({
   onClick,
   ...props
 }: React.ComponentProps<typeof Button>) {
-  const { toggleSidebar } = useSidebar()
+  const { toggleSidebar, state, isMobile, openMobile } = useSidebar()
 
   return (
     <Button
@@ -266,7 +266,17 @@ function SidebarTrigger({
       data-slot="sidebar-trigger"
       variant="ghost"
       size="icon"
-      className={cn("size-7", className)}
+      aria-label={
+        isMobile
+          ? openMobile
+            ? "Close navigation"
+            : "Open navigation"
+          : state === "expanded"
+            ? "Collapse navigation"
+            : "Expand navigation"
+      }
+      aria-expanded={isMobile ? openMobile : state === "expanded"}
+      className={cn("size-7 cursor-pointer", className)}
       onClick={(event) => {
         onClick?.(event)
         toggleSidebar()

@@ -119,59 +119,56 @@ export default function Navbar() {
   return (
     <nav
       aria-label="Top navigation"
-      className={`${DM_Sans_Font.className} fixed top-0 left-0 right-0 z-50 bg-[#090a08] border-b border-[#1e2419] text-[#f2f0e8] selection:bg-[#8fa654]/30 selection:text-[#f2f0e8]`}
+      className={`${DM_Sans_Font.className} fixed inset-x-0 top-0 z-50 border-b border-[#242a1e] bg-[#11140e] text-[#f2f0e8] selection:bg-[#8fa654]/30 selection:text-[#f2f0e8]`}
     >
-      <div className="w-full h-14 md:h-16 px-3 sm:px-4 md:px-6 flex items-center justify-between gap-2 sm:gap-4">
-        {/* Left: Sidebar toggle + MentorMatch mark */}
-        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-          <SidebarTrigger className="h-9 w-9 rounded-lg border border-transparent text-[#a8ab9e] hover:text-[#f2f0e8] hover:bg-[#161b12] hover:border-[#2a3322] focus-visible:ring-2 focus-visible:ring-[#8fa654]/50 transition-colors cursor-pointer" />
-
+      <div className="grid h-14 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 px-3 sm:h-16 sm:gap-4 sm:px-5 lg:px-7">
+        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+          <SidebarTrigger
+            className="h-11 w-11 cursor-pointer rounded-xl border border-[#2a3322] bg-[#161b12] text-[#c7cabf] transition-colors hover:border-[#3a4530] hover:bg-[#1b2116] hover:text-[#f2f0e8] focus-visible:ring-2 focus-visible:ring-[#8fa654]/50"
+          />
           <Link
             href="/"
-            className="flex items-center gap-2.5 group rounded-lg py-1 pr-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8fa654]/50"
+            aria-label="MentorMatch home"
+            className="group hidden shrink-0 cursor-pointer items-center gap-2.5 rounded-lg py-1 pr-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8fa654]/50 sm:flex"
           >
-            <span className="w-8 h-8 rounded-lg bg-[#161b12] border border-[#3a4530] flex items-center justify-center text-xs font-bold tracking-wider text-[#b7cc7e] group-hover:border-[#8fa654] transition-colors">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#3a4530] bg-[#161b12] text-xs font-bold tracking-wider text-[#b7cc7e] transition-colors group-hover:border-[#8fa654]">
               MM
             </span>
-            <span className="hidden sm:inline text-sm md:text-base font-semibold tracking-tight text-[#f2f0e8] whitespace-nowrap">
+            <span className="whitespace-nowrap text-sm font-semibold tracking-tight text-[#f2f0e8] md:text-base">
               MentorMatch
             </span>
           </Link>
         </div>
 
-        {/* Center: Search bar */}
-        <div className="flex-1 max-w-xl mx-1 sm:mx-3">
+        <div className="flex w-full min-w-0 max-w-[42rem] items-center justify-self-center px-1 sm:px-3">
           <SearchBar />
         </div>
 
-        {/* Right: Actions / Auth */}
-        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+        <div className="flex shrink-0 items-center justify-end gap-0.5 sm:gap-1">
           {isAuthenticated && !isLoading ? (
             <>
               {navIconActions.map(
                 ({ label, href, icon: Icon, isActive, badgeCount, onOpen }) => (
                   <Tooltip key={href}>
                     <TooltipTrigger asChild>
-                      <button
-                        type="button"
-                        aria-label={label}
-                        onClick={() => {
-                          onOpen();
-                          router.push(href);
-                        }}
-                        className={`relative h-9 w-9 sm:h-10 sm:w-10 rounded-xl border flex items-center justify-center transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8fa654]/50 ${
+                      <Link
+                        href={href}
+                        aria-label={`${label}${badgeCount > 0 ? `, ${badgeCount} unread` : ""}`}
+                        aria-current={isActive ? "page" : undefined}
+                        onClick={onOpen}
+                        className={`relative flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8fa654]/50 ${
                           isActive
-                            ? "bg-[#1b2116] border-[#323d28] text-[#b7cc7e]"
-                            : "bg-transparent border-transparent text-[#a8ab9e] hover:text-[#f2f0e8] hover:bg-[#161b12] hover:border-[#2a3322]"
+                            ? "border-[#8fa654] bg-[#1b2116] text-[#b7cc7e]"
+                            : "border-transparent text-[#9a9e91] hover:border-[#2a3322] hover:bg-[#161b12] hover:text-[#f2f0e8]"
                         }`}
                       >
                         <Icon className="w-4 h-4 sm:w-[18px] sm:h-[18px]" />
                         {badgeCount > 0 && (
-                          <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#8fa654] px-1 text-[10px] font-semibold text-[#0b0d08] tabular-nums">
+                          <span aria-hidden="true" className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full border border-[#11140e] bg-[#8fa654] px-1 text-[10px] font-semibold tabular-nums text-[#0b0d08]">
                             {badgeCount}
                           </span>
                         )}
-                      </button>
+                      </Link>
                     </TooltipTrigger>
                     <TooltipContent className="bg-[#11140e] border border-[#242a1e] text-[#f2f0e8]">
                       {label}
@@ -180,19 +177,22 @@ export default function Navbar() {
                 )
               )}
 
+              <span aria-hidden="true" className="mx-1.5 hidden h-7 w-px bg-[#2a3322] sm:block" />
+
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
                     type="button"
                     aria-label="Account menu"
-                    className={`h-9 sm:h-10 px-2 sm:px-2.5 rounded-xl border flex items-center gap-1.5 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8fa654]/50 ${
+                    className={`flex h-11 w-11 cursor-pointer items-center justify-center gap-2 rounded-xl border px-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8fa654]/50 md:w-auto md:px-3 ${
                       isProfileActive
-                        ? "bg-[#1b2116] border-[#323d28] text-[#b7cc7e]"
-                        : "bg-[#11140e] border-[#242a1e] text-[#c7cabf] hover:text-[#f2f0e8] hover:border-[#3c4832]"
+                        ? "border-[#8fa654] bg-[#1b2116] text-[#b7cc7e]"
+                        : "border-transparent text-[#c7cabf] hover:border-[#2a3322] hover:bg-[#161b12] hover:text-[#f2f0e8]"
                     }`}
                   >
                     <User2 className="w-4 h-4" />
-                    <ChevronDown className="w-3.5 h-3.5 text-[#8e9484] hidden sm:block" />
+                    <span className="hidden text-sm font-medium md:inline">Account</span>
+                    <ChevronDown className="hidden h-3.5 w-3.5 text-[#8e9484] md:block" />
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
@@ -216,14 +216,14 @@ export default function Navbar() {
               </DropdownMenu>
             </>
           ) : isLoading ? (
-            <div className="h-9 w-9 flex items-center justify-center">
+            <div role="status" aria-label="Loading account" className="flex h-11 w-11 items-center justify-center">
               <Spinner className="text-[#8fa654]" />
             </div>
           ) : (
             <div className="flex items-center gap-2">
               <Button
                 size="sm"
-                className="h-9 px-3.5 sm:px-4 rounded-xl bg-[#8fa654] hover:bg-[#9eb660] active:bg-[#7f9449] text-[#0b0d08] font-semibold text-xs sm:text-sm shadow-sm transition-colors cursor-pointer"
+                className="h-11 cursor-pointer rounded-xl bg-[#8fa654] px-4 text-sm font-semibold text-[#0b0d08] shadow-sm transition-colors hover:bg-[#9eb660] active:bg-[#7f9449]"
                 onClick={() => router.push("/sign-in")}
               >
                 Sign in
