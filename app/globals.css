@@ -142,3 +142,26 @@
   caret-color: #9eb660;
   transition: background-color 5000s ease-in-out 0s;
 }
+
+.olive-scrollbar {
+  scrollbar-color: #5b7044 #11140e;
+  scrollbar-width: thin;
+}
+
+.olive-scrollbar::-webkit-scrollbar {
+  width: 0.5rem;
+}
+
+.olive-scrollbar::-webkit-scrollbar-track {
+  background: #11140e;
+}
+
+.olive-scrollbar::-webkit-scrollbar-thumb {
+  background: #5b7044;
+  border: 2px solid #11140e;
+  border-radius: 9999px;
+}
+
+.olive-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #8fa654;
+}

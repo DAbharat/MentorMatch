@@ -5,7 +5,6 @@ import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
-import { Separator } from "@/components/ui/separator"
 import { DM_Sans } from "next/font/google"
 
 const DM_Sans_Font = DM_Sans({
@@ -57,7 +56,7 @@ export default function ScheduleSession({
 
     if (loading) {
         return (
-            <div className={`${DM_Sans_Font.className} min-h-screen bg-[#090a08] flex items-center justify-center px-4`} role="status" aria-live="polite">
+            <div className={`${DM_Sans_Font.className} flex min-h-[calc(100dvh-3.5rem)] items-center justify-center bg-[#090a08] px-4 md:min-h-[calc(100dvh-4rem)]`} role="status" aria-live="polite">
                 <p className="text-sm text-[#a8ab9e]">Loading session details...</p>
             </div>
         )
@@ -68,12 +67,10 @@ export default function ScheduleSession({
     const minDateString = minDate.toISOString().slice(0, 16)
 
     return (
-        <div className={`${DM_Sans_Font.className} min-h-screen bg-[#090a08] flex items-center justify-center px-4 py-8`}>
-            <Card className="w-full max-w-2xl space-y-6 rounded-2xl border border-[#242a1e] bg-[#11140e] p-5 sm:p-7 md:p-9">
-
-                {/* Header */}
+        <div className={`${DM_Sans_Font.className} flex min-h-[calc(100dvh-3.5rem)] w-full items-center justify-center bg-[#090a08] px-4 py-4 md:min-h-[calc(100dvh-4rem)] sm:py-6`}>
+            <Card className="w-full max-w-2xl rounded-2xl border border-[#242a1e] bg-[#11140e] p-4 sm:p-5 md:p-6">
                 <div className="space-y-1">
-                    <h1 className="text-[#f2f0e8] text-xl md:text-2xl font-semibold tracking-tight">
+                    <h1 className="text-xl font-semibold tracking-tight text-[#f2f0e8] sm:text-2xl">
                         Schedule a session
                     </h1>
                     <p className="text-sm leading-relaxed text-[#a8ab9e]">
@@ -84,29 +81,14 @@ export default function ScheduleSession({
                     </p>
                 </div>
 
-                <Separator className="bg-[#242a1e]" />
-
-                <form onSubmit={handleSubmit} aria-busy={submitting} className="space-y-6 md:space-y-8">
-
-                    {/* Mentor Info */}
-                    <div className="space-y-2 md:space-y-3">
-                        <Label className="text-sm font-medium text-[#c7cabf]">
-                            Mentor
-                        </Label>
-                        <div className="rounded-xl border border-[#242a1e] bg-[#0d0f0b] px-4 py-3">
-                            <p className="text-sm font-medium text-[#f2f0e8]">
-                                {mentor.name}
-                            </p>
-                        </div>
+                <form onSubmit={handleSubmit} aria-busy={submitting} className="mt-4 space-y-4 sm:mt-5 sm:space-y-5">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-[#242a1e] bg-[#0d0f0b] px-3 py-2.5">
+                        <span className="text-xs font-medium text-[#a8ab9e]">Mentor</span>
+                        <p className="text-sm font-semibold text-[#f2f0e8]">{mentor.name}</p>
                     </div>
 
-                    <Separator className="bg-[#242a1e]" />
-
-                    {/* Skill + Duration Row */}
-                    <div className="grid md:grid-cols-2 gap-5">
-
-                        {/* Skill */}
-                        <div className="space-y-2 md:space-y-3">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5">
+                        <div className="space-y-1.5">
                             <Label htmlFor="skillId" className="text-sm font-medium text-[#c7cabf]">
                                 Select skill <span className="text-[#f4b8bc]">*</span>
                             </Label>
@@ -119,7 +101,7 @@ export default function ScheduleSession({
                                         skillId: e.target.value
                                     })
                                 }
-                                className="h-11 w-full rounded-xl border border-[#283022] bg-[#0d0f0b] px-3 text-sm text-[#f2f0e8] [color-scheme:dark] hover:border-[#3c4832] focus-visible:border-[#8fa654] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8fa654]/50 disabled:cursor-not-allowed disabled:opacity-60"
+                                className="h-11 w-full cursor-pointer rounded-xl border border-[#283022] bg-[#0d0f0b] px-3 text-sm text-[#f2f0e8] [color-scheme:dark] hover:border-[#3c4832] focus-visible:border-[#8fa654] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8fa654]/50 disabled:cursor-not-allowed disabled:opacity-60"
                                 required
                                 disabled={submitting || !!mentorshipRequestSkillId}
                             >
@@ -137,8 +119,7 @@ export default function ScheduleSession({
                             )}
                         </div>
 
-                        {/* Duration */}
-                        <div className="space-y-2 md:space-y-3">
+                        <div className="space-y-1.5">
                             <Label htmlFor="duration" className="text-sm font-medium text-[#c7cabf]">
                                 Duration
                             </Label>
@@ -151,22 +132,16 @@ export default function ScheduleSession({
                                         totalCallDuration: Number(e.target.value)
                                     })
                                 }
-                                className="h-11 w-full rounded-xl border border-[#283022] bg-[#0d0f0b] px-3 text-sm text-[#f2f0e8] [color-scheme:dark] hover:border-[#3c4832] focus-visible:border-[#8fa654] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8fa654]/50"
+                                className="h-11 w-full cursor-pointer rounded-xl border border-[#283022] bg-[#0d0f0b] px-3 text-sm text-[#f2f0e8] [color-scheme:dark] hover:border-[#3c4832] focus-visible:border-[#8fa654] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8fa654]/50 disabled:cursor-not-allowed disabled:opacity-60"
                                 disabled={submitting}
                             >
                                 <option value={15}>15 minutes</option>
                                 <option value={30}>30 minutes</option>
                             </select>
-                            {/* <p className="text-xs text-muted-foreground">
-                                Maximum 30 minutes
-                            </p> */}
                         </div>
                     </div>
 
-                    {/* <Separator /> */}
-
-                    {/* Date & Time */}
-                    <div className="space-y-2 md:space-y-3">
+                    <div className="space-y-1.5">
                         <Label htmlFor="scheduledAt" className="text-sm font-medium text-[#c7cabf]">
                             Preferred date and time{" "}
                             <span className="text-[#f4b8bc]">*</span>
@@ -186,20 +161,13 @@ export default function ScheduleSession({
                             required
                             disabled={submitting}
                         />
-                        {/* <p className="text-xs text-muted-foreground">
-                            Must be scheduled at least 1 hour in advance
-                        </p> */}
                     </div>
 
-                    {/* <Separator /> */}
-
-                    {/* Buttons */}
-                    <div className="flex flex-col gap-3 pt-2 sm:flex-row">
-                        
+                    <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
                         <Button
                             type="submit"
                             disabled={submitting}
-                            className="h-11 flex-1 cursor-pointer rounded-xl bg-[#8fa654] text-[#0b0d08] hover:bg-[#9eb660] active:bg-[#7f9449] focus-visible:ring-2 focus-visible:ring-[#8fa654] disabled:cursor-not-allowed disabled:opacity-60"
+                            className="h-11 w-full cursor-pointer rounded-xl bg-[#8fa654] text-[#0b0d08] hover:bg-[#9eb660] active:bg-[#7f9449] focus-visible:ring-2 focus-visible:ring-[#8fa654] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto sm:min-w-40"
                         >
                             {submitting ? "Sending request..." : "Send request"}
                         </Button>
@@ -208,11 +176,10 @@ export default function ScheduleSession({
                             type="button"
                             onClick={onCancel}
                             disabled={submitting}
-                            className="h-11 flex-1 cursor-pointer rounded-xl border border-[#3a4530] bg-transparent text-[#c7cabf] hover:bg-[#1b2116] hover:text-[#f2f0e8] active:bg-[#242a1e] focus-visible:ring-2 focus-visible:ring-[#8fa654] disabled:cursor-not-allowed disabled:opacity-60"
+                            className="h-11 w-full cursor-pointer rounded-xl border border-[#3a4530] bg-transparent text-[#c7cabf] hover:bg-[#1b2116] hover:text-[#f2f0e8] active:bg-[#242a1e] focus-visible:ring-2 focus-visible:ring-[#8fa654] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto sm:min-w-32"
                         >
                             Cancel
                         </Button>
-
                     </div>
                 </form>
             </Card>

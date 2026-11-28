@@ -96,8 +96,8 @@ export default function RequestSidebarCard(
       })
 
   return (
-    <Card className="w-full rounded-2xl border border-[#242a1e] bg-[#11140e] p-4 shadow-none sm:p-5">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+    <Card className="w-full rounded-2xl border border-[#242a1e] bg-[#11140e] p-3 shadow-none sm:p-4">
+      <div className="flex items-start gap-3">
         <div
           aria-hidden="true"
           className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-[#3a4530] bg-[#1b2116] text-base font-semibold text-[#b7cc7e]"
@@ -106,8 +106,8 @@ export default function RequestSidebarCard(
         </div>
 
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
-            <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+            <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
               <span className="text-xs text-[#8a8f80]">
                 {isSentView ? "To" : "From"}
               </span>
@@ -131,7 +131,7 @@ export default function RequestSidebarCard(
             </div>
             <time
               dateTime={Number.isNaN(requestDate.getTime()) ? undefined : requestDate.toISOString()}
-              className="text-xs tabular-nums text-[#a8ab9e]"
+              className="shrink-0 text-xs tabular-nums text-[#a8ab9e]"
             >
               {dateLabel}
             </time>
@@ -148,17 +148,17 @@ export default function RequestSidebarCard(
           {skill && (
             <p className="mt-1 break-words text-sm font-medium text-[#cde099]">{skill.name}</p>
           )}
-          <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-relaxed text-[#c7cabf]">
+          <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-relaxed text-[#c7cabf]">
             {message}
           </p>
 
           {!isSentView && status === "PENDING" && (
-            <div className="mt-4 flex flex-col gap-2 border-t border-[#1e2419] pt-4 sm:flex-row">
+            <div className="mt-3 flex flex-col gap-2 border-t border-[#1e2419] pt-3 sm:flex-row sm:justify-end">
               <button
                 type="button"
                 onClick={() => void handleAction("ACCEPT")}
                 disabled={processingAction !== null}
-                className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-[#8fa654] bg-[#8fa654] px-4 text-sm font-semibold text-[#0b0d08] transition-colors hover:border-[#9eb660] hover:bg-[#9eb660] active:bg-[#7f9449] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#b7cc7e] disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex min-h-11 w-full items-center justify-center rounded-xl border border-[#8fa654] bg-[#8fa654] px-4 text-sm font-semibold text-[#0b0d08] transition-colors hover:border-[#9eb660] hover:bg-[#9eb660] active:bg-[#7f9449] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#b7cc7e] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:min-w-36"
               >
                 {processingAction === "ACCEPT" ? "Accepting..." : "Accept request"}
               </button>
@@ -166,7 +166,7 @@ export default function RequestSidebarCard(
                 type="button"
                 onClick={() => void handleAction("REJECT")}
                 disabled={processingAction !== null}
-                className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-[#5d6a4f] bg-[#0d0f0b] px-4 text-sm font-medium text-[#c7cabf] transition-colors hover:border-[#8d474c] hover:bg-[#231214] hover:text-[#f4b8bc] active:bg-[#1d1012] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f4b8bc] disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex min-h-11 w-full items-center justify-center rounded-xl border border-[#5d6a4f] bg-[#0d0f0b] px-4 text-sm font-medium text-[#c7cabf] transition-colors hover:border-[#8d474c] hover:bg-[#231214] hover:text-[#f4b8bc] active:bg-[#1d1012] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f4b8bc] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:min-w-28"
               >
                 {processingAction === "REJECT" ? "Rejecting..." : "Decline"}
               </button>
@@ -176,7 +176,7 @@ export default function RequestSidebarCard(
       </div>
 
       {isSentView && status === "ACCEPTED" && (
-        <div className="mt-4 border-t border-[#1e2419] pt-4">
+        <div className="mt-3 flex justify-end border-t border-[#1e2419] pt-3">
           <button
             type="button"
             onClick={handleScheduleSession}

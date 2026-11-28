@@ -273,7 +273,7 @@ export default function ProfileHeader({
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="bg-[#11140e] border border-[#242a1e] rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-[0_24px_64px_-24px_rgba(0,0,0,0.9)]"
+            className="olive-scrollbar w-full max-w-2xl overscroll-contain overflow-y-auto rounded-2xl border border-[#242a1e] bg-[#11140e] shadow-[0_24px_64px_-24px_rgba(0,0,0,0.9)] max-h-[calc(100dvh-2rem)]"
           >
             <RequestFormContainer
               mentorId={id}
