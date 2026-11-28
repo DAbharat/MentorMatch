@@ -1,8 +1,8 @@
 "use client"
 
-import React, { useEffect, useState } from "react"
+import React, { useState } from "react"
 import { Card } from "@/components/ui/card"
-import { Button } from "@/components/retroui/Button"
+import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
@@ -35,38 +35,28 @@ type ScheduleSessionProps = {
 export default function ScheduleSession({
     mentor,
     mentorshipRequestSkillId,
-    mentorshipRequestSkillName,
     loading,
     onSubmit,
     onCancel
 }: ScheduleSessionProps) {
     const [formData, setFormData] = useState({
         skillId: mentorshipRequestSkillId || "",
-        skillName: mentorshipRequestSkillName || "",
         scheduledAt: "",
         totalCallDuration: 30
     })
 
-    // Update skillId when mentorshipRequestSkillId is loaded
-    useEffect(() => {
-        if (mentorshipRequestSkillId) {
-            setFormData(prev => ({
-                ...prev,
-                skillId: mentorshipRequestSkillId,
-                skillName: mentorshipRequestSkillName || ""
-            }))
-        }
-    }, [mentorshipRequestSkillId, mentorshipRequestSkillName])
-
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
-        onSubmit(formData)
+        onSubmit({
+            ...formData,
+            skillId: mentorshipRequestSkillId || formData.skillId,
+        })
     }
 
     if (loading) {
         return (
-            <div className={`${DM_Sans_Font.className} flex items-center justify-center min-h-screen`}>
-                <p className="text-muted-foreground">Loading...</p>
+            <div className={`${DM_Sans_Font.className} min-h-screen bg-[#090a08] flex items-center justify-center px-4`} role="status" aria-live="polite">
+                <p className="text-sm text-[#a8ab9e]">Loading session details...</p>
             </div>
         )
     }
@@ -76,58 +66,58 @@ export default function ScheduleSession({
     const minDateString = minDate.toISOString().slice(0, 16)
 
     return (
-        <div className={`${DM_Sans_Font.className} min-h-screen flex items-center justify-center px-4 py-8`}>
-            <Card className="w-full max-w-2xl p-6 md:p-10 lg:p-12 rounded-2xl shadow-lg bg-[#111315] border-[#1f1f1f]">
+        <div className={`${DM_Sans_Font.className} min-h-screen bg-[#090a08] flex items-center justify-center px-4 py-8`}>
+            <Card className="w-full max-w-2xl space-y-6 rounded-2xl border border-[#242a1e] bg-[#11140e] p-5 sm:p-7 md:p-9">
 
                 {/* Header */}
                 <div className="space-y-1">
-                    <h1 className="text-[#d3d3d3] text-xl md:text-2xl font-semibold tracking-tight">
-                        Schedule Session
+                    <h1 className="text-[#f2f0e8] text-xl md:text-2xl font-semibold tracking-tight">
+                        Schedule a session
                     </h1>
-                    <p className="text-sm text-muted-foreground">
-                        Request a mentorship session with{" "}
-                        <span className="font-semibold text-muted-foreground">
+                    <p className="text-sm leading-relaxed text-[#a8ab9e]">
+                        Choose a time for a session with{" "}
+                        <span className="font-semibold text-[#c7cabf]">
                             {mentor.name}
                         </span>
                     </p>
                 </div>
 
-                <Separator className="bg-[#1f1f1f]"/>
+                <Separator className="bg-[#242a1e]" />
 
                 <form onSubmit={handleSubmit} className="space-y-6 md:space-y-8">
 
                     {/* Mentor Info */}
                     <div className="space-y-2 md:space-y-3">
-                        <Label className="text-xs uppercase tracking-wide text-[#d3d3d3]">
+                        <Label className="text-sm font-medium text-[#c7cabf]">
                             Mentor
                         </Label>
-                        <div className="rounded-lg border border-gray-500 px-4 py-3 bg-transparent">
-                            <p className="text-sm font-medium text-[#d3d3d3]">
+                        <div className="rounded-xl border border-[#242a1e] bg-[#0d0f0b] px-4 py-3">
+                            <p className="text-sm font-medium text-[#f2f0e8]">
                                 {mentor.name}
                             </p>
                         </div>
                     </div>
 
-                    <Separator className="bg-[#1f1f1f]"/>
+                    <Separator className="bg-[#242a1e]" />
 
                     {/* Skill + Duration Row */}
                     <div className="grid md:grid-cols-2 gap-5">
 
                         {/* Skill */}
-                        <div className="space-y-2 md:space-y-3 text-[#d3d3d3]">
-                            <Label htmlFor="skillId">
-                                Select Skill <span className="text-red-500">*</span>
+                        <div className="space-y-2 md:space-y-3">
+                            <Label htmlFor="skillId" className="text-sm font-medium text-[#c7cabf]">
+                                Select skill <span className="text-[#f4b8bc]">*</span>
                             </Label>
                             <select
                                 id="skillId"
-                                value={formData.skillId}
+                                value={mentorshipRequestSkillId || formData.skillId}
                                 onChange={(e) =>
                                     setFormData({
                                         ...formData,
                                         skillId: e.target.value
                                     })
                                 }
-                                className="w-full px-3 py-2 border border-[#1f1f1f] rounded-lg focus:outline-none focus:ring-2 focus:ring-black disabled:bg-transparent text-muted-foreground disabled:cursor-not-allowed"
+                                className="h-11 w-full rounded-xl border border-[#283022] bg-[#0d0f0b] px-3 text-sm text-[#f2f0e8] [color-scheme:dark] hover:border-[#3c4832] focus-visible:border-[#8fa654] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8fa654]/50 disabled:cursor-not-allowed disabled:opacity-60"
                                 required
                                 disabled={!!mentorshipRequestSkillId}
                             >
@@ -139,16 +129,16 @@ export default function ScheduleSession({
                                 ))}
                             </select>
                             {mentorshipRequestSkillId && (
-                                <p className="text-xs text-muted-foreground">
+                                <p className="text-xs text-[#a8ab9e]">
                                     Skill locked based on your mentorship request
                                 </p>
                             )}
                         </div>
 
                         {/* Duration */}
-                        <div className="space-y-2 md:space-y-3 text-[#d3d3d3]">
-                            <Label htmlFor="duration">
-                                Duration (minutes)
+                        <div className="space-y-2 md:space-y-3">
+                            <Label htmlFor="duration" className="text-sm font-medium text-[#c7cabf]">
+                                Duration
                             </Label>
                             <select
                                 id="duration"
@@ -159,7 +149,7 @@ export default function ScheduleSession({
                                         totalCallDuration: Number(e.target.value)
                                     })
                                 }
-                                className="w-full px-3 py-2 border border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-black text-muted-foreground"
+                                className="h-11 w-full rounded-xl border border-[#283022] bg-[#0d0f0b] px-3 text-sm text-[#f2f0e8] [color-scheme:dark] hover:border-[#3c4832] focus-visible:border-[#8fa654] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8fa654]/50"
                             >
                                 <option value={15}>15 minutes</option>
                                 <option value={30}>30 minutes</option>
@@ -173,10 +163,10 @@ export default function ScheduleSession({
                     {/* <Separator /> */}
 
                     {/* Date & Time */}
-                    <div className="space-y-2 md:space-y-3 text-[#d3d3d3]">
-                        <Label htmlFor="scheduledAt">
-                            Preferred Date & Time{" "}
-                            <span className="text-red-500">*</span>
+                    <div className="space-y-2 md:space-y-3">
+                        <Label htmlFor="scheduledAt" className="text-sm font-medium text-[#c7cabf]">
+                            Preferred date and time{" "}
+                            <span className="text-[#f4b8bc]">*</span>
                         </Label>
                         <Input
                             id="scheduledAt"
@@ -188,7 +178,7 @@ export default function ScheduleSession({
                                     scheduledAt: e.target.value
                                 })
                             }
-                            className="border border-gray-500"
+                            className="auth-input h-11 rounded-xl border-[#283022] bg-[#0d0f0b] text-[#f2f0e8] [color-scheme:dark] caret-[#9eb660] hover:border-[#3c4832] focus-visible:border-[#8fa654] focus-visible:ring-2 focus-visible:ring-[#8fa654]/25"
                             min={minDateString}
                             required
                         />
@@ -200,19 +190,19 @@ export default function ScheduleSession({
                     {/* <Separator /> */}
 
                     {/* Buttons */}
-                    <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                    <div className="flex flex-col gap-3 pt-2 sm:flex-row">
                         
                         <Button
                             type="submit"
-                            className="flex-1 bg-white text-black hover:bg-gray-400 rounded-full"
+                            className="h-11 flex-1 cursor-pointer rounded-xl bg-[#8fa654] text-[#0b0d08] hover:bg-[#9eb660] active:bg-[#7f9449] focus-visible:ring-2 focus-visible:ring-[#8fa654]"
                         >
-                            Send Request
+                            Send request
                         </Button>
 
                         <Button
                             type="button"
                             onClick={onCancel}
-                            className="flex-1 bg-transparent text-white rounded-full border border-white/40"
+                            className="h-11 flex-1 cursor-pointer rounded-xl border border-[#3a4530] bg-transparent text-[#c7cabf] hover:bg-[#1b2116] hover:text-[#f2f0e8] active:bg-[#242a1e] focus-visible:ring-2 focus-visible:ring-[#8fa654]"
                         >
                             Cancel
                         </Button>

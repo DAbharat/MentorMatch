@@ -21,9 +21,10 @@ export async function GET(req: NextRequest) {
         const { searchParams } = req.nextUrl
         const limit = Number(searchParams.get("limit")) || 10
         const cursor = searchParams.get("cursor")
+        const shouldCache = limit === 10 && !cursor
         let nextCursor: string | null = null
 
-        const cached = await getCachedRequests(userId, "received")
+        const cached = shouldCache ? await getCachedRequests(userId, "received") : null
         if (cached) {
             return NextResponse.json(
                 cached, 
@@ -105,7 +106,9 @@ export async function GET(req: NextRequest) {
             nextCursor
         }
 
-        await setCachedRequests(userId, "received", responseData)
+        if (shouldCache) {
+            await setCachedRequests(userId, "received", responseData)
+        }
 
         return NextResponse.json(
             responseData, 

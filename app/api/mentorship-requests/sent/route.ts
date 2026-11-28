@@ -19,9 +19,10 @@ export async function GET(req: NextRequest) {
         const limit = Number(searchParams.get("limit")) || 10
         const cursor = searchParams.get("cursor")
         const statusFilter = searchParams.get("status") // "all", "pending", "accepted", "rejected"
+        const shouldCache = limit === 10 && !cursor && (!statusFilter || statusFilter === "all")
         let nextCursor: string | null = null
 
-        const cached = await getCachedRequests(userId, "sent")
+        const cached = shouldCache ? await getCachedRequests(userId, "sent") : null
         if(cached) {
             return NextResponse.json(
                 cached, 
@@ -106,7 +107,9 @@ export async function GET(req: NextRequest) {
             data: formattedRequests,
             nextCursor
         }
-        await setCachedRequests(userId, "sent", responseData)
+        if (shouldCache) {
+            await setCachedRequests(userId, "sent", responseData)
+        }
 
         return NextResponse.json(
             responseData, 

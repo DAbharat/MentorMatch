@@ -85,6 +85,17 @@ MentorMatch pairs an obsidian-black canvas (`#090a08`) with olive-charcoal eleva
 | **Growth & Success** | `#10b981` (`text-emerald-400 bg-emerald-500/10 border-emerald-500/20`) | Mentee confidence boost, completed session indicators. |
 | **Live / In Progress** | `text-cyan-400 animate-pulse` | Ongoing WebRTC call badges and live presence. |
 
+#### Mentorship Request Statuses
+
+These state colors extend the olive base only where a request outcome needs to be scanned quickly. Each hue carries one meaning and is paired with a label, so status is never communicated by color alone.
+
+| Status | Surface | Border | Text | Usage |
+| :--- | :--- | :--- | :--- | :--- |
+| **Pending** | `#2b2517` | `#6b5528` | `#dfc47a` | Waiting for a mentor's decision. |
+| **Accepted** | `#14231f` | `#265944` | `#6ee7b7` | Request accepted and eligible for session scheduling. |
+| **Rejected** | `#231214` | `#61282d` | `#f4b8bc` | Request declined. |
+| **Accept action** | `#10b981` with `#0b0d08` text | `#10b981` | `#0b0d08` | Primary action on received requests; the dark text keeps the action legible. |
+
 ---
 
 ## 3. Typography & Hierarchy

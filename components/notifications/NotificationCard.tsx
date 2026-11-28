@@ -19,7 +19,6 @@ import {
 } from "lucide-react";
 import { DM_Sans } from "next/font/google";
 import { Button } from "../ui/button";
-import { Badge } from "../ui/badge";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -66,7 +65,7 @@ type NotificationCardProps = {
 type CategoryTheme = {
   label: string;
   icon: React.ComponentType<{ className?: string }>;
-  pill: string;
+  color: string;
 };
 
 function getCategoryTheme(type: string): CategoryTheme {
@@ -75,33 +74,33 @@ function getCategoryTheme(type: string): CategoryTheme {
       return {
         label: "Request accepted",
         icon: CalendarCheck2,
-        pill: "bg-[#0e1d17] border-[#245944] text-[#5ee0aa]",
+        color: "text-[#6ee7b7]",
       };
     case "SESSION_CONFIRMED":
       return {
         label: "Session confirmed",
         icon: CalendarCheck2,
-        pill: "bg-[#0e1d17] border-[#245944] text-[#5ee0aa]",
+        color: "text-[#6ee7b7]",
       };
     case "FEEDBACK_RECEIVED":
     case "FEEDBACK_SENT":
       return {
         label: "Feedback",
         icon: MessageSquareHeart,
-        pill: "bg-[#0e1d17] border-[#245944] text-[#5ee0aa]",
+        color: "text-[#6ee7b7]",
       };
     case "SESSION_SCHEDULED":
     case "SESSION_REMINDER":
       return {
         label: type === "SESSION_REMINDER" ? "Reminder" : "Scheduled",
         icon: CalendarClock,
-        pill: "bg-[#1f190d] border-[#5e471a] text-[#f7c95c]",
+        color: "text-[#dfc47a]",
       };
     case "SESSION_STARTED":
       return {
         label: "Session live",
         icon: Video,
-        pill: "bg-[#0d1a24] border-[#214f6e] text-[#67cdfa]",
+        color: "text-[#67cdfa]",
       };
     case "MENTORSHIP_REQUEST_REJECTED":
     case "SESSION_CANCELLED":
@@ -109,7 +108,7 @@ function getCategoryTheme(type: string): CategoryTheme {
         label:
           type === "SESSION_CANCELLED" ? "Cancelled" : "Request declined",
         icon: XCircle,
-        pill: "bg-[#231214] border-[#61282d] text-[#f4b8bc]",
+        color: "text-[#f4b8bc]",
       };
     case "MENTORSHIP_REQUEST_RECEIVED":
     case "MENTORSHIP_REQUEST_SENT":
@@ -119,23 +118,23 @@ function getCategoryTheme(type: string): CategoryTheme {
             ? "New request"
             : "Request sent",
         icon: UserPlus,
-        pill: "bg-[#161b12] border-[#3d4d2a] text-[#b7cc7e]",
+        color: "text-[#b7cc7e]",
       };
     default:
       return {
         label: "Update",
         icon: Bell,
-        pill: "bg-[#161b12] border-[#3d4d2a] text-[#b7cc7e]",
+        color: "text-[#b7cc7e]",
       };
   }
 }
 
 const sessionStatusStyles: Record<string, string> = {
-  PENDING: "bg-[#1f190d] border-[#5e471a] text-[#f7c95c]",
-  CONFIRMED: "bg-[#0e1d17] border-[#245944] text-[#5ee0aa]",
-  IN_PROGRESS: "bg-[#0d1a24] border-[#214f6e] text-[#67cdfa]",
-  COMPLETED: "bg-[#161b12] border-[#3d4d2a] text-[#b7cc7e]",
-  CANCELLED: "bg-[#231214] border-[#61282d] text-[#f4b8bc]",
+  PENDING: "text-[#dfc47a]",
+  CONFIRMED: "text-[#6ee7b7]",
+  IN_PROGRESS: "text-[#67cdfa]",
+  COMPLETED: "text-[#b7cc7e]",
+  CANCELLED: "text-[#f4b8bc]",
 };
 
 function formatNotificationTime(dateString: string) {
@@ -262,15 +261,12 @@ export default function NotificationCard({
       const statusKey = sessionStatus.status || "";
       const badgeStyle =
         sessionStatusStyles[statusKey] ||
-        "bg-[#161b12] border-[#3d4d2a] text-[#b7cc7e]";
+        "text-[#b7cc7e]";
 
       return (
-        <Badge
-          variant="outline"
-          className={`${badgeStyle} border text-xs font-medium px-2.5 py-0.5 rounded-lg`}
-        >
+        <span className={`text-xs font-medium ${badgeStyle}`}>
           Session {statusKey.toLowerCase().replace("_", " ") || "created"}
-        </Badge>
+        </span>
       );
     }
 
@@ -278,7 +274,7 @@ export default function NotificationCard({
       <Button
         type="button"
         onClick={handleScheduleSession}
-        className="h-9 px-3.5 text-xs font-semibold rounded-xl bg-[#8fa654] hover:bg-[#9eb660] active:bg-[#7f9449] text-[#0b0d08] transition-colors motion-reduce:transition-none cursor-pointer focus-visible:ring-2 focus-visible:ring-[#8fa654]"
+        className="h-11 px-3.5 text-xs font-semibold rounded-xl bg-[#8fa654] hover:bg-[#9eb660] active:bg-[#7f9449] text-[#0b0d08] transition-colors motion-reduce:transition-none cursor-pointer focus-visible:ring-2 focus-visible:ring-[#8fa654]"
       >
         Schedule session
       </Button>
@@ -287,22 +283,19 @@ export default function NotificationCard({
 
   return (
     <article
-      className={`${DM_Sans_Font.className} relative px-4 sm:px-6 py-4 sm:py-5 transition-colors motion-reduce:transition-none ${
-        !isRead
+      className={`${DM_Sans_Font.className} relative px-4 sm:px-6 py-4 sm:py-5 transition-colors motion-reduce:transition-none ${!isRead
           ? "bg-[#141911] hover:bg-[#171d14]"
           : "bg-[#11140e] hover:bg-[#141811]"
-      }`}
+        }`}
     >
       <div className="flex items-start gap-3.5 sm:gap-4">
-        <CategoryIcon
-          className="mt-0.5 h-5 w-5 shrink-0 text-[#9a9e91]"
-          aria-hidden="true"
-        />
+        {/* Semantic Category Icon */}
+        <CategoryIcon className={`mt-1 h-5 w-5 shrink-0 ${theme.color}`} aria-hidden="true" />
 
         {/* Content */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 min-w-0">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+            <div className="flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1">
               {!isRead && (
                 <span
                   className="inline-block w-2 h-2 rounded-full bg-[#8fa654] shrink-0"
@@ -313,40 +306,40 @@ export default function NotificationCard({
               )}
 
               <h2
-                className={`text-sm sm:text-[15px] leading-snug ${
-                  !isRead
+                className={`text-sm sm:text-[15px] leading-snug ${!isRead
                     ? "font-semibold text-[#f2f0e8]"
                     : "font-medium text-[#c7cabf]"
-                }`}
+                  }`}
               >
                 {title || theme.label}
               </h2>
 
               <span
-                className={`inline-flex items-center px-2 py-0.5 rounded-md border text-[11px] font-medium ${theme.pill}`}
+                className={`text-[11px] font-medium ${theme.color}`}
               >
                 {theme.label}
               </span>
             </div>
 
             {/* Timestamp + Row Actions */}
-            <div className="flex items-center gap-1 shrink-0">
+            <div className="flex min-w-0 items-center justify-between gap-2 sm:shrink-0 sm:justify-end">
               <time
                 dateTime={createdAt}
                 title={new Date(createdAt).toLocaleString()}
-                className="text-xs text-[#8a8f80] whitespace-nowrap mr-1 tabular-nums"
+                className="text-xs text-[#a8ab9e] whitespace-nowrap tabular-nums"
               >
                 {formatNotificationTime(createdAt)}
               </time>
 
-              {!isRead && (
+              <div className="flex shrink-0 items-center gap-1">
+                {!isRead && (
                 <button
                   type="button"
                   onClick={handleMarkAsRead}
                   disabled={isMarkingRead}
                   aria-label="Mark notification as read"
                   title="Mark as read"
-                  className="h-10 w-10 sm:h-9 sm:w-9 rounded-lg border border-transparent hover:border-[#5d6a4f] hover:bg-[#1b2116] text-[#b7cc7e] flex items-center justify-center transition-colors motion-reduce:transition-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8fa654]"
+                  className="h-11 w-11 rounded-lg hover:bg-[#1b2116] active:bg-[#242a1e] text-[#b7cc7e] flex items-center justify-center transition-colors motion-reduce:transition-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8fa654]"
                 >
                   <Check className="w-4 h-4" aria-hidden="true" />
                 </button>
@@ -357,7 +350,7 @@ export default function NotificationCard({
                   <button
                     type="button"
                     aria-label="Notification actions"
-                    className="h-10 w-10 sm:h-9 sm:w-9 rounded-lg border border-transparent hover:border-[#5d6a4f] hover:bg-[#1b2116] text-[#a8ab9e] hover:text-[#f2f0e8] flex items-center justify-center transition-colors motion-reduce:transition-none cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8fa654]"
+                    className="h-11 w-11 rounded-lg hover:bg-[#1b2116] active:bg-[#242a1e] text-[#a8ab9e] hover:text-[#f2f0e8] flex items-center justify-center transition-colors motion-reduce:transition-none cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8fa654]"
                   >
                     <MoreVertical className="w-4 h-4" aria-hidden="true" />
                   </button>
@@ -369,7 +362,7 @@ export default function NotificationCard({
                   <DropdownMenuItem
                     onClick={handleMarkAsRead}
                     disabled={isMarkingRead || isRead}
-                    className="rounded-lg text-sm text-[#c7cabf] focus:bg-[#1b2116] focus:text-[#f2f0e8] cursor-pointer disabled:opacity-50"
+                    className="min-h-11 rounded-lg text-sm text-[#c7cabf] focus:bg-[#1b2116] focus:text-[#f2f0e8] cursor-pointer disabled:opacity-50"
                   >
                     <CheckCheck
                       className="w-4 h-4 mr-2 text-[#5ee0aa]"
@@ -379,7 +372,7 @@ export default function NotificationCard({
                   </DropdownMenuItem>
                   <DropdownMenuSeparator className="bg-[#1e2419]" />
                   <DropdownMenuItem
-                    className="rounded-lg text-sm text-[#f4b8bc] focus:bg-[#231214] focus:text-[#f4b8bc] cursor-pointer"
+                    className="min-h-11 rounded-lg text-sm text-[#f4b8bc] focus:bg-[#231214] focus:text-[#f4b8bc] cursor-pointer"
                     onClick={(e) => {
                       e.stopPropagation();
                       setShowDeleteDialog(true);
@@ -394,13 +387,13 @@ export default function NotificationCard({
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+              </div>
             </div>
           </div>
 
           <p
-            className={`mt-1.5 text-sm leading-relaxed break-words ${
-              !isRead ? "text-[#c7cabf]" : "text-[#a8ab9e]"
-            }`}
+            className={`mt-1.5 text-sm leading-relaxed break-words ${!isRead ? "text-[#c7cabf]" : "text-[#a8ab9e]"
+              }`}
           >
             {message}
           </p>

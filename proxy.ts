@@ -27,13 +27,17 @@ export async function proxy(req: NextRequest) {
 
     let userId: string | null = null;
     const accessToken = req.cookies.get("accessToken")?.value
+    const refreshToken = req.cookies.get("refreshToken")?.value
+    const hasValidRefreshToken = refreshToken
+        ? verifyToken(refreshToken, "refresh") !== null
+        : false
 
     if (accessToken) {
         try {
             const payload = verifyToken(accessToken, "access")
             userId = payload?.userId || null;
-        } catch (error: any) {
-            console.log("Invalid token: ", error.message)
+        } catch (error: unknown) {
+            console.log("Invalid token: ", error instanceof Error ? error.message : String(error))
             userId = null
         }
     }
@@ -44,17 +48,19 @@ export async function proxy(req: NextRequest) {
         return NextResponse.redirect(new URL("/profile", req.url))
     }
 
-    if (!userId && pathname !== "/sign-in" && !isPublicRoute(pathname)) {
-        return NextResponse.redirect(new URL("/sign-in", req.url))
-    }
-
     if (userId && pathname === "/") {
         return NextResponse.redirect(new URL("/profile", req.url))
     }
 
     if (!userId && !isPublicRoute(pathname)) {
-        console.log("Middleware: Redirecting unauthenticated users to /sign-in")
-        return NextResponse.redirect(new URL("/sign-in", req.url))
+        if (pathname.startsWith("/api/")) {
+            return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
+        }
+
+        if (!hasValidRefreshToken) {
+            console.log("Middleware: Redirecting unauthenticated users to /sign-in")
+            return NextResponse.redirect(new URL("/sign-in", req.url))
+        }
     }
 
     const response = NextResponse.next()

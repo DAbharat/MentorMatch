@@ -3,9 +3,10 @@
 import RequestSidebarForm from '@/components/Request-Sidebar/RequestSidebarForm'
 import { getMentorshipRequestById } from '@/services/mentorship-request.service'
 import React, { useEffect, useState, use } from 'react'
-import { toast } from 'sonner'
 import { DM_Sans } from "next/font/google"
 import { Separator } from '@/components/ui/separator'
+import { Button } from '@/components/ui/button'
+import Link from 'next/link'
 
 
 const DM_Sans_Font = DM_Sans({
@@ -32,9 +33,9 @@ export default function RequestIdPage({ params }: { params: Promise<{ requestId:
     const [request, setRequest] = useState<RequestId | null>(null)
     const [isLoading, setIsLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
+    const [retryCount, setRetryCount] = useState(0)
 
 
-    // console.log("request: ", request)
     useEffect(() => {
         const fetchRequest = async () => {
             try {
@@ -42,28 +43,63 @@ export default function RequestIdPage({ params }: { params: Promise<{ requestId:
                 setError(null)
 
                 const data = await getMentorshipRequestById(requestId)
-                toast.success("Mentorship request details of the user fetched successfully")
                 setRequest(data.data)
 
-            } catch (error: any) {
+            } catch (error: unknown) {
                 console.error("Error fetching mentorship request:", error)
-                toast.error(error?.message || "Failed to load mentorship request details.")
-                setError(error?.message || "Failed to load mentorship request details.")
+                setError(
+                    error instanceof Error
+                        ? error.message
+                        : "Failed to load mentorship request details."
+                )
             } finally {
                 setIsLoading(false)
             }
         }
-        fetchRequest()
-    }, [requestId])
+        void fetchRequest()
+    }, [requestId, retryCount])
 
-    if (!request) return (
-        <div className="flex items-center justify-center h-40 text-sm text-muted-foreground animate-pulse">
-            Loading request...
+    if (isLoading) return (
+        <div className={`${DM_Sans_Font.className} flex min-h-40 items-center justify-center bg-[#090a08] px-4`} role="status" aria-live="polite">
+            <p className="text-sm text-[#a8ab9e]">Loading request details...</p>
         </div>
     )
 
+    if (error) return (
+        <main className={`${DM_Sans_Font.className} min-h-screen bg-[#090a08] px-4 py-10`}>
+            <section className="mx-auto max-w-3xl rounded-2xl border border-[#61282d] bg-[#231214] p-5 sm:p-6" role="alert">
+                <h1 className="text-lg font-semibold text-[#f4b8bc]">Request details could not be loaded</h1>
+                <p className="mt-2 text-sm leading-relaxed text-[#f4b8bc]">{error}</p>
+                <div className="mt-5 flex flex-wrap gap-3">
+                    <Button
+                        type="button"
+                        onClick={() => setRetryCount((count) => count + 1)}
+                        className="h-11 cursor-pointer rounded-xl bg-[#8fa654] px-4 font-semibold text-[#0b0d08] hover:bg-[#9eb660] active:bg-[#7f9449] focus-visible:ring-2 focus-visible:ring-[#8fa654]"
+                    >
+                        Try again
+                    </Button>
+                    <Button asChild variant="outline" className="h-11 cursor-pointer rounded-xl border-[#3a4530] bg-[#0d0f0b] px-4 text-[#c7cabf] hover:bg-[#1b2116] hover:text-[#f2f0e8] focus-visible:ring-2 focus-visible:ring-[#8fa654]">
+                        <Link href="/requests">Back to requests</Link>
+                    </Button>
+                </div>
+            </section>
+        </main>
+    )
+
+    if (!request) return (
+        <main className={`${DM_Sans_Font.className} min-h-screen bg-[#090a08] px-4 py-10`}>
+            <section className="mx-auto max-w-3xl rounded-2xl border border-[#242a1e] bg-[#11140e] p-5 sm:p-6">
+                <h1 className="text-lg font-semibold text-[#f2f0e8]">Request not found</h1>
+                <p className="mt-2 text-sm text-[#a8ab9e]">This request may have been removed or is no longer available.</p>
+                <Button asChild variant="outline" className="mt-5 h-11 cursor-pointer rounded-xl border-[#3a4530] bg-[#0d0f0b] px-4 text-[#c7cabf] hover:bg-[#1b2116] hover:text-[#f2f0e8] focus-visible:ring-2 focus-visible:ring-[#8fa654]">
+                    <Link href="/requests">Back to requests</Link>
+                </Button>
+            </section>
+        </main>
+    )
+
     return (
-        <div className={`${DM_Sans_Font.className} pt-6 md:pt-8`}>
+        <main className={`${DM_Sans_Font.className} min-h-screen bg-[#090a08] pt-6 md:pt-8`}>
 
             {/* Centered Header */}
             <div className="max-w-3xl mx-auto px-4">
@@ -73,7 +109,7 @@ export default function RequestIdPage({ params }: { params: Promise<{ requestId:
             </div>
 
             {/* Full Width Separator */}
-            <Separator className="w-full" />
+            <Separator className="w-full bg-[#242a1e]" />
 
             {/* Centered Content */}
             <div className="max-w-4xl mx-auto px-4 mt-6 space-y-4">
@@ -105,6 +141,6 @@ export default function RequestIdPage({ params }: { params: Promise<{ requestId:
                 </div>
 
             </div>
-        </div>
+        </main>
     )
 }

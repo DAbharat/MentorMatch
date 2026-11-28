@@ -2,6 +2,7 @@
 
 import React from 'react'
 import { Card } from '../ui/card'
+import { Star } from 'lucide-react'
 
 type FeedbackCardProps = {
     id: string;
@@ -33,9 +34,15 @@ export default function FeedbackCard({
     rating,
     createdAt
 }: FeedbackCardProps) {
+    const createdDate = createdAt ? new Date(createdAt) : null;
+    const dateTime = createdDate && !Number.isNaN(createdDate.getTime())
+        ? createdDate.toISOString()
+        : null;
+
     const formatDate = (date?: Date | string) => {
         if (!date) return '';
         const dateObj = typeof date === 'string' ? new Date(date) : date;
+        if (Number.isNaN(dateObj.getTime())) return '';
         return dateObj.toLocaleDateString('en-US', {
             month: 'short',
             day: 'numeric',
@@ -45,54 +52,53 @@ export default function FeedbackCard({
 
     return (
         <div className="w-full">
-            <Card className="bg-[#111315] border-[#1f1f1f] p-3 sm:p-4 md:p-5 rounded-2xl">
+            <Card className="rounded-2xl border border-[#242a1e] bg-[#11140e] p-4 sm:p-5">
                 
-                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                <div className="flex items-start gap-3 sm:gap-4">
                     
                     {/* Mentee Avatar */}
-                    <div className="shrink-0 flex justify-center sm:justify-start">
-                        <div className="w-14 h-14 sm:w-16 sm:h-16 md:w-18 md:h-18 rounded-full bg-[#d3d3d3] flex items-center justify-center text-black text-base sm:text-lg md:text-lg font-semibold shadow-md">
+                    <div className="shrink-0">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-lg border border-[#3a4530] bg-[#161b12] text-base font-semibold text-[#b7cc7e] sm:h-12 sm:w-12">
                             {mentee.name.charAt(0).toUpperCase()}
                         </div>
                     </div>
 
                     {/* Content */}
-                    <div className="flex-1 space-y-1.5 sm:space-y-2 text-center sm:text-left">
+                    <div className="min-w-0 flex-1 space-y-2">
                         
                         {/* Mentee Name + Date */}
-                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-0.5 sm:gap-2">
-                            <h3 className="text-sm sm:text-base md:text-base font-semibold text-[#d3d3d3]">
+                        <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+                            <h3 className="text-sm font-semibold text-[#f2f0e8] sm:text-base">
                                 {mentee.name}
                             </h3>
-                            {createdAt && (
-                                <p className="text-xs text-muted-foreground">
+                            {dateTime && (
+                                <time dateTime={dateTime} className="text-xs text-[#a8ab9e]">
                                     {formatDate(createdAt)}
-                                </p>
+                                </time>
                             )}
                         </div>
 
                         {/* Skill */}
-                        <p className="text-xs sm:text-sm text-muted-foreground">
-                            for the skill:{" "}
-                            <span className="font-semibold text-muted-foreground">
+                        <p className="text-sm text-[#a8ab9e]">
+                            Feedback on{" "}
+                            <span className="font-medium text-[#c7cabf]">
                                 {skill.name}
                             </span>
                         </p>
 
                         {/* Comment */}
-                        <p className="text-xs sm:text-sm text-[#d3d3d3] leading-relaxed pt-1">
+                        <p className="break-words text-sm leading-relaxed text-[#c7cabf]">
                             {comment}
                         </p>
 
                         {/* Rating */}
-                        <div className="flex justify-center sm:justify-start gap-0.5 pt-1.5">
+                        <div className="flex gap-1 pt-1" role="img" aria-label={`${rating} out of 5 stars`}>
                             {[1, 2, 3, 4, 5].map((star) => (
-                                <span
+                                <Star
                                     key={star}
-                                    className={`text-lg ${star <= rating ? "text-yellow-400" : "text-gray-500"}`}
-                                >
-                                    ★
-                                </span>
+                                    className={`h-4 w-4 ${star <= rating ? "fill-[#f59e0b] text-[#f59e0b]" : "text-[#8e9484]"}`}
+                                    aria-hidden="true"
+                                />
                             ))}
                         </div>
                     </div>

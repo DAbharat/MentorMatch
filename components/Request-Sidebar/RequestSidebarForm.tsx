@@ -7,7 +7,7 @@ import { Separator } from "../ui/separator"
 import { updateMentorshipRequestStatus } from "@/services/mentorship-request.service"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
-import { Button } from "../retroui/Button"
+import { Button } from "../ui/button"
 import Link from "next/link"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "../ui/alert-dialog"
 import { DM_Sans } from "next/font/google"
@@ -53,30 +53,36 @@ export default function RequestSidebarForm({
             setTimeout(() => {
                 router.push("/requests")
             }, 800)
-        } catch (error: any) {
-            toast.error(error.message || `Failed to ${action.toLowerCase()} request`)
+        } catch (error: unknown) {
+            toast.error(
+                error instanceof Error
+                    ? error.message
+                    : `Failed to ${action.toLowerCase()} request`
+            )
         } finally {
             setIsProcessing(false)
         }
     }
 
     return (
-        <Card className="w-full max-w-2xl mx-auto overflow-hidden shadow-lg rounded-xl border border-black/20">
+        <Card className="mx-auto w-full max-w-2xl overflow-hidden rounded-2xl border border-[#242a1e] bg-[#11140e] shadow-none">
 
             {/* Header */}
-            <div className="px-6 py-4 bg-linear-to-r from-background to-muted/20 flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-black flex items-center justify-center text-white text-lg font-bold shrink-0">
+            <div className="flex items-start gap-3 px-5 py-5 sm:items-center sm:gap-4 sm:px-6">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-[#3a4530] bg-[#161b12] text-lg font-semibold text-[#b7cc7e]">
                     {mentee.name.charAt(0).toUpperCase()}
                 </div>
 
                 <div className="flex-1 min-w-0 space-y-1">
-                    <Link href={`/profile/${mentee.id}`} className="text-sm font-bold truncate hover:underline cursor-pointer">{mentee.name}</Link>
-                    <p className="text-xs text-muted-foreground">
-                        Mentorship Request
+                    <Link href={`/profile/${mentee.id}`} className="block truncate text-sm font-semibold text-[#f2f0e8] hover:text-[#cde099] hover:underline underline-offset-4 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8fa654]">
+                        {mentee.name}
+                    </Link>
+                    <p className="text-xs text-[#a8ab9e]">
+                        Mentorship request
                     </p>
                 </div>
 
-                <span className="text-xs text-muted-foreground whitespace-nowrap">
+                <time dateTime={createdAt} className="max-w-28 shrink-0 text-right text-xs leading-relaxed text-[#a8ab9e] sm:max-w-none">
                     {new Date(createdAt).toLocaleDateString("en-US", {
                         month: "short",
                         day: "numeric",
@@ -84,68 +90,64 @@ export default function RequestSidebarForm({
                         hour: "2-digit",
                         minute: "2-digit"
                     })}
-                </span>
+                </time>
             </div>
 
-            <Separator />
+            <Separator className="bg-[#242a1e]" />
 
             {/* Request Details */}
-            <div className="px-6 py-4 space-y-3">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                    Request Details
+            <div className="space-y-3 px-5 py-5 sm:px-6">
+                <p className="text-xs font-medium text-[#a8ab9e]">
+                    Request details
                 </p>
 
-                <p className="text-sm font-semibold leading-snug">
+                <p className="break-words text-base font-semibold leading-snug text-[#f2f0e8]">
                     {title}
                 </p>
 
-                <Badge
-                    variant="secondary"
-                    className="text-xs rounded-full px-3 py-1"
-                >
+                <Badge variant="outline" className="rounded-md border-[#3a4530] bg-[#161b12] px-2.5 py-1 text-xs text-[#c7cabf]">
                     {skill.name}
                 </Badge>
             </div>
 
-            <Separator />
+            <Separator className="bg-[#242a1e]" />
 
             {/* Message */}
-            <div className="px-6 py-4 space-y-3">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+            <div className="space-y-3 px-5 py-5 sm:px-6">
+                <p className="text-xs font-medium text-[#a8ab9e]">
                     Message
                 </p>
 
-                <div className="relative rounded-lg border border-border/60 bg-muted/20 p-4">
-                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-black/10 rounded-l-lg"></div>
-                    <p className="text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap">
+                <div className="rounded-xl bg-[#0d0f0b] p-4">
+                    <p className="break-words text-sm leading-relaxed text-[#c7cabf] whitespace-pre-wrap">
                         {message}
                     </p>
                 </div>
             </div>
 
-            <Separator />
+            <Separator className="bg-[#242a1e]" />
 
             {/* Action Buttons */}
-            <div className={`px-6 py-4 flex gap-3 flex-col sm:flex-row ${DM_Sans_Font.className}`}>
+            <div className={`flex flex-col gap-3 px-5 py-5 sm:flex-row sm:px-6 ${DM_Sans_Font.className}`}>
                 <AlertDialog>
                     <AlertDialogTrigger asChild>
                         <Button
                             disabled={isProcessing}
-                            className="flex-1 py-2 text-sm font-semibold rounded-lg bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
+                            className="h-11 flex-1 cursor-pointer rounded-xl bg-[#10b981] text-sm font-semibold text-[#0b0d08] hover:bg-[#34d399] active:bg-[#059669] focus-visible:ring-2 focus-visible:ring-[#10b981] disabled:cursor-not-allowed"
                         >
                             {isProcessing ? "Processing..." : "Accept"}
                         </Button>
                     </AlertDialogTrigger>
-                    <AlertDialogContent>
+                    <AlertDialogContent className="rounded-2xl border border-[#242a1e] bg-[#11140e] text-[#f2f0e8]">
                         <AlertDialogHeader>
-                            <AlertDialogTitle>Accept Mentorship Request</AlertDialogTitle>
-                            <AlertDialogDescription>
+                            <AlertDialogTitle className="text-[#f2f0e8]">Accept mentorship request</AlertDialogTitle>
+                            <AlertDialogDescription className="text-[#a8ab9e]">
                                 Are you sure you want to accept this request? After accepting, the mentee will be able to ask for a session availability.
                             </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                            <AlertDialogCancel className="cursor-pointer">Cancel</AlertDialogCancel>
-                            <AlertDialogAction className="bg-green-500 cursor-pointer" onClick={() => handleAction("ACCEPT")}>
+                            <AlertDialogCancel className="h-11 cursor-pointer rounded-xl border-[#3a4530] bg-[#0d0f0b] text-[#c7cabf] hover:bg-[#1b2116] hover:text-[#f2f0e8] focus-visible:ring-2 focus-visible:ring-[#8fa654]">Cancel</AlertDialogCancel>
+                            <AlertDialogAction className="h-11 cursor-pointer rounded-xl bg-[#10b981] text-[#0b0d08] hover:bg-[#34d399] focus-visible:ring-2 focus-visible:ring-[#10b981]" onClick={() => handleAction("ACCEPT")}>
                                 Accept Request
                             </AlertDialogAction>
                         </AlertDialogFooter>
@@ -156,21 +158,21 @@ export default function RequestSidebarForm({
                     <AlertDialogTrigger asChild>
                         <Button
                             disabled={isProcessing}
-                            className="flex-1 py-2 text-sm font-semibold rounded-lg bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+                            className="h-11 flex-1 cursor-pointer rounded-xl border border-[#61282d] bg-[#231214] text-sm font-semibold text-[#f4b8bc] hover:bg-[#30171a] active:bg-[#3b1b1f] focus-visible:ring-2 focus-visible:ring-[#f4b8bc] disabled:cursor-not-allowed"
                         >
                             {isProcessing ? "Processing..." : "Reject"}
                         </Button>
                     </AlertDialogTrigger>
-                    <AlertDialogContent>
+                    <AlertDialogContent className="rounded-2xl border border-[#242a1e] bg-[#11140e] text-[#f2f0e8]">
                         <AlertDialogHeader>
-                            <AlertDialogTitle>Reject Mentorship Request</AlertDialogTitle>
-                            <AlertDialogDescription>
+                            <AlertDialogTitle className="text-[#f2f0e8]">Reject mentorship request</AlertDialogTitle>
+                            <AlertDialogDescription className="text-[#a8ab9e]">
                                 Are you sure you want to reject this request? This action cannot be undone and the mentee will be notified.
                             </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                            <AlertDialogCancel className="cursor-pointer">Cancel</AlertDialogCancel>
-                            <AlertDialogAction className="bg-red-600 cursor-pointer" onClick={() => handleAction("REJECT")}>
+                            <AlertDialogCancel className="h-11 cursor-pointer rounded-xl border-[#3a4530] bg-[#0d0f0b] text-[#c7cabf] hover:bg-[#1b2116] hover:text-[#f2f0e8] focus-visible:ring-2 focus-visible:ring-[#8fa654]">Cancel</AlertDialogCancel>
+                            <AlertDialogAction className="h-11 cursor-pointer rounded-xl border border-[#61282d] bg-[#231214] text-[#f4b8bc] hover:bg-[#30171a] focus-visible:ring-2 focus-visible:ring-[#f4b8bc]" onClick={() => handleAction("REJECT")}>
                                 Reject Request
                             </AlertDialogAction>
                         </AlertDialogFooter>

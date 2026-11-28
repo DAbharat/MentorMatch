@@ -13,6 +13,7 @@ export default function SessionsPage() {
     const [sessions, setSessions] = useState<Session[]>([])
     const [currentUserID, setCurrentUserID] = useState<string | null>(null)
     const [loading, setLoading] = useState(true)
+    const [loadError, setLoadError] = useState<string | null>(null)
     const [socket, setSocket] = useState<WsClient | null>(null)
     const [activeSessions, setActiveSessions] = useState<string[]>([])
 
@@ -37,6 +38,7 @@ export default function SessionsPage() {
     const loadSessions = async () => {
         try {
             setLoading(true)
+            setLoadError(null)
             const [sessionsResponse, currentUser] = await Promise.all([
                 fetchAllSessions(),
                 fetchMyProfile()
@@ -47,12 +49,12 @@ export default function SessionsPage() {
             const inProgressSessions = sessionsResponse.sessions
                 .filter((s: Session) => s.status === "IN_PROGRESS")
                 .map((s: Session) => s.id)
-            
-            if (inProgressSessions.length > 0) {
-                setActiveSessions(inProgressSessions)
-            }
-        } catch (error: any) {
-            toast.error(error.message || "Failed to load sessions")
+
+            setActiveSessions(inProgressSessions)
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : "Failed to load sessions"
+            setLoadError(message)
+            toast.error(message)
         } finally {
             setLoading(false)
         }
@@ -115,6 +117,8 @@ export default function SessionsPage() {
             sessions={sessions}
             currentUserId={currentUserID}
             loading={loading}
+            errorMessage={loadError}
+            onRetry={loadSessions}
             onConfirm={handleConfirm}
             onCancel={handleCancel}
             onStartSession={handleStartSession}

@@ -63,49 +63,51 @@ export default function FeedbackForm({
 
     return (
         <div className={containerClass}>
-            <Card className={`${cardContainerClass} p-6 md:p-10 lg:p-12 rounded-2xl shadow-lg bg-[#111315] border-[#1f1f1f]`}>
+            <Card className={`${cardContainerClass} rounded-2xl border-[#242a1e] bg-[#11140e] p-6 shadow-none md:p-8`}>
 
                 {/* Header */}
                 <div className="space-y-1">
-                    <h1 className="text-[#d3d3d3] text-xl md:text-2xl font-semibold tracking-tight">
+                    <h1 id="feedback-dialog-title" className="text-xl font-semibold tracking-tight text-[#f2f0e8] md:text-2xl">
                         Feedback Form
                     </h1>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-[#a8ab9e]">
                         Give feedback about your session with{" "}
-                        <span className="font-semibold text-muted-foreground">
+                        <span className="font-semibold text-[#c7cabf]">
                             {mentor.name}
                         </span>
                         {" "}for the skill{" "}
-                        <span className="font-semibold text-muted-foreground">
+                        <span className="font-semibold text-[#c7cabf]">
                             {skill.name}
                         </span>
                     </p>
                 </div>
 
-                <Separator className="bg-[#1f1f1f]" />
+                <Separator className="bg-[#242a1e]" />
 
                 <form onSubmit={handleSubmit} className="space-y-6 md:space-y-8">
 
                     {/* Rating Section */}
                     <div className="space-y-3">
-                        <Label className="text-xs uppercase tracking-wide text-[#d3d3d3]">
+                        <Label id="rating-label" className="text-sm font-medium text-[#c7cabf]">
                             How would you rate this session? <span className="text-red-500">*</span>
                         </Label>
-                        <div className="flex gap-3">
+                        <div role="group" aria-labelledby="rating-label" className="flex flex-wrap gap-2">
                             {[1, 2, 3, 4, 5].map((star) => (
                                 <button
                                     key={star}
                                     type="button"
+                                    aria-label={`Rate ${star} out of 5`}
+                                    aria-pressed={rating === star}
                                     onClick={() => setRating(star)}
                                     onMouseEnter={() => setHoveredRating(star)}
                                     onMouseLeave={() => setHoveredRating(0)}
-                                    className="text-3xl transition-colors duration-200"
+                                    className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-3xl transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#8fa654]"
                                 >
                                     <span
                                         className={
                                             star <= (hoveredRating || rating)
-                                                ? "text-yellow-400"
-                                                : "text-gray-500"
+                                                ? "text-[#f59e0b]"
+                                                : "text-[#8a8f80]"
                                         }
                                     >
                                         ★
@@ -114,17 +116,17 @@ export default function FeedbackForm({
                             ))}
                         </div>
                         {rating > 0 && (
-                            <p className="text-xs text-muted-foreground">
+                            <p className="text-xs text-[#a8ab9e]">
                                 Rating: {rating} out of 5
                             </p>
                         )}
                     </div>
 
-                    <Separator className="bg-[#1f1f1f]" />
+                    <Separator className="bg-[#242a1e]" />
 
                     {/* Comment Section */}
                     <div className="space-y-3">
-                        <Label htmlFor="comment" className="text-xs uppercase tracking-wide text-[#d3d3d3]">
+                        <Label htmlFor="comment" className="text-sm font-medium text-[#c7cabf]">
                             Your Feedback
                         </Label>
                         <textarea
@@ -132,18 +134,18 @@ export default function FeedbackForm({
                             value={comment}
                             onChange={(e) => setComment(e.target.value)}
                             placeholder="Share your thoughts about the session..."
-                            className="w-full px-4 py-3 border border-gray-500 rounded-lg bg-transparent text-[#d3d3d3] placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-white/20 resize-none"
+                            className="w-full resize-none rounded-xl border border-[#283022] bg-[#0d0f0b] px-4 py-3 text-[#f2f0e8] placeholder:text-[#8a8f80] hover:border-[#3c4832] focus-visible:border-[#8fa654] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8fa654]"
                             rows={4}
                         />
                     </div>
 
-                    <Separator className="bg-[#1f1f1f]" />
+                    <Separator className="bg-[#242a1e]" />
 
                     {/* Submit Button */}
                     <div className="flex flex-col sm:flex-row gap-3 pt-2">
                         <Button
                             type="submit"
-                            className="flex-1 bg-white text-black hover:bg-gray-400 rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="min-h-11 flex-1 rounded-xl bg-[#8fa654] font-semibold text-[#0b0d08] hover:bg-[#9eb660] active:bg-[#7f9449] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#b7cc7e] disabled:cursor-not-allowed disabled:opacity-50"
                             disabled={loading || rating === 0 || comment.trim() === ''}
                         >
                             {loading ? "Submitting..." : "Submit Feedback"}

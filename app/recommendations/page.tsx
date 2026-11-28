@@ -6,7 +6,6 @@ import { DM_Sans } from "next/font/google";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import RecommendationsList from "@/components/recommendations/RecommendationsList";
-import { Sparkles } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 
 const DM_Sans_Font = DM_Sans({
@@ -27,7 +26,7 @@ export default function RecommendationsPage() {
 
     if (authLoading) {
         return (
-            <div className={`min-h-screen bg-[#0b090a] flex items-center justify-center ${DM_Sans_Font.className}`}>
+            <div className={`min-h-screen bg-[#090a08] flex items-center justify-center ${DM_Sans_Font.className}`}>
                 <Spinner />
             </div>
         );
@@ -36,7 +35,7 @@ export default function RecommendationsPage() {
     if (!userId) return null;
 
     return (
-        <div className={`min-h-screen bg-[#0b090a] text-white p-4 sm:p-6 lg:p-8 ${DM_Sans_Font.className}`}>
+        <div className={`min-h-screen bg-[#090a08] text-[#f2f0e8] p-4 sm:p-6 lg:p-8 ${DM_Sans_Font.className}`}>
             <div className="max-w-6xl mx-auto space-y-6">
                 {/* Page Header */}
                 {/* <div className="flex items-center gap-3 border-b border-[#1f1f1f] pb-5"> */}
