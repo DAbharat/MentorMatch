@@ -79,22 +79,33 @@ func (h *Hub) Unregister(client *Client) []string {
 	return leftRooms
 }
 
-func (h *Hub) JoinRoom(client *Client, room string) {
+func (h *Hub) JoinRoom(client *Client, room string) bool {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
 	if !h.clients[client] {
-		return
+		return false
 	}
 	if h.rooms[room] == nil {
 		h.rooms[room] = make(map[*Client]bool)
 	}
+
+	hasOtherClient := false
+	for roomClient := range h.rooms[room] {
+		if roomClient != client {
+			hasOtherClient = true
+			break
+		}
+	}
+
 	h.rooms[room][client] = true
 
 	if h.clientRooms[client] == nil {
 		h.clientRooms[client] = make(map[string]bool)
 	}
 	h.clientRooms[client][room] = true
+
+	return hasOtherClient
 }
 
 func (h *Hub) LeaveRoom(client *Client, room string) {

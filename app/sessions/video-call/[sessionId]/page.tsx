@@ -24,6 +24,7 @@ export default function VideoCallPage() {
 
   const socketRef = useRef<WsClient | null>(null)
   const [socket, setSocket] = useState<WsClient | null>(null)
+  const [socketConnected, setSocketConnected] = useState(false)
   const [webrtcConfig, setWebrtcConfig] = useState<any>(null)
   const [role, setRole] = useState<"MENTOR" | "MENTEE" | null>(null)
   const socketInitializedRef = useRef(false)
@@ -66,6 +67,7 @@ export default function VideoCallPage() {
       try {
         if (socketRef.current?.connected) {
           setSocket(socketRef.current)
+          setSocketConnected(true)
           return
         }
 
@@ -79,17 +81,25 @@ export default function VideoCallPage() {
         })
 
         socketRef.current.on("connect", () => {
+          setSocketConnected(true)
           console.log("Socket connected.")
         })
 
+        socketRef.current.on("reconnect", () => {
+          setSocketConnected(true)
+        })
+
         socketRef.current.on("connect_error", (error: any) => {
+          setSocketConnected(false)
           console.log("Socket connection error: ", error.message)
           toast.error("Failed to connect to Server.")
         })
 
         socketRef.current.on("disconnect", (reason: string) => {
+          setSocketConnected(false)
           console.warn("Diconnected: ", reason)
           hasJoinedRef.current = false
+          rejoinStartedRef.current = false
 
           if (reason === "io server disconnect") {
             socketRef.current?.connect()
@@ -101,6 +111,7 @@ export default function VideoCallPage() {
         })
 
         setSocket(socketRef.current)
+        setSocketConnected(socketRef.current.connected)
       } catch (error) {
         socketInitializedRef.current = false
       }
@@ -122,6 +133,9 @@ export default function VideoCallPage() {
     isMuted,
     isCameraOff,
     isPeerConnected,
+    hasPeerJoined,
+    isReady,
+    error: mediaError,
     initMedia,
     toggleMute,
     toggleCamera,
@@ -140,7 +154,7 @@ export default function VideoCallPage() {
 
   const [session, setSession] = useState<any>(null)
   const [loading, setLoading] = useState(true)
-  const [phase, setPhase] = useState<"INITIAL" | "IN CALL" | "CONNECTING" | "ENDED">("INITIAL")
+  const [phase, setPhase] = useState<"INITIAL" | "IN CALL" | "CONNECTING" | "WAITING" | "ENDED">("INITIAL")
   const [elapsed, setElapsed] = useState(0)
   const [isRejoin, setIsRejoin] = useState(false)
 
@@ -166,8 +180,8 @@ export default function VideoCallPage() {
   }, [phase, session?.callStartedAt])
 
   useEffect(() => {
-    initMedia()
-  }, [])
+    void initMedia()
+  }, [initMedia])
 
   useEffect(() => {
     if (typeof window === "undefined") return
@@ -197,7 +211,7 @@ export default function VideoCallPage() {
 
   // Setup when socket connects and session is loaded - always show initial screen first
   useEffect(() => {
-    if (!socket || !session || !socket.connected) return
+    if (!socket || !session || !socketConnected) return
 
     const handleSessionStarted = async (data: any) => {
       if (data.callStartedAt) {
@@ -220,14 +234,15 @@ export default function VideoCallPage() {
     return () => {
       socket.off("session:started", handleSessionStarted)
     }
-  }, [socket, sessionId])
+  }, [socket, session, sessionId, socketConnected])
 
   // Handle rejoin auto-join - separate effect to prevent infinite loop
   useEffect(() => {
-    if (!socket || !session || !socket.connected || !isRejoin) return
+    if (!socket || !session || !socketConnected || !isReady || !isRejoin) return
     if (rejoinStartedRef.current) return
 
     rejoinStartedRef.current = true
+    setPhase("CONNECTING")
 
     const autoJoin = async () => {
       try {
@@ -253,18 +268,18 @@ export default function VideoCallPage() {
     }
 
     autoJoin()
-  }, [socket, sessionId, isRejoin])
+  }, [socket, sessionId, isRejoin, socketConnected, isReady])
 
   // Show initial screen if not rejoin and not attempting to join
   useEffect(() => {
     if (isRejoin || rejoinStartedRef.current || joinAttemptedRef.current) return
-    if (!socket || !session || !socket.connected) return
+    if (!socket || !session || !socketConnected) return
 
     setPhase("INITIAL")
-  }, [socket, session, isRejoin])
+  }, [socket, session, isRejoin, socketConnected])
 
   useEffect(() => {
-    if (!webrtcConfig || !socket?.connected || hasJoinedRef.current) return
+    if (!webrtcConfig || !socket || hasJoinedRef.current) return
 
     hasJoinedRef.current = true
     joinRoom()
@@ -273,19 +288,21 @@ export default function VideoCallPage() {
   useEffect(() => {
     if (!webrtcConfig) return
 
-    if (connectionState === "connecting" || connectionState === "new") {
-      setPhase("CONNECTING")
-    } else if (connectionState === "connected") {
+    if (connectionState === "connected") {
       setPhase("IN CALL")
-    } else if (connectionState === "failed" || connectionState === "disconnected") {
+    } else if (connectionState === "connecting" || (connectionState === "new" && hasPeerJoined)) {
       setPhase("CONNECTING")
+    } else if (connectionState === "new") {
+      setPhase("WAITING")
+    } else if (connectionState === "failed" || connectionState === "disconnected") {
+      setPhase(hasPeerJoined ? "CONNECTING" : "WAITING")
       hasJoinedRef.current = false
-      if (socket?.connected) {
+      if (socket?.connected && hasPeerJoined) {
         socket.emit("webrtc:join", { sessionId })
         hasJoinedRef.current = true
       }
     }
-  }, [connectionState, socket, sessionId, webrtcConfig])
+  }, [connectionState, hasPeerJoined, socket, sessionId, webrtcConfig])
 
   const formattedTime = `${Math.floor(elapsed / 60)
     .toString()
@@ -303,9 +320,20 @@ export default function VideoCallPage() {
 
   const handleJoinCall = useCallback(async () => {
     joinAttemptedRef.current = true
-    setPhase("CONNECTING")
     hasJoinedRef.current = false
+    if (isRejoin) {
+      rejoinStartedRef.current = true
+    }
+    setPhase("CONNECTING")
     try {
+      const mediaReady = await initMedia()
+      if (!mediaReady) {
+        setPhase("INITIAL")
+        joinAttemptedRef.current = false
+        rejoinStartedRef.current = false
+        return
+      }
+
       const data = await startVideoCall(sessionId)
       setWebrtcConfig(data)
       setRole(data.role)
@@ -324,8 +352,9 @@ export default function VideoCallPage() {
       toast.error(error.message || "Failed to join video call")
       setPhase("INITIAL")
       joinAttemptedRef.current = false
+      rejoinStartedRef.current = false
     }
-  }, [sessionId, socket])
+  }, [initMedia, isRejoin, sessionId, socket])
 
   const handleAutoEndCall = useCallback(async () => {
     setPhase("ENDED")
@@ -379,21 +408,36 @@ export default function VideoCallPage() {
 
   if (phase === "CONNECTING") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0b090a]">
+      <main role="status" aria-live="polite" className="min-h-screen flex items-center justify-center bg-[#0b090a]">
         <div className="text-center">
           <p className="text-white text-lg font-medium mb-2">
             Connecting...
           </p>
-          <p className="text-[#666] text-sm">
+          <p className="text-[#a8ab9e] text-sm">
             Setting up secure video connection
           </p>
         </div>
-      </div>
+      </main>
+    )
+  }
+
+  if (phase === "WAITING") {
+    return (
+      <main role="status" aria-live="polite" className="min-h-screen flex items-center justify-center bg-[#0b090a] px-4">
+        <div className="text-center">
+          <p className="mb-2 text-lg font-medium text-[#f2f0e8]">
+            Waiting for the other participant
+          </p>
+          <p className="text-sm text-[#a8ab9e]">
+            They need to join this session before the call can connect.
+          </p>
+        </div>
+      </main>
     )
   }
 
   return (phase === "INITIAL" ?
-    <div className="bg-[#0b090a] min-h-screen">
+    <div className="h-[calc(100dvh-3.5rem)] min-h-0 overflow-hidden bg-[#090a08] md:h-[calc(100dvh-4rem)]">
       <InitialScreen
         id={session.id}
         mentor={session.mentor}
@@ -404,9 +448,10 @@ export default function VideoCallPage() {
         onToggleCamera={handleToggleCamera}
         onJoinCall={handleJoinCall}
         localStream={localStream}
+        mediaError={!isReady ? mediaError : null}
       />
     </div> :
-    <div className="bg-[#0b090a] min-h-screen">
+    <div className="h-[calc(100dvh-3.5rem)] min-h-0 overflow-hidden bg-[#090a08] md:h-[calc(100dvh-4rem)]">
       <VideoCallScreen
         sessionId={session.id}
         mentor={session.mentor}

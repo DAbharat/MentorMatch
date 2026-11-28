@@ -127,7 +127,21 @@ export default function ProfileHeader({
   };
 
   const isOwner = userId === id;
+  const hasOfferedSkills = skillsOffered.length > 0;
+  const isRequestUnavailable = !hasOfferedSkills || hasActiveConfirmedSession;
   const initial = (name?.trim().charAt(0) || "M").toUpperCase();
+
+  const handleSendRequest = () => {
+    if (!hasOfferedSkills) {
+      toast.error(
+        "This person has no skills to offer, so a request can't be sent."
+      );
+      return;
+    }
+
+    if (userId) setOpen(true);
+    else router.push("/sign-in");
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -202,16 +216,21 @@ export default function ProfileHeader({
                 </Button>
                 <Button
                   type="button"
-                  onClick={() =>
-                    userId ? setOpen(true) : router.push("/sign-in")
-                  }
-                  disabled={hasActiveConfirmedSession}
+                  onClick={handleSendRequest}
+                  disabled={hasActiveConfirmedSession && hasOfferedSkills}
+                  aria-disabled={isRequestUnavailable}
                   title={
-                    hasActiveConfirmedSession
-                      ? "You have an active confirmed session. Wait until it completes to send another request."
+                    !hasOfferedSkills
+                      ? "This person has no skills to offer, so a request can't be sent."
+                      : hasActiveConfirmedSession
+                        ? "You have an active confirmed session. Wait until it completes to send another request."
                       : "Send a new mentorship request"
                   }
-                  className="h-11 cursor-pointer rounded-xl bg-[#8fa654] px-4 text-sm font-semibold text-[#0b0d08] transition-colors hover:bg-[#9eb660] active:bg-[#7f9449] disabled:cursor-not-allowed disabled:opacity-50"
+                  className={`h-11 rounded-xl bg-[#8fa654] px-4 text-sm font-semibold text-[#0b0d08] transition-colors focus-visible:ring-2 focus-visible:ring-[#8fa654] ${
+                    isRequestUnavailable
+                      ? "cursor-not-allowed opacity-50 hover:bg-[#8fa654] active:bg-[#8fa654]"
+                      : "cursor-pointer hover:bg-[#9eb660] active:bg-[#7f9449]"
+                  }`}
                 >
                   <Send className="h-4 w-4" aria-hidden="true" />
                   Send request
@@ -221,10 +240,18 @@ export default function ProfileHeader({
               !isOwner && (
               <Button
                 type="button"
-                onClick={() =>
-                  userId ? setOpen(true) : router.push("/sign-in")
+                onClick={handleSendRequest}
+                aria-disabled={!hasOfferedSkills}
+                title={
+                  !hasOfferedSkills
+                    ? "This person has no skills to offer, so a request can't be sent."
+                    : "Send a new mentorship request"
                 }
-                className="h-11 cursor-pointer rounded-xl bg-[#8fa654] px-4 text-sm font-semibold text-[#0b0d08] transition-colors hover:bg-[#9eb660] active:bg-[#7f9449]"
+                className={`h-11 rounded-xl bg-[#8fa654] px-4 text-sm font-semibold text-[#0b0d08] transition-colors focus-visible:ring-2 focus-visible:ring-[#8fa654] ${
+                  !hasOfferedSkills
+                    ? "cursor-not-allowed opacity-50 hover:bg-[#8fa654] active:bg-[#8fa654]"
+                    : "cursor-pointer hover:bg-[#9eb660] active:bg-[#7f9449]"
+                }`}
               >
                 <Send className="w-4 h-4" aria-hidden="true" />
                 Send request

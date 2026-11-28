@@ -24,11 +24,12 @@ type ScheduleSessionProps = {
     mentorshipRequestSkillId?: string | null
     mentorshipRequestSkillName?: string | null
     loading: boolean
+    submitting: boolean
     onSubmit: (formData: {
         skillId: string
         scheduledAt: string
         totalCallDuration: number
-    }) => void
+    }) => Promise<void>
     onCancel: () => void
 }
 
@@ -36,6 +37,7 @@ export default function ScheduleSession({
     mentor,
     mentorshipRequestSkillId,
     loading,
+    submitting,
     onSubmit,
     onCancel
 }: ScheduleSessionProps) {
@@ -45,9 +47,9 @@ export default function ScheduleSession({
         totalCallDuration: 30
     })
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        onSubmit({
+        await onSubmit({
             ...formData,
             skillId: mentorshipRequestSkillId || formData.skillId,
         })
@@ -84,7 +86,7 @@ export default function ScheduleSession({
 
                 <Separator className="bg-[#242a1e]" />
 
-                <form onSubmit={handleSubmit} className="space-y-6 md:space-y-8">
+                <form onSubmit={handleSubmit} aria-busy={submitting} className="space-y-6 md:space-y-8">
 
                     {/* Mentor Info */}
                     <div className="space-y-2 md:space-y-3">
@@ -119,7 +121,7 @@ export default function ScheduleSession({
                                 }
                                 className="h-11 w-full rounded-xl border border-[#283022] bg-[#0d0f0b] px-3 text-sm text-[#f2f0e8] [color-scheme:dark] hover:border-[#3c4832] focus-visible:border-[#8fa654] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8fa654]/50 disabled:cursor-not-allowed disabled:opacity-60"
                                 required
-                                disabled={!!mentorshipRequestSkillId}
+                                disabled={submitting || !!mentorshipRequestSkillId}
                             >
                                 <option value="">Select...</option>
                                 {mentor.skillsOffered.map((skill) => (
@@ -150,6 +152,7 @@ export default function ScheduleSession({
                                     })
                                 }
                                 className="h-11 w-full rounded-xl border border-[#283022] bg-[#0d0f0b] px-3 text-sm text-[#f2f0e8] [color-scheme:dark] hover:border-[#3c4832] focus-visible:border-[#8fa654] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8fa654]/50"
+                                disabled={submitting}
                             >
                                 <option value={15}>15 minutes</option>
                                 <option value={30}>30 minutes</option>
@@ -181,6 +184,7 @@ export default function ScheduleSession({
                             className="auth-input h-11 rounded-xl border-[#283022] bg-[#0d0f0b] text-[#f2f0e8] [color-scheme:dark] caret-[#9eb660] hover:border-[#3c4832] focus-visible:border-[#8fa654] focus-visible:ring-2 focus-visible:ring-[#8fa654]/25"
                             min={minDateString}
                             required
+                            disabled={submitting}
                         />
                         {/* <p className="text-xs text-muted-foreground">
                             Must be scheduled at least 1 hour in advance
@@ -194,15 +198,17 @@ export default function ScheduleSession({
                         
                         <Button
                             type="submit"
-                            className="h-11 flex-1 cursor-pointer rounded-xl bg-[#8fa654] text-[#0b0d08] hover:bg-[#9eb660] active:bg-[#7f9449] focus-visible:ring-2 focus-visible:ring-[#8fa654]"
+                            disabled={submitting}
+                            className="h-11 flex-1 cursor-pointer rounded-xl bg-[#8fa654] text-[#0b0d08] hover:bg-[#9eb660] active:bg-[#7f9449] focus-visible:ring-2 focus-visible:ring-[#8fa654] disabled:cursor-not-allowed disabled:opacity-60"
                         >
-                            Send request
+                            {submitting ? "Sending request..." : "Send request"}
                         </Button>
 
                         <Button
                             type="button"
                             onClick={onCancel}
-                            className="h-11 flex-1 cursor-pointer rounded-xl border border-[#3a4530] bg-transparent text-[#c7cabf] hover:bg-[#1b2116] hover:text-[#f2f0e8] active:bg-[#242a1e] focus-visible:ring-2 focus-visible:ring-[#8fa654]"
+                            disabled={submitting}
+                            className="h-11 flex-1 cursor-pointer rounded-xl border border-[#3a4530] bg-transparent text-[#c7cabf] hover:bg-[#1b2116] hover:text-[#f2f0e8] active:bg-[#242a1e] focus-visible:ring-2 focus-visible:ring-[#8fa654] disabled:cursor-not-allowed disabled:opacity-60"
                         >
                             Cancel
                         </Button>

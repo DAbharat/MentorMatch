@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation"
 import ScheduleSession from "@/components/sessions/ScheduleSession"
-import { use, useEffect, useState } from "react"
+import { use, useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 import { createSession } from "@/services/session.service"
 import { fetchUserById, fetchMyProfile } from "@/services/profile.service"
@@ -35,6 +35,8 @@ export default function ScheduleSessionPage({ params }: PageProps) {
     const [mentorshipRequestSkillId, setMentorshipRequestSkillId] = useState<string | null>(null)
     const [mentorshipRequestSkillName, setMentorshipRequestSkillName] = useState<string | null>(null)
     const [loading, setLoading] = useState(true)
+    const [submitting, setSubmitting] = useState(false)
+    const submissionLockRef = useRef(false)
 
     useEffect(() => {
         if (!mentorId) {
@@ -67,8 +69,8 @@ export default function ScheduleSessionPage({ params }: PageProps) {
                     setMentorshipRequestSkillName(mentorshipData.data.skill.name)
                 }
 
-            } catch (error: any) {
-                toast.error(error.message || "Failed to load mentor info")
+            } catch (error: unknown) {
+                toast.error(error instanceof Error ? error.message : "Failed to load mentor info")
                 router.push("/notifications")
             } finally {
                 setLoading(false)
@@ -76,13 +78,14 @@ export default function ScheduleSessionPage({ params }: PageProps) {
         }
 
         loadMentor()
-    }, [mentorId, router])
+    }, [mentorId, requestId, router])
 
     const handleSubmit = async (formData: {
         skillId: string
         scheduledAt: string
         totalCallDuration: number
     }) => {
+        if (submissionLockRef.current) return
         if (!mentor) return
 
         if (!formData.skillId || !formData.scheduledAt) {
@@ -95,6 +98,9 @@ export default function ScheduleSessionPage({ params }: PageProps) {
             toast.error("Please select a future date and time")
             return
         }
+
+        submissionLockRef.current = true
+        setSubmitting(true)
 
         try {
             const currentUserResponse = await fetchMyProfile()
@@ -110,12 +116,11 @@ export default function ScheduleSessionPage({ params }: PageProps) {
 
             await createSession(sessionData)
             toast.success("Session request sent successfully!")
-
-            setTimeout(() => {
-                router.push("/sessions")
-            }, 800)
-        } catch (error: any) {
-            toast.error(error.message || "Failed to schedule session")
+            router.push("/sessions")
+        } catch (error: unknown) {
+            submissionLockRef.current = false
+            setSubmitting(false)
+            toast.error(error instanceof Error ? error.message : "Failed to schedule session")
         }
     }
 
@@ -141,6 +146,7 @@ export default function ScheduleSessionPage({ params }: PageProps) {
             mentorshipRequestSkillId={mentorshipRequestSkillId}
             mentorshipRequestSkillName={mentorshipRequestSkillName}
             loading={loading}
+            submitting={submitting}
             onSubmit={handleSubmit}
             onCancel={handleCancel}
         />

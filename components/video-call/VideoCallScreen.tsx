@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef } from 'react'
 import { Phone, Mic, MicOff, Video, VideoOff, MonitorOff, Monitor } from 'lucide-react'
 import { toast } from 'sonner';
 
@@ -56,23 +56,10 @@ export default function VideoCallScreen({
 
     const localVideoRef = useRef<HTMLVideoElement>(null)
     const remoteVideoRef = useRef<HTMLVideoElement>(null)
-    const [isMobileView, setIsMobileView] = useState(false)
-
     const hasShownReconnectToast = useRef(false)
     const hasShownDisconnectToast = useRef(false)
 
     const handleScreenShare = async () => {
-        console.log("DEBUG: handleScreenShare called")
-        console.log("DEBUG: onStartScreenShare type:", typeof onStartScreenShare)
-        console.log("DEBUG: onStopScreenShare type:", typeof onStopScreenShare)
-        console.log("DEBUG: isScreenSharing:", isScreenSharing)
-        
-        if (!onStartScreenShare || !onStopScreenShare) {
-            console.error("ERROR: Screen share functions not provided to VideoCallScreen!")
-            toast.error("Screen share functions not initialized")
-            return
-        }
-
         try {
             if (isScreenSharing) {
                 await onStopScreenShare()
@@ -125,23 +112,13 @@ export default function VideoCallScreen({
         }
     }, [remoteStream])
 
-    useEffect(() => {
-        const checkMobile = () => {
-            setIsMobileView(window.innerWidth < 768)
-        }
-
-        checkMobile()
-        window.addEventListener('resize', checkMobile)
-        return () => window.removeEventListener('resize', checkMobile)
-    }, [])
-
     const currentUser = isUserMentor ? mentor : mentee
     const otherUser = isUserMentor ? mentee : mentor
 
     const getConnectionColor = () => {
-        if (connectionState === "connected") return "#4ade80"
-        if (connectionState === "connecting") return "#fbbf24"
-        return "#f87171"
+        if (connectionState === "connected") return "#10b981"
+        if (connectionState === "connecting") return "#dfc47a"
+        return "#f4b8bc"
     }
 
     const getConnectionText = () => {
@@ -152,253 +129,211 @@ export default function VideoCallScreen({
 
     return (
         <div
-            className="min-h-screen w-full flex flex-col transition-opacity duration-300 opacity-100"
-            style={{ backgroundColor: '#0b090a', fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif" }}
+            className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-[#090a08] text-[#f2f0e8] transition-opacity duration-300"
+            style={{ fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif" }}
         >
-            {!isPeerConnected && (
-                <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-yellow-500 text-black px-4 py-2 rounded z-50">
-                    {connectionState === "connecting"
-                        ? "Connecting to user..."
-                        : "Waiting for other user..."}
-                </div>
-            )}
-
-            {/* Header */}
-            <div className="bg-[#111315] border-b border-[#1f1f1f] px-4 sm:px-6 py-3 sm:py-4">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 sm:gap-3">
-                        <div className="flex flex-col">
-                            <h1 className="text-sm sm:text-base text-white font-semibold">
-                                {otherUser.name}
-                            </h1>
-                            <div className="flex items-center gap-1.5">
-                                <span
-                                    className="w-2 h-2 rounded-full"
-                                    style={{ backgroundColor: getConnectionColor() }}
-                                />
-                                <p className="text-xs text-[#888]">{getConnectionText()}</p>
-                            </div>
+            <header className="shrink-0 border-b border-[#1e2419] bg-[#11140e] px-3 py-2 sm:px-5 sm:py-2.5">
+                <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
+                    <div className="min-w-0">
+                        <h1 className="truncate text-sm font-semibold text-[#f2f0e8] sm:text-base">
+                            {otherUser.name}
+                        </h1>
+                        <div className="flex items-center gap-1.5">
+                            <span
+                                aria-hidden="true"
+                                className="h-2 w-2 shrink-0 rounded-full"
+                                style={{ backgroundColor: getConnectionColor() }}
+                            />
+                            <p className="text-xs text-[#a8ab9e]">{getConnectionText()}</p>
                         </div>
                     </div>
 
-                    <div className="text-center">
-                        <p className="text-xs text-[#888] mb-0.5">Duration</p>
-                        <p className="font-mono text-lg sm:text-xl font-bold text-white">
+                    <div className="text-right sm:text-center">
+                        <p className="text-[11px] text-[#a8ab9e]">Duration</p>
+                        <p className="font-mono text-lg font-semibold tabular-nums text-[#f2f0e8] sm:text-xl">
                             {elapsedTime}
                         </p>
                     </div>
 
-                    <div className="text-right text-xs text-[#666]">
-                        ID: <span className="font-mono text-[#888]">{sessionId.slice(0, 8)}...</span>
+                    <div className="hidden truncate text-right text-xs text-[#a8ab9e] sm:block">
+                        <span className="sr-only">Session ID: </span>
+                        <span className="font-mono">ID: {sessionId.slice(0, 8)}...</span>
                     </div>
                 </div>
-            </div>
+            </header>
 
-            {/* Video Container — equal 50/50 split on both mobile (column) and desktop (row) */}
-            <div className="flex-1 flex flex-col md:flex-row gap-2 sm:gap-3 p-3 sm:p-4 overflow-hidden min-h-0">
-
-                {/* Remote Video */}
-                <div
-                    className="flex-1 rounded-2xl overflow-hidden flex items-center justify-center relative min-h-0"
-                    style={{
-                        backgroundColor: '#111',
-                        border: '1px solid #1f1f1f',
-                        boxShadow: '0 0 0 1px #1f1f1f, 0 24px 64px rgba(0,0,0,0.5)',
-                    }}
-                >
+            <div
+                role="group"
+                aria-label="Call participants"
+                className="flex min-h-0 min-w-0 flex-1 flex-col gap-2 overflow-hidden p-2 sm:gap-3 sm:p-3 md:flex-row"
+            >
+                <section className="relative flex min-h-0 min-w-0 flex-1 items-center justify-center overflow-hidden rounded-xl border border-[#242a1e] bg-[#11140e]">
                     {remoteStream ? (
                         <video
                             ref={remoteVideoRef}
                             autoPlay
                             playsInline
+                            aria-label={`${otherUser.name}'s video`}
                             className="w-full h-full object-cover"
                         />
                     ) : (
-                        <div className="flex flex-col items-center gap-3">
+                        <div className="flex min-w-0 flex-col items-center gap-2 px-3 text-center">
                             <div
-                                className="w-20 h-20 sm:w-24 sm:h-24 rounded-full flex items-center justify-center text-3xl sm:text-4xl font-semibold text-white"
-                                style={{
-                                    background: 'linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%)',
-                                    border: '1px solid #2e2e2e',
-                                }}
+                                aria-hidden="true"
+                                className="flex h-16 w-16 items-center justify-center rounded-full border border-[#2a3322] bg-[#161b12] text-2xl font-semibold text-[#b7cc7e] sm:h-20 sm:w-20"
                             >
                                 {otherUser.name.charAt(0).toUpperCase()}
                             </div>
-                            <div className="text-center">
-                                <p className="text-[#888] text-sm">Waiting for</p>
-                                <p className="text-white font-semibold">{otherUser.name}</p>
-                            </div>
+                            <p className="max-w-full break-words text-sm text-[#a8ab9e]">
+                                Waiting for <span className="font-semibold text-[#f2f0e8]">{otherUser.name}</span>
+                            </p>
                         </div>
                     )}
 
-                    {/* User Label */}
                     <div
-                        className="absolute bottom-3 left-3 px-2.5 py-1 rounded-lg text-xs text-[#aaa]"
-                        style={{ backgroundColor: 'rgba(11,9,10,0.8)', backdropFilter: 'blur(8px)', border: '1px solid #1f1f1f' }}
+                        className="absolute bottom-2 left-2 max-w-[calc(100%-1rem)] truncate rounded-md border border-[#242a1e] bg-[#090a08]/90 px-2.5 py-1 text-xs text-[#c7cabf]"
                     >
                         {otherUser.name}
                     </div>
-                </div>
+                </section>
 
-                {/* Local Video — same flex-1 so it matches remote exactly */}
-                <div
-                    className="flex-1 rounded-2xl overflow-hidden relative flex items-center justify-center min-h-0"
-                    style={{
-                        backgroundColor: '#111',
-                        border: '1px solid #1f1f1f',
-                        boxShadow: '0 0 0 1px #1f1f1f, 0 24px 64px rgba(0,0,0,0.5)',
-                    }}
-                >
+                <section className="relative flex min-h-0 min-w-0 flex-1 items-center justify-center overflow-hidden rounded-xl border border-[#242a1e] bg-[#11140e]">
                     {cameraEnabled && localStream ? (
                         <video
                             ref={localVideoRef}
                             autoPlay
                             playsInline
                             muted
+                            aria-label="Your video"
                             className="w-full h-full object-cover"
                         />
                     ) : (
                         <div className="flex flex-col items-center gap-2 p-3">
                             <div
-                                className="w-20 h-20 sm:w-24 sm:h-24 rounded-full flex items-center justify-center text-3xl sm:text-4xl font-semibold text-white"
-                                style={{
-                                    background: 'linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%)',
-                                    border: '1px solid #2e2e2e',
-                                }}
+                                aria-hidden="true"
+                                className="flex h-16 w-16 items-center justify-center rounded-full border border-[#2a3322] bg-[#161b12] text-2xl font-semibold text-[#b7cc7e] sm:h-20 sm:w-20"
                             >
                                 {currentUser.name.charAt(0).toUpperCase()}
                             </div>
-                            <p className="text-[#555] text-xs text-center">Camera Off</p>
+                            <p className="text-xs text-[#a8ab9e]">Camera off</p>
                         </div>
                     )}
 
-                    {/* Local User Label */}
                     <div
-                        className="absolute bottom-3 left-3 px-2.5 py-1 rounded-lg text-xs text-[#aaa]"
-                        style={{ backgroundColor: 'rgba(11,9,10,0.8)', backdropFilter: 'blur(8px)', border: '1px solid #1f1f1f' }}
+                        className="absolute bottom-2 left-2 max-w-[calc(100%-1rem)] truncate rounded-md border border-[#242a1e] bg-[#090a08]/90 px-2.5 py-1 text-xs text-[#c7cabf]"
                     >
                         You ({currentUser.name.split(' ')[0]})
                     </div>
 
-                    {/* Mic Badge */}
                     <div
-                        className="absolute top-3 right-3 flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
+                        role="status"
+                        className="absolute right-2 top-2 flex items-center gap-1.5 rounded-md border border-[#242a1e] bg-[#090a08]/90 px-2 py-1 text-xs font-medium"
                         style={{
-                            backgroundColor: micEnabled ? 'rgba(34, 197, 94, 0.12)' : 'rgba(239, 68, 68, 0.12)',
-                            border: micEnabled ? '1px solid rgba(34, 197, 94, 0.25)' : '1px solid rgba(239, 68, 68, 0.25)',
-                            color: micEnabled ? '#4ade80' : '#f87171',
+                            color: micEnabled ? '#10b981' : '#f4b8bc',
                         }}
                     >
                         <span
-                            className="w-1.5 h-1.5 rounded-full"
-                            style={{ backgroundColor: micEnabled ? '#4ade80' : '#f87171' }}
+                            aria-hidden="true"
+                            className="h-1.5 w-1.5 rounded-full"
+                            style={{ backgroundColor: micEnabled ? '#10b981' : '#f4b8bc' }}
                         />
-                        <span>{micEnabled ? 'On' : 'Off'}</span>
+                        <span>Mic {micEnabled ? 'on' : 'off'}</span>
                     </div>
-                </div>
+                </section>
             </div>
 
-            {/* Controls Bar */}
-            <div
-                className="px-4 sm:px-6 py-4 sm:py-5 border-t border-[#1f1f1f] bg-[#111315]"
-            >
-                <div className="flex items-center justify-center gap-3 sm:gap-4 flex-wrap">
-                    {/* Mic Button */}
+            <footer className="shrink-0 border-t border-[#1e2419] bg-[#11140e] px-3 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:px-5 sm:pt-3 sm:pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+                <div className="mx-auto grid w-full max-w-sm grid-cols-4 gap-1 sm:gap-3">
                     <button
                         onClick={onToggleMic}
-                        className="group flex flex-col items-center gap-1.5 focus:outline-none"
-                        title={micEnabled ? "Mute" : "Unmute"}
+                        className="group flex min-h-16 min-w-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl px-1 py-1 transition-colors hover:bg-[#161b12] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#b7cc7e] active:bg-[#1b2116]"
+                        aria-label={micEnabled ? "Mute microphone" : "Unmute microphone"}
                     >
                         <div
-                            className="w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-105"
+                            aria-hidden="true"
+                            className="flex h-11 w-11 items-center justify-center rounded-xl border transition-colors sm:h-12 sm:w-12"
                             style={{
-                                backgroundColor: micEnabled ? '#1a1a1a' : '#3b1f1f',
-                                border: micEnabled ? '1px solid #2e2e2e' : '1px solid #5a2020',
+                                backgroundColor: micEnabled ? '#161b12' : '#231214',
+                                borderColor: micEnabled ? '#2a3322' : '#61282d',
                             }}
                         >
                             {micEnabled ? (
-                                <Mic className="w-5 h-5 sm:w-6 sm:h-6 text-[#e0e0e0]" />
+                                <Mic className="h-5 w-5 text-[#c7cabf]" />
                             ) : (
-                                <MicOff className="w-5 h-5 sm:w-6 sm:h-6 text-[#f87171]" />
+                                <MicOff className="h-5 w-5 text-[#f4b8bc]" />
                             )}
                         </div>
-                        <span className="text-[10px] sm:text-xs font-medium text-center" style={{ color: micEnabled ? '#888' : '#f87171' }}>
+                        <span className={`max-w-full truncate text-[11px] font-medium ${micEnabled ? "text-[#c7cabf]" : "text-[#f4b8bc]"}`}>
                             {micEnabled ? 'Mute' : 'Unmute'}
                         </span>
                     </button>
 
-                    {/* Camera Button */}
                     <button
                         onClick={onToggleCamera}
-                        className="group flex flex-col items-center gap-1.5 focus:outline-none"
-                        title={cameraEnabled ? "Stop Video" : "Start Video"}
+                        className="group flex min-h-16 min-w-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl px-1 py-1 transition-colors hover:bg-[#161b12] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#b7cc7e] active:bg-[#1b2116]"
+                        aria-label={cameraEnabled ? "Turn camera off" : "Turn camera on"}
                     >
                         <div
-                            className="w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-105"
+                            aria-hidden="true"
+                            className="flex h-11 w-11 items-center justify-center rounded-xl border transition-colors sm:h-12 sm:w-12"
                             style={{
-                                backgroundColor: cameraEnabled ? '#1a1a1a' : '#3b1f1f',
-                                border: cameraEnabled ? '1px solid #2e2e2e' : '1px solid #5a2020',
+                                backgroundColor: cameraEnabled ? '#161b12' : '#231214',
+                                borderColor: cameraEnabled ? '#2a3322' : '#61282d',
                             }}
                         >
                             {cameraEnabled ? (
-                                <Video className="w-5 h-5 sm:w-6 sm:h-6 text-[#e0e0e0]" />
+                                <Video className="h-5 w-5 text-[#c7cabf]" />
                             ) : (
-                                <VideoOff className="w-5 h-5 sm:w-6 sm:h-6 text-[#f87171]" />
+                                <VideoOff className="h-5 w-5 text-[#f4b8bc]" />
                             )}
                         </div>
-                        <span className="text-[10px] sm:text-xs font-medium text-center" style={{ color: cameraEnabled ? '#888' : '#f87171' }}>
-                            {cameraEnabled ? 'Stop' : 'Start'}
+                        <span className={`max-w-full truncate text-[11px] font-medium ${cameraEnabled ? "text-[#c7cabf]" : "text-[#f4b8bc]"}`}>
+                            {cameraEnabled ? 'Camera off' : 'Camera on'}
                         </span>
                     </button>
 
                     <button
                         onClick={handleScreenShare}
                         disabled={isPeerScreenSharing}
-                        className="group flex flex-col items-center gap-1.5 focus:outline-none"
-                        title={isScreenSharing ? "Stop Sharing" : "Start Sharing"}
+                        className="group flex min-h-16 min-w-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl px-1 py-1 transition-colors hover:bg-[#161b12] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#b7cc7e] active:bg-[#1b2116] disabled:cursor-not-allowed"
+                        aria-label={isScreenSharing ? "Stop sharing screen" : "Share screen"}
                     >
                         <div
-                            className="w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-105"
+                            aria-hidden="true"
+                            className="flex h-11 w-11 items-center justify-center rounded-xl border transition-colors sm:h-12 sm:w-12"
                             style={{
-                                backgroundColor: isScreenSharing ? '#1a1a1a' : '#3b1f1f',
-                                border: isScreenSharing ? '1px solid #2e2e2e' : '1px solid #5a2020',
+                                backgroundColor: isPeerScreenSharing ? '#0d0f0b' : isScreenSharing ? '#1b2116' : '#161b12',
+                                borderColor: isPeerScreenSharing ? '#283022' : isScreenSharing ? '#323d28' : '#2a3322',
                             }}
                         >
                             {isScreenSharing ? (
-                                <Monitor className="w-5 h-5 sm:w-6 sm:h-6 text-[#e0e0e0]" />
+                                <Monitor className="h-5 w-5 text-[#b7cc7e]" />
                             ) : (
-                                <MonitorOff className="w-5 h-5 sm:w-6 sm:h-6 text-[#f87171]" />
+                                <MonitorOff className={`h-5 w-5 ${isPeerScreenSharing ? "text-[#8e9484]" : "text-[#c7cabf]"}`} />
                             )}
                         </div>
-                        <span className="text-[10px] sm:text-xs font-medium text-center" style={{ color: isScreenSharing ? '#888' : '#f87171' }}>
-                            {isScreenSharing ? 'Stop Sharing' : 'Start Sharing'}
+                        <span className={`max-w-full truncate text-[11px] font-medium ${isPeerScreenSharing ? "text-[#8e9484]" : "text-[#c7cabf]"}`}>
+                            {isPeerScreenSharing ? 'Peer sharing' : isScreenSharing ? 'Stop share' : 'Share screen'}
                         </span>
                     </button>
 
-                    {/* Divider */}
-                    <div className="w-px h-10 sm:h-12 mx-1" style={{ backgroundColor: '#1f1f1f' }} />
-
-                    {/* End Call Button */}
                     <button
                         onClick={onEndCall}
-                        className="group flex flex-col items-center gap-1.5 focus:outline-none"
-                        title="End Call"
+                        className="group flex min-h-16 min-w-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl px-1 py-1 transition-colors hover:bg-[#231214] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f4b8bc] active:bg-[#2b181a]"
+                        aria-label="End call"
                     >
                         <div
-                            className="w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-105"
-                            style={{
-                                background: 'linear-gradient(135deg, #7f1d1d 0%, #5f0f0f 100%)',
-                                border: '1px solid #dc262655',
-                            }}
+                            aria-hidden="true"
+                            className="flex h-11 w-11 items-center justify-center rounded-xl border border-[#61282d] bg-[#231214] transition-colors group-hover:bg-[#2b181a] sm:h-12 sm:w-12"
                         >
-                            <Phone className="w-5 h-5 sm:w-6 sm:h-6 text-[#fca5a5] rotate-135" />
+                            <Phone className="h-5 w-5 rotate-135 text-[#f4b8bc]" />
                         </div>
-                        <span className="text-[10px] sm:text-xs font-medium" style={{ color: '#fca5a5' }}>
+                        <span className="max-w-full truncate text-[11px] font-medium text-[#f4b8bc]">
                             End Call
                         </span>
                     </button>
                 </div>
-            </div>
+            </footer>
         </div>
     )
 }

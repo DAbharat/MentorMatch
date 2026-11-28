@@ -4,7 +4,7 @@ import { SessionStatus, updateSessionSchema } from "@/schema/sessionSchema";
 import { z } from "zod";
 import { computeSessionMetrices } from "@/lib/helpers/session-metrics";
 import { createNotification } from "@/lib/notification";
-import { NotificationType } from "@prisma/client";
+import { NotificationType, Prisma } from "@prisma/client";
 import { getSessionFromRequest } from "@/lib/auth/auth";
 import { invalidateSessionParticipants } from "@/redis/cache/sessions";
 import { invalidateMentorAnalytics } from "@/redis/cache/analytics";
@@ -40,11 +40,16 @@ const SESSION_TRANSITIONS: Record<string, TransitionRule> = {
 } as const;
 
 type ActionHandler = (
-    session: any,
-    userId: string,
+    session: Prisma.SessionGetPayload<{
+        include: {
+            mentor: true
+            mentee: true
+            skill: true
+        }
+    }>,
     sessionId: string,
     isAutoEnd?: boolean
-) => Promise<Record<string, any>>
+) => Promise<Prisma.SessionUpdateManyMutationInput>
 
 const ACTION_HANDLERS: Record<string, ActionHandler> = {
     CONFIRM: async() => {
@@ -53,7 +58,7 @@ const ACTION_HANDLERS: Record<string, ActionHandler> = {
         }
     },
 
-    START: async(session, _userId, _sessionId) => {
+    START: async(session) => {
         if(session.callStartedAt) {
             throw new Error("Session has already been started")
         }
@@ -64,7 +69,7 @@ const ACTION_HANDLERS: Record<string, ActionHandler> = {
         }
     },
 
-    COMPLETE: async(session, _userId, sessionId, isAutoEnd) => {
+    COMPLETE: async(session, sessionId, isAutoEnd) => {
         if(session.metricsComputedAt) {
             throw new Error("Session metrics already finalized")
         }
@@ -202,24 +207,49 @@ export async function PATCH(req: NextRequest,
             })
         }
 
-        let data;
+        let data: Prisma.SessionUpdateManyMutationInput;
 
         try {
-            data = await actionHandler(getSession, userId, sessionId, isAutoEnd);
-        } catch (error: any) {
+            data = await actionHandler(getSession, sessionId, isAutoEnd);
+        } catch (error: unknown) {
             return NextResponse.json({
-                message: error.message || "Action handler error"
+                message: error instanceof Error ? error.message : "Action handler error"
             }, {
                 status: 400
             })
         }
 
-        const updateSession = await prisma.session.update({
+        const updateResult = await prisma.session.updateMany({
             where: {
-                id: sessionId
+                id: sessionId,
+                status: {
+                    in: rule.from
+                }
             },
             data
         })
+
+        if (updateResult.count === 0) {
+            return NextResponse.json({
+                message: "This session was already updated. Refresh to see its current status."
+            }, {
+                status: 409
+            })
+        }
+
+        const updateSession = await prisma.session.findUnique({
+            where: {
+                id: sessionId
+            }
+        })
+
+        if (!updateSession) {
+            return NextResponse.json({
+                message: "Session not found"
+            }, {
+                status: 404
+            })
+        }
         if(action === "CONFIRM") {
             await scheduleSessionReminder(updateSession.id, updateSession.scheduledAt)
         } else if(action === "CANCEL") {

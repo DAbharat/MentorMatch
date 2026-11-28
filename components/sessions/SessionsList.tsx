@@ -216,7 +216,7 @@ export default function SessionsList({
         ? `/sessions/video-call/${session.id}?rejoin=true`
         : `/sessions/video-call/${session.id}`
 
-      console.log("[SessionsList] Navigating to:", url)
+      // console.log("[SessionsList] Navigating to:", url)
       router.push(url)
     } catch (error: any) {
       toast.error(error.message || "Failed to join session")

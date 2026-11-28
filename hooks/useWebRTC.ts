@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { WsClient as Socket } from "@/lib/ws/wsClient"
 
 interface useWebRTCProps {
@@ -17,6 +17,7 @@ export const useWebRTC = ({
 
   const pcRef = useRef<RTCPeerConnection | null>(null)
   const localStreamRef = useRef<MediaStream | null>(null)
+  const mediaRequestRef = useRef<Promise<boolean> | null>(null)
   const pendingCandidates = useRef<RTCIceCandidate[]>([])
 
   const [localStream, setLocalStream] = useState<MediaStream | null>(null)
@@ -40,6 +41,7 @@ export const useWebRTC = ({
   const [isCameraOff, setIsCameraOff] = useState(false)
   const [isReady, setIsReady] = useState(false)
   const [isJoined, setIsJoined] = useState(false)
+  const [hasPeerJoined, setHasPeerJoined] = useState(false)
 
   const [error, setError] = useState<string | null>(null)
   const [isPeerConnected, setIsPeerConnected] = useState(false)
@@ -53,35 +55,55 @@ export const useWebRTC = ({
   const isStoppingRef = useRef(false)
   const screenTrackRef = useRef<MediaStreamTrack | null>(null)
 
-  async function initMedia() {
+  const initMedia = useCallback(async (): Promise<boolean> => {
     if (localStreamRef.current) {
-      return
+      return true
+    }
+    if (mediaRequestRef.current) {
+      return mediaRequestRef.current
     }
 
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: true,
-        video: true
-      })
+    setError(null)
 
-      const videoTrack = stream.getVideoTracks()[0]
-      cameraTrackRef.current = videoTrack
+    const request = (async () => {
+      try {
+        if (!navigator.mediaDevices?.getUserMedia) {
+          throw new Error("Camera and microphone access is not supported by this browser.")
+        }
 
-      localStreamRef.current = stream
-      setLocalStream(stream)
-      setIsReady(true)
-    } catch (err: any) {
-      if (err.name === 'NotAllowedError') {
-        setError("Camera/mic access denied. Please allow permissions in browser settings.")
-      } else if (err.name === 'NotFoundError') {
-        setError("No camera or microphone found on this device.")
-      } else if (err.name === 'NotReadableError') {
-        setError("Camera/mic is already in use by another application.")
-      } else {
-        setError("Failed to access camera/mic: " + err.message)
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: true,
+          video: true
+        })
+
+        const videoTrack = stream.getVideoTracks()[0]
+        cameraTrackRef.current = videoTrack
+
+        localStreamRef.current = stream
+        setLocalStream(stream)
+        setIsReady(true)
+        return true
+      } catch (err: unknown) {
+        const mediaError = err instanceof Error ? err : new Error(String(err))
+        if (mediaError.name === 'NotAllowedError') {
+          setError("Camera and microphone access is blocked. Allow access in your browser settings, then choose Join again.")
+        } else if (mediaError.name === 'NotFoundError') {
+          setError("No camera or microphone was found. Connect a device, then choose Join again.")
+        } else if (mediaError.name === 'NotReadableError') {
+          setError("Camera or microphone is being used by another app. Close that app, then choose Join again.")
+        } else {
+          setError("Could not access camera or microphone. Check browser permissions and try again: " + mediaError.message)
+        }
+        setIsReady(false)
+        console.error("[WebRTC] Local media setup failed:", mediaError)
+        return false
+      } finally {
+        mediaRequestRef.current = null
       }
-    }
-  }
+    })()
+    mediaRequestRef.current = request
+    return request
+  }, [])
 
   function createPeerConnection() {
     const pc = new RTCPeerConnection({ iceServers })
@@ -156,6 +178,7 @@ export const useWebRTC = ({
     }
 
     const handlePeerJoined = async () => {
+      setHasPeerJoined(true)
       if (role !== "MENTOR") {
         return
       }
@@ -171,6 +194,7 @@ export const useWebRTC = ({
 
 
     const handleOffer = async ({ offer }: any) => {
+      setHasPeerJoined(true)
       if (role !== "MENTEE") {
         return
       }
@@ -191,6 +215,7 @@ export const useWebRTC = ({
     }
 
     const handleAnswer = async ({ answer }: any) => {
+      setHasPeerJoined(true)
       if (role !== "MENTOR") {
         return
       }
@@ -222,8 +247,13 @@ export const useWebRTC = ({
     }
 
     const handlePeerLeft = () => {
+      setHasPeerJoined(false)
       setRemoteStream(null)
       setIsPeerConnected(false)
+    }
+
+    const handleSocketDisconnect = () => {
+      setHasPeerJoined(false)
     }
 
     const handleScreenShareStart = () => {
@@ -241,6 +271,16 @@ export const useWebRTC = ({
       console.log("[WebRTC] Peer stopped screen sharing")
     }
 
+    const handleWebRTCError = (error: unknown) => {
+      console.error("WebRTC socket error:", error)
+    }
+
+    const joinSignalingRoom = () => {
+      if (socket.connected) {
+        socket.emit("webrtc:join", { sessionId })
+      }
+    }
+
     socket.on("webrtc:peer-joined", handlePeerJoined)
     socket.on("webrtc:offer", handleOffer)
     socket.on("webrtc:answer", handleAnswer)
@@ -248,10 +288,12 @@ export const useWebRTC = ({
     socket.on("webrtc:peer-left", handlePeerLeft)
     socket.on("webrtc:screen-share-started", handleScreenShareStart)
     socket.on("webrtc:screen-share-stopped", handleScreenShareStop)
+    socket.on("webrtc:error", handleWebRTCError)
+    socket.on("connect", joinSignalingRoom)
+    socket.on("reconnect", joinSignalingRoom)
+    socket.on("disconnect", handleSocketDisconnect)
 
-    socket.on("webrtc:error", (error: any) => {
-      console.error("WebRTC socket error:", error)
-    })
+    joinSignalingRoom()
 
     return () => {
 
@@ -270,17 +312,17 @@ export const useWebRTC = ({
         pcRef.current = null
       }
 
-      if(socket) {
       socket.off("webrtc:offer", handleOffer)
       socket.off("webrtc:answer", handleAnswer)
       socket.off("webrtc:ice-candidate", handleIce)
-      }
-
       socket.off("webrtc:peer-left", handlePeerLeft)
       socket.off("webrtc:peer-joined", handlePeerJoined)
       socket.off("webrtc:screen-share-started", handleScreenShareStart)
       socket.off("webrtc:screen-share-stopped", handleScreenShareStop)
-      socket.off("webrtc:error")
+      socket.off("webrtc:error", handleWebRTCError)
+      socket.off("connect", joinSignalingRoom)
+      socket.off("reconnect", joinSignalingRoom)
+      socket.off("disconnect", handleSocketDisconnect)
 
       pendingCandidates.current = []
     }
@@ -288,11 +330,6 @@ export const useWebRTC = ({
   }, [isJoined, isReady, role, sessionId, iceServers])
 
   function joinRoom(): void {
-    if (!socket?.connected) {
-      return
-    }
-
-    socket.emit("webrtc:join", { sessionId })
     setIsJoined(true)
   }
 
@@ -330,6 +367,8 @@ export const useWebRTC = ({
     setConnectionState("closed")
     setIsJoined(false)
     setIsReady(false)
+    setHasPeerJoined(false)
+    setError(null)
 
     pcRef.current = null
     localStreamRef.current = null
@@ -534,6 +573,7 @@ export const useWebRTC = ({
     isCameraOff,
     isReady,
     error,
+    hasPeerJoined,
     isPeerConnected,
     initMedia,
     joinRoom,

@@ -67,7 +67,8 @@ export default function RequestForm({
                     <button 
                         type="button" 
                         onClick={onClose}
-                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-[#a8ab9e] transition-colors hover:bg-[#1b2116] hover:text-[#f2f0e8] active:bg-[#242a1e] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8fa654]"
+                        disabled={loading}
+                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-[#a8ab9e] transition-colors hover:bg-[#1b2116] hover:text-[#f2f0e8] active:bg-[#242a1e] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8fa654] disabled:cursor-not-allowed disabled:opacity-50"
                         aria-label="Close mentorship request form"
                     >
                         <X className="h-5 w-5" aria-hidden="true" />

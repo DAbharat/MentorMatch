@@ -34,10 +34,6 @@ export class WsClient {
         if(options.chatId) {
             this.joinedRooms.add(`chat_${options.chatId}`)
         }
-        if(options.sessionId) {
-            this.joinedRooms.add(`call_${options.sessionId}`)
-        }
-
         this.connect()
     }
 

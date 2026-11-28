@@ -1,6 +1,7 @@
 import axios, { AxiosError } from "axios";
 import { ApiResponse } from "@/types/ApiResponse";
 import axiosClient from "@/lib/axiosClient";
+import { Session } from "@/types/session";
 
 export async function fetchAllSessions() {
     try {
@@ -73,6 +74,7 @@ export async function createSession(sessionData: {
     mentorId: string
     menteeId: string
     skillId: string
+    mentorshipRequestId: string
     scheduledAt: string
     totalCallDuration: number
 }) {
@@ -90,9 +92,9 @@ export async function createSession(sessionData: {
 export async function checkMentorshipSessionStatus(mentorId: string) {
     try {
         const allSessions = await fetchAllSessions()
-        const sessions = allSessions.sessions || []
+        const sessions: Session[] = allSessions.sessions || []
         
-        const mentorshipSession = sessions.find((session: any) => 
+        const mentorshipSession = sessions.find((session) =>
             session.mentor.id === mentorId || 
             session.mentee.id === mentorId
         )

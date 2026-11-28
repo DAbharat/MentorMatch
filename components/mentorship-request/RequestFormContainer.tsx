@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from 'react'
+import React, { useRef, useState } from 'react'
 import RequestForm from './RequestForm'
 import { MentorshipRequestService } from '@/services/mentorship-request.service'
 import { toast } from 'sonner'
@@ -25,13 +25,17 @@ export default function RequestFormContainer({
 }: Props) {
 
     const [loading, setLoading] = useState(false)
+    const submissionLockRef = useRef(false)
 
     const handleSubmit = async (data: {
         skillId: string
         message: string
     }) => {
+        if (submissionLockRef.current) return
+        submissionLockRef.current = true
+        setLoading(true)
+
         try {
-            setLoading(true)
             await MentorshipRequestService({
                 mentorId,
                 skillId: data.skillId,
@@ -39,10 +43,15 @@ export default function RequestFormContainer({
             })
 
             toast.success("Mentorship request sent successfully!")
-        } catch (error: any) {
-            toast.error(error.message || "Failed to send mentorship request")
-        } finally {
+            onClose()
+        } catch (error: unknown) {
+            submissionLockRef.current = false
             setLoading(false)
+            toast.error(
+                error instanceof Error
+                    ? error.message
+                    : "Failed to send mentorship request"
+            )
         }
     }
     return (

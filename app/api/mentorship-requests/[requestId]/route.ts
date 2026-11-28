@@ -106,17 +106,25 @@ export async function PATCH(req: NextRequest,
         console.log("New Status:", newStatus)
 
         const result = await prisma.$transaction(async (tx) => {
-            console.log("Updating mentorship request...")
-            const updateRequest = await tx.mentorshipRequest.update({
+            const updateResult = await tx.mentorshipRequest.updateMany({
                 where: {
-                    id: requestId
+                    id: requestId,
+                    status: "PENDING"
                 },
                 data: {
                     status: newStatus
                 }
             })
 
-            console.log("Request updated:", updateRequest)
+            if (updateResult.count === 0) {
+                return null
+            }
+
+            const updateRequest = await tx.mentorshipRequest.findUniqueOrThrow({
+                where: {
+                    id: requestId
+                }
+            })
 
             let chat = null
 
@@ -148,6 +156,15 @@ export async function PATCH(req: NextRequest,
                 chat
             }
         })
+
+        if (!result) {
+            return NextResponse.json({
+                message: "Mentorship request already processed"
+            }, {
+                status: 409
+            })
+        }
+
         if(action === "ACCEPT" && result.chat) {
             await invalidateChatOnNewMessage(
                 mentorshipRequestExists.mentorId, 

@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { Calendar } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
@@ -50,11 +50,15 @@ export default function RequestSidebarCard(
   }: RequestSidebarProps
 ) {
   const [processingAction, setProcessingAction] = useState<"ACCEPT" | "REJECT" | null>(null)
+  const actionLockRef = useRef(false)
   const router = useRouter()
 
   const handleAction = async (action: "ACCEPT" | "REJECT") => {
+    if (actionLockRef.current || status !== "PENDING") return
+    actionLockRef.current = true
+    setProcessingAction(action)
+
     try {
-      setProcessingAction(action)
       await updateMentorshipRequestStatus(id, action)
       toast.success(`Request ${action === "ACCEPT" ? "accepted" : "rejected"} successfully`)
       onStatusUpdate?.(id)
@@ -64,7 +68,7 @@ export default function RequestSidebarCard(
           ? error.message
           : `Failed to ${action.toLowerCase()} request`
       )
-    } finally {
+      actionLockRef.current = false
       setProcessingAction(null)
     }
   }
@@ -147,29 +151,29 @@ export default function RequestSidebarCard(
           <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-relaxed text-[#c7cabf]">
             {message}
           </p>
+
+          {!isSentView && status === "PENDING" && (
+            <div className="mt-4 flex flex-col gap-2 border-t border-[#1e2419] pt-4 sm:flex-row">
+              <button
+                type="button"
+                onClick={() => void handleAction("ACCEPT")}
+                disabled={processingAction !== null}
+                className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-[#8fa654] bg-[#8fa654] px-4 text-sm font-semibold text-[#0b0d08] transition-colors hover:border-[#9eb660] hover:bg-[#9eb660] active:bg-[#7f9449] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#b7cc7e] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {processingAction === "ACCEPT" ? "Accepting..." : "Accept request"}
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleAction("REJECT")}
+                disabled={processingAction !== null}
+                className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-[#5d6a4f] bg-[#0d0f0b] px-4 text-sm font-medium text-[#c7cabf] transition-colors hover:border-[#8d474c] hover:bg-[#231214] hover:text-[#f4b8bc] active:bg-[#1d1012] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f4b8bc] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {processingAction === "REJECT" ? "Rejecting..." : "Decline"}
+              </button>
+            </div>
+          )}
         </div>
       </div>
-
-      {!isSentView && (
-        <div className="mt-4 flex flex-col gap-2 border-t border-[#1e2419] pt-4 sm:flex-row">
-          <button
-            type="button"
-            onClick={() => void handleAction("ACCEPT")}
-            disabled={processingAction !== null}
-            className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-[#10b981] bg-[#10b981] px-4 text-sm font-semibold text-[#0b0d08] transition-colors hover:border-[#34d399] hover:bg-[#34d399] active:bg-[#059669] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6ee7b7] disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {processingAction === "ACCEPT" ? "Accepting..." : "Accept request"}
-          </button>
-          <button
-            type="button"
-            onClick={() => void handleAction("REJECT")}
-            disabled={processingAction !== null}
-            className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-[#61282d] bg-[#231214] px-4 text-sm font-medium text-[#f4b8bc] transition-colors hover:border-[#8d474c] hover:bg-[#351a1d] active:bg-[#1d1012] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f4b8bc] disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {processingAction === "REJECT" ? "Rejecting..." : "Decline"}
-          </button>
-        </div>
-      )}
 
       {isSentView && status === "ACCEPTED" && (
         <div className="mt-4 border-t border-[#1e2419] pt-4">

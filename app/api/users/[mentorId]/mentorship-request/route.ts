@@ -4,7 +4,7 @@ import prisma from "@/lib/prisma";
 import { createMentorshipRequestSchema } from "@/schema/createMentorshipRequestSchema";
 import { z } from "zod";
 import { createNotification } from "@/lib/notification";
-import { NotificationType } from "@prisma/client";
+import { NotificationType, Prisma } from "@prisma/client";
 import { getSessionFromRequest } from "@/lib/auth/auth";
 import { invalidateRequestParticipants } from "@/redis/cache/mentorship-requests";
 
@@ -124,35 +124,47 @@ export async function POST(req: NextRequest,
             }
         })
 
-        const mentorshipRequestExists = await prisma.mentorshipRequest.findFirst({
-            where: {
-                mentorId: mentorId,
-                menteeId: userId,
-                skillId: skillId,
-                status: "PENDING"
-            }
-        })
-        console.log("Existing request: ", mentorshipRequestExists)
+        const requestCreation = await prisma.$transaction(async (tx) => {
+            const existingRequest = await tx.mentorshipRequest.findFirst({
+                where: {
+                    mentorId,
+                    menteeId: userId,
+                    skillId,
+                    status: "PENDING"
+                },
+                select: {
+                    id: true
+                }
+            })
 
-        if (mentorshipRequestExists) {
+            if (existingRequest) {
+                return { duplicate: true as const }
+            }
+
+            const request = await tx.mentorshipRequest.create({
+                data: {
+                    mentorId,
+                    menteeId: userId,
+                    initialMessage,
+                    skillId,
+                    status: "PENDING",
+                }
+            })
+
+            return { duplicate: false as const, request }
+        }, {
+            isolationLevel: Prisma.TransactionIsolationLevel.Serializable
+        })
+
+        if (requestCreation.duplicate) {
             return NextResponse.json({
                 message: "You already have a pending mentorship request for this skill with this mentor"
             }, {
-                status: 400
+                status: 409
             })
         }
 
-        console.log("Creating mentorship request from", userId, "to", mentorId, "for skill", skillId)
-
-        const createRequest = await prisma.mentorshipRequest.create({
-            data: {
-                mentorId: mentorId,
-                menteeId: userId,
-                initialMessage: initialMessage,
-                skillId: skillId,
-                status: "PENDING",
-            }
-        })
+        const createRequest = requestCreation.request
 
         console.log("Mentorship request created successfully:", createRequest.id)
         console.log("Now creating notification for mentor:", mentorId)
@@ -179,6 +191,17 @@ export async function POST(req: NextRequest,
             status: 201
         })
     } catch (error) {
+        if (
+            error instanceof Prisma.PrismaClientKnownRequestError &&
+            error.code === "P2034"
+        ) {
+            return NextResponse.json({
+                message: "You already have a pending mentorship request for this skill with this mentor"
+            }, {
+                status: 409
+            })
+        }
+
         console.error("Error creating mentorship request:", error)
         return NextResponse.json({
             message: "Internal server error"

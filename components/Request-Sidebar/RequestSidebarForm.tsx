@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useRef, useState } from "react"
 import { Card } from "../ui/card"
 import { Badge } from "../ui/badge"
 import { Separator } from "../ui/separator"
@@ -42,25 +42,26 @@ export default function RequestSidebarForm({
 }: RequestSidebarFormProps) {
 
     const [isProcessing, setIsProcessing] = useState(false)
+    const actionLockRef = useRef(false)
     const router = useRouter()
 
     const handleAction = async (action: "ACCEPT" | "REJECT") => {
+        if (actionLockRef.current) return
+        actionLockRef.current = true
+        setIsProcessing(true)
+
         try {
-            setIsProcessing(true)
             await updateMentorshipRequestStatus(id, action)
             toast.success(`Request ${action === "ACCEPT" ? "accepted" : "rejected"} successfully`)
-            
-            setTimeout(() => {
-                router.push("/requests")
-            }, 800)
+            router.push("/requests")
         } catch (error: unknown) {
+            actionLockRef.current = false
+            setIsProcessing(false)
             toast.error(
                 error instanceof Error
                     ? error.message
                     : `Failed to ${action.toLowerCase()} request`
             )
-        } finally {
-            setIsProcessing(false)
         }
     }
 
@@ -147,8 +148,8 @@ export default function RequestSidebarForm({
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                             <AlertDialogCancel className="h-11 cursor-pointer rounded-xl border-[#3a4530] bg-[#0d0f0b] text-[#c7cabf] hover:bg-[#1b2116] hover:text-[#f2f0e8] focus-visible:ring-2 focus-visible:ring-[#8fa654]">Cancel</AlertDialogCancel>
-                            <AlertDialogAction className="h-11 cursor-pointer rounded-xl bg-[#10b981] text-[#0b0d08] hover:bg-[#34d399] focus-visible:ring-2 focus-visible:ring-[#10b981]" onClick={() => handleAction("ACCEPT")}>
-                                Accept Request
+                            <AlertDialogAction disabled={isProcessing} className="h-11 cursor-pointer rounded-xl bg-[#10b981] text-[#0b0d08] hover:bg-[#34d399] focus-visible:ring-2 focus-visible:ring-[#10b981] disabled:cursor-not-allowed disabled:opacity-50" onClick={() => handleAction("ACCEPT")}>
+                                {isProcessing ? "Processing..." : "Accept Request"}
                             </AlertDialogAction>
                         </AlertDialogFooter>
                     </AlertDialogContent>
@@ -172,8 +173,8 @@ export default function RequestSidebarForm({
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                             <AlertDialogCancel className="h-11 cursor-pointer rounded-xl border-[#3a4530] bg-[#0d0f0b] text-[#c7cabf] hover:bg-[#1b2116] hover:text-[#f2f0e8] focus-visible:ring-2 focus-visible:ring-[#8fa654]">Cancel</AlertDialogCancel>
-                            <AlertDialogAction className="h-11 cursor-pointer rounded-xl border border-[#61282d] bg-[#231214] text-[#f4b8bc] hover:bg-[#30171a] focus-visible:ring-2 focus-visible:ring-[#f4b8bc]" onClick={() => handleAction("REJECT")}>
-                                Reject Request
+                            <AlertDialogAction disabled={isProcessing} className="h-11 cursor-pointer rounded-xl border border-[#61282d] bg-[#231214] text-[#f4b8bc] hover:bg-[#30171a] focus-visible:ring-2 focus-visible:ring-[#f4b8bc] disabled:cursor-not-allowed disabled:opacity-50" onClick={() => handleAction("REJECT")}>
+                                {isProcessing ? "Processing..." : "Reject Request"}
                             </AlertDialogAction>
                         </AlertDialogFooter>
                     </AlertDialogContent>

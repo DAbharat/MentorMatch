@@ -4,7 +4,7 @@ import prisma from "@/lib/prisma";
 import { createSessionSchema } from "@/schema/sessionSchema";
 import { z } from "zod";
 import { createNotification } from "@/lib/notification";
-import { NotificationType } from "@prisma/client";
+import { NotificationType, Prisma } from "@prisma/client";
 import { getSessionFromRequest } from "@/lib/auth/auth";
 import { getCachedUserSessions, invalidateSessionParticipants, setCachedUserSessions } from "@/redis/cache/sessions";
 import { scheduleSessionReminder } from "@/queues/sqs.producer";
@@ -208,18 +208,50 @@ export async function POST(req: NextRequest) {
             })
         }
 
-        const createSession = await prisma.session.create({
-            data: {
-                mentorId,
-                menteeId,
-                skillId,
-                mentorshipRequestId,
-                scheduledAt,
-                totalCallDuration,
-                status: "PENDING",
-                roomId: crypto.randomUUID()
+        const sessionCreation = await prisma.$transaction(async (tx) => {
+            const activeSession = await tx.session.findFirst({
+                where: {
+                    mentorshipRequestId,
+                    status: {
+                        in: ["PENDING", "CONFIRMED", "IN_PROGRESS"]
+                    }
+                },
+                select: {
+                    id: true
+                }
+            })
+
+            if (activeSession) {
+                return { duplicate: true as const }
             }
+
+            const session = await tx.session.create({
+                data: {
+                    mentorId,
+                    menteeId,
+                    skillId,
+                    mentorshipRequestId,
+                    scheduledAt,
+                    totalCallDuration,
+                    status: "PENDING",
+                    roomId: crypto.randomUUID()
+                }
+            })
+
+            return { duplicate: false as const, session }
+        }, {
+            isolationLevel: Prisma.TransactionIsolationLevel.Serializable
         })
+
+        if (sessionCreation.duplicate) {
+            return NextResponse.json({
+                message: "An active session request already exists for this mentorship."
+            }, {
+                status: 409
+            })
+        }
+
+        const createSession = sessionCreation.session
         if (createSession.status === "CONFIRMED") {
             await scheduleSessionReminder(createSession.id, createSession.scheduledAt);
         }
@@ -240,6 +272,17 @@ export async function POST(req: NextRequest) {
             status: 201
         })
     } catch (error) {
+        if (
+            error instanceof Prisma.PrismaClientKnownRequestError &&
+            error.code === "P2034"
+        ) {
+            return NextResponse.json({
+                message: "An active session request already exists for this mentorship."
+            }, {
+                status: 409
+            })
+        }
+
         console.error("Error creating session:", error)
         return NextResponse.json({
             message: "Internal server error"

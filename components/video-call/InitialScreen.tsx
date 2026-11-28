@@ -19,6 +19,7 @@ type InitialScreenProps = {
     onToggleCamera: () => void;
     onJoinCall: () => void;
     localStream: MediaStream | null;
+    mediaError: string | null;
 }
 
 export default function InitialScreen({
@@ -30,7 +31,8 @@ export default function InitialScreen({
     onToggleMic,
     onToggleCamera,
     onJoinCall,
-    localStream
+    localStream,
+    mediaError
 }: InitialScreenProps) {
 
     const videoRef = useRef<HTMLVideoElement>(null)
@@ -43,166 +45,134 @@ export default function InitialScreen({
 
     return (
         <div
-            className="min-h-screen w-full flex flex-col items-center justify-center px-4 py-10"
-            style={{ backgroundColor: '#0b090a', fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif" }}
+            className="flex h-full min-h-0 w-full flex-col gap-2 overflow-hidden bg-[#090a08] px-3 pt-3 text-[#f2f0e8] sm:gap-3 sm:px-6 sm:pt-4"
+            style={{ fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif" }}
         >
-            {/* Session info */}
-            <div className="mb-6 text-center">
-                <p className="text-[#a0a0a0] text-sm tracking-widest uppercase mb-1 font-light">
-                    Session with
-                </p>
-                <h1 className="text-white text-xl sm:text-2xl lg:text-3xl font-semibold tracking-tight">
-                    {mentor.name}
-                    <span className="text-[#444] mx-2 font-extralight">&amp;</span>
-                    {mentee.name}
+            <header className="shrink-0 text-center">
+                <p className="text-xs font-medium text-[#a8ab9e]">Session with</p>
+                <h1 className="mx-auto mt-1 flex max-w-full flex-wrap items-center justify-center gap-x-2 text-xl font-semibold tracking-tight text-[#f2f0e8] sm:text-2xl lg:text-3xl">
+                    <span className="break-words">{mentor.name}</span>
+                    <span aria-hidden="true" className="text-[#8e9484]">&amp;</span>
+                    <span className="break-words">{mentee.name}</span>
                 </h1>
-            </div>
+            </header>
 
-            {/* Video preview card */}
-            <div className="w-full max-w-160 lg:max-w-150">
-                <div
-                    className="relative w-full rounded-2xl overflow-hidden flex items-center justify-center"
-                    style={{
-                        aspectRatio: '16 / 9',
-                        backgroundColor: '#0b090a',
-                        border: '1px solid #1f1f1f',
-                        boxShadow: '0 0 0 1px #1f1f1f, 0 24px 64px rgba(0,0,0,0.7)',
-                    }}
-                >
-                    {/* Camera off */}
-                    {!cameraEnabled && (
-                        <div className="flex flex-col items-center gap-3 select-none">
+            <div
+                role="group"
+                aria-label="Camera preview"
+                className="flex min-h-0 w-full flex-1 items-center justify-center"
+            >
+                <div className="relative aspect-video max-h-full w-full max-w-3xl overflow-hidden rounded-2xl border border-[#242a1e] bg-[#11140e]">
+                    {cameraEnabled && localStream ? (
+                        <video
+                            ref={videoRef}
+                            autoPlay
+                            playsInline
+                            muted
+                            aria-label="Your camera preview"
+                            className="h-full w-full object-cover"
+                        />
+                    ) : (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-4 text-center">
                             <div
-                                className="w-16 h-16 sm:w-18 sm:h-18 lg:w-20 lg:h-20 rounded-full flex items-center justify-center text-xl sm:text-2xl font-semibold text-white"
-                                style={{
-                                    background: 'linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%)',
-                                    border: '1px solid #2e2e2e',
-                                }}
+                                aria-hidden="true"
+                                className="flex h-16 w-16 items-center justify-center rounded-full border border-[#2a3322] bg-[#161b12] text-2xl font-semibold text-[#b7cc7e]"
                             >
                                 {mentee.name.charAt(0).toUpperCase()}
                             </div>
-                            <p className="text-[#555] text-sm tracking-wide">Camera is off</p>
+                            <p className="text-sm text-[#c7cabf]">
+                                {mediaError ? "Camera preview unavailable" : cameraEnabled ? "Camera unavailable" : "Camera is off"}
+                            </p>
+                            {mediaError && (
+                                <p
+                                    role="alert"
+                                    className="max-w-[min(90%,32rem)] break-words text-xs text-[#f4b8bc]"
+                                >
+                                    {mediaError}
+                                </p>
+                            )}
                         </div>
                     )}
 
-                    {/* Camera on */}
-                    {cameraEnabled && (
-                        <div className="w-full h-full bg-[#111] flex items-center justify-center">
-                            <video
-                                ref={videoRef}
-                                autoPlay
-                                playsInline
-                                muted
-                                className="w-full h-full object-cover"
-                            />
-                        </div>
-                    )}
-
-                    {/* Mic badge */}
                     <div
-                        className="absolute top-3 right-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium"
-                        style={{
-                            backgroundColor: micEnabled ? 'rgba(34, 197, 94, 0.12)' : 'rgba(239, 68, 68, 0.12)',
-                            border: micEnabled ? '1px solid rgba(34, 197, 94, 0.25)' : '1px solid rgba(239, 68, 68, 0.25)',
-                            color: micEnabled ? '#4ade80' : '#f87171',
-                        }}
+                        role="status"
+                        className="absolute right-2 top-2 flex items-center gap-1.5 rounded-md border border-[#242a1e] bg-[#090a08]/90 px-2 py-1 text-xs font-medium"
+                        style={{ color: micEnabled ? '#10b981' : '#f4b8bc' }}
                     >
                         <span
-                            className="w-1.5 h-1.5 rounded-full"
-                            style={{ backgroundColor: micEnabled ? '#4ade80' : '#f87171' }}
+                            aria-hidden="true"
+                            className="h-1.5 w-1.5 rounded-full"
+                            style={{ backgroundColor: micEnabled ? '#10b981' : '#f4b8bc' }}
                         />
                         {micEnabled ? 'Mic on' : 'Mic off'}
                     </div>
 
-                    {/* Name */}
-                    <div
-                        className="absolute bottom-3 left-3 px-2.5 py-1 rounded-lg text-xs text-[#aaa]"
-                        style={{ backgroundColor: 'rgba(11,9,10,0.7)', backdropFilter: 'blur(8px)', border: '1px solid #1f1f1f' }}
-                    >
+                    <div className="absolute bottom-2 left-2 max-w-[calc(100%-1rem)] truncate rounded-md border border-[#242a1e] bg-[#090a08]/90 px-2.5 py-1 text-xs text-[#c7cabf] sm:bottom-3 sm:left-3">
                         {mentee.name} (You)
                     </div>
                 </div>
             </div>
 
-            {/* Controls */}
-            <div className="mt-8 flex items-center gap-3 sm:gap-4 flex-wrap justify-center">
-                {/* Mic */}
-                <button
-                    type="button"
-                    onClick={onToggleMic}
-                    className="group flex flex-col items-center gap-1.5 focus:outline-none"
-                    title={micEnabled ? "Mute" : "Unmute"}
+            <footer className="shrink-0 px-1 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:pb-[max(1rem,env(safe-area-inset-bottom))]">
+                <div
+                    role="group"
+                    aria-label="Call controls"
+                    className="mx-auto grid w-full max-w-xs grid-cols-3 gap-2"
                 >
-                    <div
-                        className="w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-105"
-                        style={{
-                            backgroundColor: micEnabled ? '#1a1a1a' : '#3b1f1f',
-                            border: micEnabled ? '1px solid #2e2e2e' : '1px solid #5a2020',
-                        }}
+                    <button
+                        type="button"
+                        onClick={onToggleMic}
+                        aria-label={micEnabled ? "Mute microphone" : "Unmute microphone"}
+                        className="group flex min-h-16 min-w-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl px-1 py-1 transition-colors hover:bg-[#161b12] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#b7cc7e] active:bg-[#1b2116]"
                     >
-                        {micEnabled ? (
-                            <Mic className="w-5 h-5 sm:w-6 sm:h-6 text-[#e0e0e0]" />
-                        ) : (
-                            <MicOff className="w-5 h-5 sm:w-6 sm:h-6 text-[#f87171]" />
-                        )}
-                    </div>
-                    <span className="text-[10px] sm:text-xs font-medium" style={{ color: micEnabled ? '#888' : '#f87171' }}>
-                        {micEnabled ? 'Mute' : 'Unmute'}
-                    </span>
-                </button>
+                        <span
+                            aria-hidden="true"
+                            className={`flex h-11 w-11 items-center justify-center rounded-xl border ${micEnabled ? "border-[#2a3322] bg-[#161b12] text-[#c7cabf]" : "border-[#61282d] bg-[#231214] text-[#f4b8bc]"}`}
+                        >
+                            {micEnabled ? <Mic className="h-5 w-5" /> : <MicOff className="h-5 w-5" />}
+                        </span>
+                        <span className={`max-w-full truncate text-[11px] font-medium ${micEnabled ? "text-[#c7cabf]" : "text-[#f4b8bc]"}`}>
+                            {micEnabled ? 'Mute' : 'Unmute'}
+                        </span>
+                    </button>
 
-                {/* Camera */}
-                <button
-                    type="button"
-                    onClick={onToggleCamera}
-                    className="group flex flex-col items-center gap-1.5 focus:outline-none"
-                    title={cameraEnabled ? "Stop Video" : "Start Video"}
-                >
-                    <div
-                        className="w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-105"
-                        style={{
-                            backgroundColor: cameraEnabled ? '#1a1a1a' : '#3b1f1f',
-                            border: cameraEnabled ? '1px solid #2e2e2e' : '1px solid #5a2020',
-                        }}
+                    <button
+                        type="button"
+                        onClick={onToggleCamera}
+                        aria-label={cameraEnabled ? "Turn camera off" : "Turn camera on"}
+                        className="group flex min-h-16 min-w-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl px-1 py-1 transition-colors hover:bg-[#161b12] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#b7cc7e] active:bg-[#1b2116]"
                     >
-                        {cameraEnabled ? (
-                            <Video className="w-5 h-5 sm:w-6 sm:h-6 text-[#e0e0e0]" />
-                        ) : (
-                            <VideoOff className="w-5 h-5 sm:w-6 sm:h-6 text-[#f87171]" />
-                        )}
-                    </div>
-                    <span className="text-[10px] sm:text-xs font-medium" style={{ color: cameraEnabled ? '#888' : '#f87171' }}>
-                        {cameraEnabled ? 'Stop' : 'Start'}
-                    </span>
-                </button>
+                        <span
+                            aria-hidden="true"
+                            className={`flex h-11 w-11 items-center justify-center rounded-xl border ${cameraEnabled ? "border-[#2a3322] bg-[#161b12] text-[#c7cabf]" : "border-[#61282d] bg-[#231214] text-[#f4b8bc]"}`}
+                        >
+                            {cameraEnabled ? <Video className="h-5 w-5" /> : <VideoOff className="h-5 w-5" />}
+                        </span>
+                        <span className={`max-w-full truncate text-[11px] font-medium ${cameraEnabled ? "text-[#c7cabf]" : "text-[#f4b8bc]"}`}>
+                            {cameraEnabled ? 'Camera off' : 'Camera on'}
+                        </span>
+                    </button>
 
-                <div className="w-px h-10 sm:h-12 mx-1" style={{ backgroundColor: '#1f1f1f' }} />
-
-                {/* Join Call */}
-                <button
-                    type="button"
-                    onClick={onJoinCall}
-                    className="group flex flex-col items-center gap-1.5 focus:outline-none"
-                    title="Join Call"
-                >
-                    <div
-                        className="w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-105"
-                        style={{
-                            background: 'linear-gradient(135deg, #1a5c38 0%, #166534 100%)',
-                            border: '1px solid #22c55e55',
-                        }}
+                    <button
+                        type="button"
+                        onClick={onJoinCall}
+                        aria-label="Join call"
+                        className="group flex min-h-16 min-w-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl px-1 py-1 transition-colors hover:bg-[#161b12] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#b7cc7e] active:bg-[#1b2116]"
                     >
-                        <Phone className="w-5 h-5 sm:w-6 sm:h-6 text-[#4ade80]" />
-                    </div>
-                    <span className="text-[10px] sm:text-xs font-medium" style={{ color: '#4ade80' }}>
-                        Join
-                    </span>
-                </button>
-            </div>
+                        <span
+                            aria-hidden="true"
+                            className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#8fa654] text-[#0b0d08] transition-colors group-hover:bg-[#9eb660] group-active:bg-[#7f9449]"
+                        >
+                            <Phone className="h-5 w-5 rotate-135" />
+                        </span>
+                        <span className="text-[11px] font-semibold text-[#b7cc7e]">Join</span>
+                    </button>
+                </div>
 
-            <p className="mt-8 text-[#333] text-xs">
-                Session ID: <span className="font-mono text-[#444]">{id}</span>
-            </p>
+                <p className="mx-auto mt-1 max-w-full break-all text-center text-xs text-[#8a8f80]">
+                    Session ID: <span className="font-mono text-[#a8ab9e]">{id}</span>
+                </p>
+            </footer>
         </div>
     )
 }

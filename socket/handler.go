@@ -231,13 +231,15 @@ func (s *Server) handleWebRTCJoin(client *manage.Client, payload manage.MessageP
 		return
 	}
 
-	s.hub.JoinRoom(client, room)
-	s.hub.BroadcastJSON(room, map[string]any{
+	peerAlreadyJoined := s.hub.JoinRoom(client, room)
+	peerJoinedEvent := map[string]any{
 		"event": "webrtc:peer-joined",
-		"data": map[string]string{
-			"userId": client.UserID,
-		},
-	}, client)
+		"data":  map[string]string{"userId": client.UserID},
+	}
+	s.hub.BroadcastJSON(room, peerJoinedEvent, client)
+	if peerAlreadyJoined {
+		client.SendJSON(map[string]string{"event": "webrtc:peer-joined"})
+	}
 }
 
 func (s *Server) handleWebRTCSignaling(client *manage.Client, payload manage.MessagePayload, raw []byte) {
